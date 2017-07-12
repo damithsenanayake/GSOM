@@ -11,7 +11,7 @@ from sklearn.metrics import adjusted_mutual_info_score, adjusted_rand_score
 from SelfOrganizingSwarm import SelfOrganizingSwarm
 from sklearn.decomposition import PCA
 
-fi = pd.read_csv('mnist_train.csv', header=None)
+fi = pd.read_csv('~/data/mnist_train.csv', header=None)
 # test = pd.read_csv('../mnist_test.csv', header=None)
 samples = 4000
 
@@ -22,14 +22,14 @@ gc.collect()
 # x, y = SelfOrganizingSwarm(iterations=10, alpha=1, beta=0.1, delta=0, theta=3.5).fit_transform(dat[:samples]).T
 
 # x, y = MovingMap(iterations=100, beta=1.5).fit_transform(dat[:samples]).T
-# Y= GSOM().fit_transform(dat,   lr=1,  beta=0.3, sf=0.9, fd = 0.9, wd=0.022)
-Y = TSNE(perplexity=40).fit_transform(dat)
+Y= GSOM().fit_transform(dat,   lr=1,  beta=0.3, sf=0.6, fd = 0.9, wd=0.02275)
+# Y = TSNE(perplexity=40).fit_transform(dat)
 x, y = Y.T
 # x, y = MDS().fit_transform(dat[:samples]).T
 fig = plt.figure()
 
 kl = KMeans(10).fit(Y).labels_
-print " lr=1,  beta=0.3, sf=0.9, fd = 0.9, wd=0.025"
+# print " lr=1,  beta=0.3, sf=0.9, fd = 0.9, wd=0.025"
 print 'instances : ', samples
 print 'ars :', adjusted_rand_score(labels, kl)
 print 'ami :', adjusted_mutual_info_score(labels, kl)
