@@ -1,7 +1,6 @@
 import numpy as np
 from scipy.spatial.distance import minkowski
 from sklearn.metrics.pairwise import pairwise_distances
-import timeit
 
 import sys
 
@@ -47,10 +46,8 @@ class GSOM(object):
         self.Herr = 0
 
         self.lr = lr
-        st = timeit.default_timer()
         self.train_batch(X[np.random.permutation(np.array(range(X.shape[0])))])
-        et = timeit.default_timer() - st
-        print "\n elapsed time for growing : ", et , "\n"
+
         self.Y = np.array(self.grid.values()).astype(float)
         self.Y -= self.Y.min(axis=0)
         self.Y /= self.Y.max(axis=0)
@@ -61,9 +58,7 @@ class GSOM(object):
     def smoothen(self, X, lr = 0.5):
         r_st =0.9
         its =100
-        print self.wd
-        st = timeit.default_timer()
-        Ydists = pairwise_distances(self.Y)
+
         for i in range(its):
             radius =r_st* np.exp(-2.0*i/its)
             alpha =lr -i * lr * 1.0 / its #* np.exp(-1.5*i/(its))
@@ -72,16 +67,16 @@ class GSOM(object):
             for x in X:
 
                 bmu = np.argmin(np.linalg.norm(x - self.C, axis=1))
-                Ldist = Ydists[bmu] #np.linalg.norm(self.Y-self.Y[bmu], axis = 1)
+                Ldist = np.linalg.norm(self.Y-self.Y[bmu], axis = 1)
                 neighborhood =np.where(Ldist < radius)[0]
                 # neighborhood =np.argsort(Ldist)[:5]
 
                 w = np.array(self.C)[neighborhood]
-                w +=  alpha * ((x-w) * np.array([np.exp(-(15.5)*Ldist[neighborhood]**2/radius**2)]).T- self.wd*w*(1-np.exp(-2.5*i/its)))
+                w +=  alpha * ((x-w) * np.array([0.5*radius**2/(0.5*radius**2+Ldist[neighborhood]**2)]).T- self.wd*w*(1-np.exp(-2.5*i/its)))
                 if np.any(np.isinf(w)) or np.any(np.isnan(w)):
                     print 'error'
                 self.C[neighborhood] = w
-        print "\ntime for first smoothing iteration : ", (timeit.default_timer()-st), "\n"
+
 
 
     def predict_inner(self, X):
@@ -195,7 +190,7 @@ class GSOM(object):
 
                 self.neurons[str(list(nei))] = w
                 self.grid[str(list(nei))] = list(nei)
-                self.errors[str(list(nei))] =(self.errors[bmu] -self.GT/2)* self.fd
+                self.errors[str(list(nei))] =self.errors[bmu] * self.fd
 
         self.errors[bmu] = self.GT / 2
 
@@ -227,15 +222,13 @@ class GSOM(object):
 ########################################################################################################################
 
     def LMDS(self, X):
-        r_st = .4
+        r_st = 1.
         radius = r_st
 
         grid = self.predict(X).astype(float)
         n = X.shape[0]*0.5
         its = 50
         it = 0
-        st = timeit.default_timer()
-
         while it < its and radius > 0.001 and self.beta*np.exp(-7.5 * it**2  / its**2 ) > 0.001:# or n>1:
             radius *=0.9# r_st *  np.exp(- 9.0*it  / (50))
 
@@ -249,7 +242,7 @@ class GSOM(object):
 
                 neighbors = np.where(Ldist < radius)[0]
                 # neighbors = np.argsort(Ldist)[:10]
-                if len(neighbors.shape) == 0 or neighbors.shape[0] == 1 or not Ldist[neighbors].any():
+                if len(neighbors.shape) == 0 or neighbors.shape[0] == 1:
                     continue
                 d = Ldist[neighbors] / Ldist[neighbors].sum()
                 d[np.isnan(d)] = 0
@@ -272,7 +265,7 @@ class GSOM(object):
                 #     print 'error '
             it += 1
             n*=0.8
-        print '\n LMDS time : ', timeit.default_timer() - st
+        print ''
         print len(self.neurons)
         return grid
 

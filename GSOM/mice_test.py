@@ -20,9 +20,9 @@ c=cls.astype(float)/cls.max()
 
 X = normalize(np.array(fread)[:, 1:-4].astype(float))
 print X.shape
-# Y = GSOM().fit_transform(X, lr=1,  beta=0.07, sf=0.995, fd = 0.99, wd=0.005)
+Y = GSOM().fit_transform(X, lr=1,  beta=0.08, sf=0.997, fd = 1.99, wd=0.0079)
 # Y=TSNE(perplexity=60).fit_transform(X)
-Y = GS().fit_transform(X, lr=1,  beta=0.07, sf=0.995, fd = 0.99, wd=0.00)
+# Y = GS().fit_transform(X, lr=1,  beta=0.07, sf=0.995, fd = 0.99, wd=0.00)
 # Y = PCA(2).fit_transform(X)
 
 # Y = LocallyLinearEmbedding(100).fit_transform(X)

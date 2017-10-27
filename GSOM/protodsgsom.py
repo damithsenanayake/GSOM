@@ -57,32 +57,35 @@ class GSOM(object):
         self.C = np.array(self.neurons.values())
         self.smoothen(X)
 
-
-    def smoothen(self, X, lr = 0.5):
-        r_st =0.9
-        its =100
+    def smoothen(self, X, lr=0.5):
+        r_st = 0.9
+        its = 100
         print self.wd
         st = timeit.default_timer()
         Ydists = pairwise_distances(self.Y)
         for i in range(its):
-            radius =r_st* np.exp(-2.0*i/its)
-            alpha =lr -i * lr * 1.0 / its #* np.exp(-1.5*i/(its))
-            sys.stdout.write('\r smoothing epoch %i: %s : radius: %s' % (i+1, str(alpha), str(radius)))
+            radius = r_st * np.exp(-2.0 * i / its)
+            alpha = lr - i * lr * 1.0 / its  # * np.exp(-1.5*i/(its))
+            sys.stdout.write('\r smoothing epoch %i: %s : radius: %s' % (i + 1, str(alpha), str(radius)))
             sys.stdout.flush()
-            for x in X:
+            Hdists = pairwise_distances(X, self.C)
+            bmus = np.argmin(Hdists, axis=1)
+            for i in range(X.shape[0]):
 
-                bmu = np.argmin(np.linalg.norm(x - self.C, axis=1))
-                Ldist = Ydists[bmu] #np.linalg.norm(self.Y-self.Y[bmu], axis = 1)
-                neighborhood =np.where(Ldist < radius)[0]
+                # bmu = np.argmin(np.linalg.norm(x - self.C, axis=1))
+                bmu = bmus[i]
+                Ldist = Ydists[bmu]  # np.linalg.norm(self.Y-self.Y[bmu], axis = 1)
+                neighborhood = np.where(Ldist < radius)[0]
                 # neighborhood =np.argsort(Ldist)[:5]
 
                 w = np.array(self.C)[neighborhood]
-                w +=  alpha * ((x-w) * np.array([np.exp(-(15.5)*Ldist[neighborhood]**2/radius**2)]).T- self.wd*w*(1-np.exp(-2.5*i/its)))
+                w += alpha * (
+                (X[i] - w) * np.array([np.exp(-(15.5) * Ldist[neighborhood] ** 2 / radius ** 2)]).T - self.wd * w * (
+                1 - np.exp(-2.5 * i / its)))
                 if np.any(np.isinf(w)) or np.any(np.isnan(w)):
                     print 'error'
                 self.C[neighborhood] = w
-        print "\ntime for first smoothing iteration : ", (timeit.default_timer()-st), "\n"
-
+        print "\ntime for first smoothing iteration : ", (timeit.default_timer() - st), "\n"
 
     def predict_inner(self, X):
         hits = []
@@ -227,7 +230,7 @@ class GSOM(object):
 ########################################################################################################################
 
     def LMDS(self, X):
-        r_st = .4
+        r_st = .5
         radius = r_st
 
         grid = self.predict(X).astype(float)

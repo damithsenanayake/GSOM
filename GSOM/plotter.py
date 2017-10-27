@@ -25,6 +25,10 @@ ax.errorbar(x, y, c = 'black', yerr=[y-np.min(vals, axis=0), np.max(vals, axis=0
 # plt.setp(bp1['caps'], color = 'blue')
 # plt.setp(bp1['medians'], color = 'green')
 # plt.setp(bp1['fliers'], color = 'red', marker = '+')
+plt.text(0.25, 0.5, 'DS-GSOM')
+plt.text(2.25, 0.5, 't-SNE')
+plt.tick_params(axis='both', which='major', labelsize=10)
+plt.tick_params(axis='both', which='minor', labelsize=8)
 plt.xticks(x, xticks)
 
 plt.show()
