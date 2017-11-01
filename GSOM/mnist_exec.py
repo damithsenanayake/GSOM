@@ -14,7 +14,7 @@ from sklearn.decomposition import PCA
 print GSOM.__module__
 fi = pd.read_csv('~/data/mnist_train.csv', header=None)
 # test = pd.read_csv('../mnist_test.csv', header=None)
-samples = 6000
+samples = 500
 
 dat =normalize(np.array(fi)[:samples, 1:])#/255.0
 labels = np.array(fi)[:samples, 0]
@@ -23,7 +23,7 @@ gc.collect()
 # x, y = SelfOrganizingSwarm(iterations=10, alpha=1, beta=0.1, delta=0, theta=3.5).fit_transform(dat[:samples]).T
 
 # x, y = MovingMap(iterations=100, beta=1.5).fit_transform(dat[:samples]).T
-Y= GSOM().fit_transform(dat,   lr=1,  beta=0.3, sf=0.6, fd = 0.9, wd=0.0275)
+Y= GSOM().fit_transform(dat,   lr=1,  beta=0.3, sf=0.99, fd = 1.9, wd=0.035)
 # Y = TSNE(perplexity=40).fit_transform(dat)
 x, y = Y.T
 # x, y = MDS().fit_transform(dat[:samples]).T

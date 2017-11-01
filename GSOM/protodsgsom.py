@@ -1,6 +1,6 @@
 import numpy as np
 from scipy.spatial.distance import minkowski
-from sklearn.metrics.pairwise import pairwise_distances
+from sklearn.metrics.pairwise import pairwise_distances, pairwise_distances_argmin
 import timeit
 
 import sys

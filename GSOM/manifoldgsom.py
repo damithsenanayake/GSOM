@@ -1,6 +1,6 @@
 import numpy as np
 from scipy.spatial.distance import minkowski
-from sklearn.metrics.pairwise import pairwise_distances
+from sklearn.metrics.pairwise import pairwise_distances, pairwise_distances_argmin
 import timeit
 
 import sys
@@ -10,6 +10,7 @@ class GSOM(object):
     def __init__(self):
         self.radius = 0
         self.lr = 0
+        self.neurons = {}
         self.grid = {}
         self.errors = {}
         self.hits = {}
@@ -35,13 +36,11 @@ class GSOM(object):
 
         self.radius = np.exp(1)#3.0#
         self.beta = beta
-
-        self.W = np.random.random((4, self.dims))
-        self.grid = np.array([[i, j] for i in range(2) for j in range(2)])
-        self.errors = {}
-        for g in self.grid:
-            self.errors[str(g)] = 0
-
+        for i in range(2):
+            for j in range(2):
+                self.neurons[str([i, j])] = np.random.random(self.dims)
+                self.grid[str([i, j])] = [i, j]
+                self.errors[str([i, j])] = 0
         self.sf = sf
         self.GT = -self.dims * np.log(sf)  # /255.0
         self.fd = fd
@@ -52,41 +51,40 @@ class GSOM(object):
         self.train_batch(X[np.random.permutation(np.array(range(X.shape[0])))])
         et = timeit.default_timer() - st
         print "\n elapsed time for growing : ", et , "\n"
-        self.Y = np.array(self.grid).astype(float)
+        self.Y = np.array(self.grid.values()).astype(float)
         self.Y -= self.Y.min(axis=0)
         self.Y /= self.Y.max(axis=0)
-        self.C = self.W
+        self.C = np.array(self.neurons.values())
         self.smoothen(X)
 
-
-    def smoothen(self, X, lr = 0.5):
-        r_st =0.9
-        its =100
+    def smoothen(self, X, lr=0.5):
+        r_st = 0.9
+        its = 100
         print self.wd
         st = timeit.default_timer()
         Ydists = pairwise_distances(self.Y)
         for i in range(its):
-            radius =r_st* np.exp(-2.0*i/its)
-            alpha =lr -i * lr * 1.0 / its #* np.exp(-1.5*i/(its))
-            sys.stdout.write('\r smoothing epoch %i: %s : radius: %s' % (i+1, str(alpha), str(radius)))
+            radius = r_st * np.exp(-2.0 * i / its)
+            alpha = lr - i * lr * 1.0 / its  # * np.exp(-1.5*i/(its))
+            sys.stdout.write('\r smoothing epoch %i: %s : radius: %s' % (i + 1, str(alpha), str(radius)))
             sys.stdout.flush()
-            Hdists = pairwise_distances(X, self.C)
-            bmus = np.argmin(Hdists, axis=1)
+            bmus = pairwise_distances_argmin(X, self.C, axis=1)#np.argmin(Hdists, axis=1)
             for i in range(X.shape[0]):
 
                 # bmu = np.argmin(np.linalg.norm(x - self.C, axis=1))
                 bmu = bmus[i]
-                Ldist = Ydists[bmu]#np.linalg.norm(self.Y-self.Y[bmu], axis = 1)
-                neighborhood =np.where(Ldist < radius)[0]
+                Ldist = Ydists[bmu]  # np.linalg.norm(self.Y-self.Y[bmu], axis = 1)
+                neighborhood = np.where(Ldist < radius)[0]
                 # neighborhood =np.argsort(Ldist)[:5]
 
                 w = np.array(self.C)[neighborhood]
-                w +=  alpha * ((X[i]-w) * np.array([np.exp(-(15.5)*Ldist[neighborhood]**2/radius**2)]).T- self.wd*w*(1-np.exp(-2.5*i/its)))
+                w += alpha * (
+                (X[i] - w) * np.array([np.exp(-(15.5) * Ldist[neighborhood] ** 2 / radius ** 2)]).T - self.wd * w * (
+                1 - np.exp(-2.5 * i / its)))
                 if np.any(np.isinf(w)) or np.any(np.isnan(w)):
                     print 'error'
                 self.C[neighborhood] = w
-        print "\ntime for first smoothing iteration : ", (timeit.default_timer()-st), "\n"
-
+        print "\ntime for first smoothing iteration : ", (timeit.default_timer() - st), "\n"
 
     def predict_inner(self, X):
         hits = []
@@ -112,9 +110,9 @@ class GSOM(object):
             for x in X:
                 c+=1
                 self.train_single(x)
-                sys.stdout.write('\r epoch %i :  %i%% : nodes - %i : LR - %s : radius : %s' %(i+1, c*100/t, self.W.shape[0], str(self.lr), str(self.radius) ))
+                sys.stdout.write('\r epoch %i :  %i%% : nodes - %i : LR - %s : radius : %s' %(i+1, c*100/t, len(self.neurons), str(self.lr), str(self.radius) ))
                 sys.stdout.flush()
-            self.lr *=0.9* (1 - 3.8 / self.W.shape[0])# np.exp(-i/50.0)#
+            self.lr *=0.9* (1 - 3.8 / len(self.neurons))# np.exp(-i/50.0)#
             self.radius *=np.exp(-i/200.0)#(1 - 3.8 / len(self.w))
             if self.radius <=1:
                 break#self.radius = 1.1
@@ -131,25 +129,25 @@ class GSOM(object):
         # self.fd = 1.0 / len(neighbors)
         hs = np.array([np.exp(-dists**2/(2*self.radius**2))]).T
         # hs.fill(1)
-        weights = self.W[neighbors]
+        weights = np.array(self.neurons.values())[neighbors]
 
         weights +=  (x - weights) * self.lr*hs #- self.lr * self.wd*weights
 
-        for neighbor, w in zip(neighbors, weights):
-            self.W[neighbor] = w
-
-        erix = str(self.grid[bmu])
+        for neighbor, w in zip(np.array(self.neurons.keys())[neighbors], weights):
+            self.neurons[neighbor] = w
         try:
-            self.errors[erix] += err
+            self.errors[bmu] += err
         except KeyError:
-            self.errors[erix] = err
+            self.errors[bmu] = err
+        if self.errors[bmu] > self.Herr:
+                self.Herr = self.errors[bmu]
 
-
-        if self.errors[erix] > self.GT:
-            self.grow(bmu, erix)
-            for k in neighbors:
+        if self.errors[bmu] > self.GT:
+        #if self.errors[bmu] > self.GT:
+            self.grow(bmu)
+            for k in np.array(self.neurons.keys())[neighbors]:
                 if not k == bmu:
-                    self.errors[str(self.grid[k])]+= (self.errors[str(self.grid[bmu])]*self.fd)
+                    self.errors[k]+= (self.errors[bmu]*self.fd)
 
     def predict(self, X):
         hits =[]
@@ -161,22 +159,27 @@ class GSOM(object):
 
 
     def find_bmu(self, x):
-        dists = np.linalg.norm(x - self.W, axis=1)
-        mink = np.argmin(dists)
-        return mink, dists[mink]
+        nodes = np.asarray(self.neurons.values())
+        mink = np.argmin(np.linalg.norm(x - nodes, axis=1))
+        # mink = pairwise_distances_argmin(nodes, np.array([x]))
+        try:
+            dist =minkowski(self.neurons.values()[mink], x, p = 2)
+        except ValueError:
+            print 'nan'
+
+        return self.neurons.keys()[mink], dist   #dist_sqr[mink]
 
     def get_neighbourhood(self, node):
         if self.grid_changed:
-            self.p_dist_matrix = pairwise_distances(self.grid)
+            self.p_dist_matrix = pairwise_distances(np.array(self.grid.values()))
             self.grid_changed=False
-        node_dists = self.p_dist_matrix[node]
-        cands = np.where(node_dists < self.radius)[0]
-        return cands, node_dists[
-            cands]  # np.array(self.grid.keys())
+        node_dists = self.p_dist_matrix[np.where(np.array(self.neurons.keys()) == node)[0]][0]
+        return np.where(node_dists < self.radius)[0], node_dists[
+            np.where(node_dists < self.radius)[0]]  # np.array(self.grid.keys())
 
 
 
-    def grow(self, bmu, erix):
+    def grow(self, bmu):
         # type: (object) -> object
         p = self.grid[bmu]
         up = p + np.array([0, +1])
@@ -187,50 +190,49 @@ class GSOM(object):
         neighbors = np.array([up, right, down, left])
         for nei in neighbors:
             try:
-                self.errors[str((nei))] +=0 #(self.errors[erix]-self.GT/2) *self.fd
+                self.errors[str(list(nei))] = self.errors[str(list(nei))] * 1.0
             except KeyError:
                 self.grid_changed=True
                 w = self.get_new_weight(bmu, nei)
 
-                self.W=np.concatenate((self.W, w), axis=0)
-                self.grid=np.concatenate((self.grid, np.array([nei])), axis=0)
-                self.errors[str(nei)] =self.errors[erix] * self.fd
+                self.neurons[str(list(nei))] = w
+                self.grid[str(list(nei))] = list(nei)
+                self.errors[str(list(nei))] =(self.errors[bmu] -self.GT/2)* self.fd
 
-        self.errors[erix] = self.GT / 2
+        self.errors[bmu] = self.GT / 2
 
 
     def get_new_weight(self, old, new):
 
-        grid = self.grid
+        grid = np.array(self.grid.values())
         dists = np.linalg.norm(grid - np.array(new), axis = 1)
         order1 = np.where(dists ==1)[0]
         order2 = np.where(dists==2)[0]
         order2L = np.where(dists==np.sqrt(2))[0]
-        w1 = self.W[old]
-        w2 = self.W[order1[np.where(np.linalg.norm(self.grid[order1] - self.grid[old], axis=1)==2)[0]]]
-
-        if not w2.shape[0]:
-            second_neighbours = order2[np.where(np.linalg.norm(self.grid[order2] - self.grid[old], axis=1) == 1)[0]]
-            w2 = self.W[second_neighbours]
-            if not w2.shape[0]:
-                third_neighbours = order2L[
-                    np.where(np.linalg.norm(self.grid[order2L] - self.grid[old], axis=1) == 1)[0]]
-                w2 = self.W[[third_neighbours[0]]]
-                if not w2.shape[0]:
-                    w2 = np.random.random((1, self.W.shape[1]))
-            return 2 * w1 - w2
-        else:
+        w1 = self.neurons[old]
+        # if order1.shape[0] > 1:
+        try :
+            w2 = self.neurons[self.grid.keys()[order1[np.where(np.linalg.norm(np.array(self.grid.values())[order1] - np.array(self.grid[old]), axis=1)==2)[0]]]]
             return (w1+w2)/2
+        except TypeError:
+            second_neighbours = order2[np.where(np.linalg.norm(np.array(self.grid.values())[order2] - np.array(self.grid[old]), axis=1) == 1)[0]]
+            third_neighbours = order2L[np.where(np.linalg.norm(np.array(self.grid.values())[order2L] - np.array(self.grid[old]), axis=1) == 1)[0]]
+            try:
+                w2 = self.neurons[self.grid.keys()[second_neighbours]]
+            except:
+                try:
+                    w2 = self.neurons[self.grid.keys()[third_neighbours[0]]]
+                except:
+                    w2 = np.random.random(self.dims) * 2 -1
+            return 2 * w1 - w2
 
 ########################################################################################################################
 
     def LMDS(self, X):
-        r_st = 1.
+        r_st = .5
         radius = r_st
 
         grid = self.predict(X).astype(float)
-        Xdists = pairwise_distances(X)
-        Ydists = pairwise_distances(grid)
         n = X.shape[0]*0.5
         its = 50
         it = 0
@@ -244,8 +246,8 @@ class GSOM(object):
             for i in range(X.shape[0]):
                 grid -= grid.min(axis=0)
                 grid /= grid.max(axis=0)
-                Ldist =Ydists[i]# np.linalg.norm(grid - grid[i], axis=1)
-                Hdist = Xdists[i]#np.linalg.norm(X[i] - X, axis=1)
+                Ldist = np.linalg.norm(grid - grid[i], axis=1)
+                Hdist = np.linalg.norm(X[i] - X, axis=1)
 
                 neighbors = np.where(Ldist < radius)[0]
                 # neighbors = np.argsort(Ldist)[:10]
@@ -272,7 +274,7 @@ class GSOM(object):
                 #     print 'error '
             it += 1
             n*=0.8
-        print '\nLMDS time :', timeit.default_timer() - st
-        print self.W.shape
+        print '\n LMDS time : ', timeit.default_timer() - st
+        print len(self.neurons)
         return grid
 

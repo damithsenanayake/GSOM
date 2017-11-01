@@ -2,7 +2,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import sklearn.datasets as ds
 from sklearn.manifold import TSNE
-from protodsgsom import GSOM
+from manifoldgsom import GSOM
 print GSOM.__module__
 
 X, t = ds.make_blobs(1500, random_state=20)
@@ -36,8 +36,8 @@ rand = np.random.RandomState(seed=10)
 #
 # X = np.concatenate((X, W), axis = 0)
 gsom = GSOM()
-# Y= GSOM().fit_transform(X, lr = 1.0, beta=0.00, sf=0.7, wd=0.02, fd=.9)#X,lr = 1.0, beta=0.0,sf=0.01, fd=0.75, wd=0.5)
-Y = TSNE().fit_transform(X)
+Y= GSOM().fit_transform(X, lr = 1.0, beta=0.01, sf=0.7, wd=0.02, fd=.9)#X,lr = 1.0, beta=0.0,sf=0.01, fd=0.75, wd=0.5)
+# Y = TSNE().fit_transform(X)
 # Y = LocallyLinearEmbedding(n_neighbors=100).fit_transform(X)
 print Y.shape
 
