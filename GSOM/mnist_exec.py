@@ -3,7 +3,7 @@ import pandas as pd
 import numpy as np
 import gc
 from MovingMap import  MovingMap
-from bgsom import GSOM
+from prunegsom import GSOM
 from sklearn.preprocessing import normalize
 from sklearn.manifold import MDS, TSNE, LocallyLinearEmbedding
 from sklearn.cluster import KMeans
@@ -14,7 +14,7 @@ from sklearn.decomposition import PCA
 print GSOM.__module__
 fi = pd.read_csv('~/data/mnist_train.csv', header=None)
 # test = pd.read_csv('../mnist_test.csv', header=None)
-samples = 500
+samples = 1000
 
 dat =normalize(np.array(fi)[:samples, 1:])#/255.0
 labels = np.array(fi)[:samples, 0]
@@ -23,8 +23,8 @@ gc.collect()
 # x, y = SelfOrganizingSwarm(iterations=10, alpha=1, beta=0.1, delta=0, theta=3.5).fit_transform(dat[:samples]).T
 
 # x, y = MovingMap(iterations=100, beta=1.5).fit_transform(dat[:samples]).T
-Y= GSOM().fit_transform(dat,   lr=1,  beta=0.3, sf=0.99, fd = 1.9, wd=0.035)
-# Y = TSNE(perplexity=40).fit_transform(dat)
+Y= GSOM(lr=.1,  beta=0.3, sf=0.999, fd = 1.9, wd=0.05).fit_transform(dat)
+# Y = TSNE(perplexity=60).fit_transform(dat)
 x, y = Y.T
 # x, y = MDS().fit_transform(dat[:samples]).T
 fig = plt.figure()

@@ -16,13 +16,8 @@ X = X/X.max()
 t = fread[:,-1]
 imlables = ['duck', 'block 1', 'car 1', 'fs cat', 'Anc', 'Car 2', 'block 2', 'baby powder', 'Tylenol', 'Vaseline', 'Mushroom', 'cup', 'piggy', 'socket', 'pot', 'bottle', 'dish', 'cup 2', 'car 3', 'tub']
 
-# Y = TSNE().fit_transform(X)#
-Y= GSOM().fit_transform(X, lr = 1.0, beta=0.2, sf=0.99, wd=0.017, fd=1.9)
-# fig, ax = plt.subplots()
-#
-# ax.scatter(Y.T[0], Y.T[1], c = t, cmap = plt.cm.jet, alpha=0.7, label=t)
-# ax.legend()
-# plt.show()
+Y= GSOM().fit_transform(X, lr = 1.0, beta=0.5, sf=0.995, wd=0.02, fd=1.9)
+
 
 unique = list(set(t))
 colors = [plt.cm.jet(float(i)/max(unique)) for i in unique]
