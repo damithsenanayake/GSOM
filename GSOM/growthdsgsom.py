@@ -58,15 +58,15 @@ class GSOM(object):
 
 
     def smoothen(self, X):
-        r_st = 0.9
-        its = 50
-        lr = self.lr #* 0.5
+        r_st =0.9
+        its = 20
+        lr = self.lr * 0.5
         print self.wd
         st = timeit.default_timer()
         Ydists = pairwise_distances(self.Y)
 
         for i in range(its):
-            radius =r_st* np.exp(-15.5 * i**2/float(its)**2)#np.exp(-8.5 * i**2 / float(its)**2)
+            radius =r_st* np.exp(-8.5 * i**2 / float(its)**2)
             alpha =lr -i * lr * 1.0 / its #* np.exp(-1.5*i/(its))
             sys.stdout.write('\r smoothing epoch %i: %s : radius: %s' % (i+1, str(alpha), str(radius)))
             sys.stdout.flush()
@@ -118,9 +118,7 @@ class GSOM(object):
                 self.errors[k] = 0
             i += 1
             prune = np.random.randint(0, 5)
-
-            if self.lr <= 0.5 *lr:
-                self.prune()
+            self.prune()
 
         self.lr = lr
 
@@ -202,8 +200,10 @@ class GSOM(object):
             self.p_dist_matrix = pairwise_distances(np.array(self.grid.values()))
             self.grid_changed=False
         node_dists = self.p_dist_matrix[np.where(np.array(self.neurons.keys()) == node)[0]][0]
-        return np.where(node_dists < self.radius)[0], node_dists[
-            np.where(node_dists < self.radius)[0]]  # np.array(self.grid.keys())
+
+        neicands = np.argsort(node_dists)[:int(np.ceil(node_dists.shape[0]/10+1))]
+
+        return neicands, node_dists[neicands]  # np.array(self.grid.keys())
 
 
 
@@ -257,7 +257,7 @@ class GSOM(object):
 ########################################################################################################################
 
     def LMDS(self, X):
-        r_st = 1.41
+        r_st = 0.9
         radius = r_st
 
         grid = self.predict(X).astype(float)

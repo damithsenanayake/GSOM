@@ -2,7 +2,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import sklearn.datasets as ds
 from sklearn.manifold import TSNE, MDS
-from dsgsom import GSOM
+from growthdsgsom import GSOM
 print GSOM.__module__
 
 X, t = ds.make_swiss_roll(1500, random_state=20)
@@ -10,11 +10,11 @@ X, t = ds.make_swiss_roll(1500, random_state=20)
 Z, t2 = ds.make_s_curve(1500, random_state=1)
 
 rand = np.random.RandomState(seed=10)
-Z += rand.randn(3)*10
+Z += rand.randn(3)*5
 
 X = np.concatenate((X/20, Z/20), axis=0)
 
-gsom = GSOM(lr = 0.1, beta=0.25, sf=0.9, wd=0.0025, fd=.9)
+gsom = GSOM(lr = 0.5, beta=0.1, sf=0.9999, wd=0.0035, fd=1.9)
 
 Y = gsom.fit_transform(X)
 
