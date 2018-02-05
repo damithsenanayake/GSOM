@@ -23,7 +23,7 @@ gc.collect()
 # x, y = SelfOrganizingSwarm(iterations=10, alpha=1, beta=0.1, delta=0, theta=3.5).fit_transform(dat[:samples]).T
 
 # x, y = MovingMap(iterations=100, beta=1.5).fit_transform(dat[:samples]).T
-Y= GSOM(lr=1.,  beta=0.2, sf=0.999, fd = 1.9, wd=0.05).fit_transform(dat)
+Y= GSOM(lr=.5,  beta=0.2, sf=0.999, fd = 1.9, wd=0.05).fit_transform(dat)
 # Y = PCA(2).fit_transform(dat)
 x, y = Y.T
 # x, y = MDS().fit_transform(dat[:samples]).T
