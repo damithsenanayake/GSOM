@@ -60,7 +60,7 @@ class GSOM(object):
 
     def smoothen(self, X, lr = 0.5):
         r_st =0.9
-        its =100
+        its =0
         print self.wd
         st = timeit.default_timer()
         Ydists = pairwise_distances(self.Y)
@@ -216,7 +216,7 @@ class GSOM(object):
             second_neighbours = order2[np.where(np.linalg.norm(np.array(self.grid.values())[order2] - np.array(self.grid[old]), axis=1) == 1)[0]]
             third_neighbours = order2L[np.where(np.linalg.norm(np.array(self.grid.values())[order2L] - np.array(self.grid[old]), axis=1) == 1)[0]]
             try:
-                w2 = self.neurons[self.grid.keys()[second_neighbours]]
+                w2 = self.neurons[self.grid.keys()[second_neighbours[0]]]
             except:
                 try:
                     w2 = self.neurons[self.grid.keys()[third_neighbours[0]]]
@@ -227,7 +227,7 @@ class GSOM(object):
 ########################################################################################################################
 
     def LMDS(self, X):
-        r_st = .9
+        r_st = .5
         radius = r_st
 
         grid = self.predict(X).astype(float)
