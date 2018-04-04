@@ -5,16 +5,16 @@ from sklearn.manifold import TSNE, MDS
 from dsgsom import GSOM
 print GSOM.__module__
 
-X, t = ds.make_swiss_roll(1500, random_state=20)
+X, t = ds.make_swiss_roll(50000, random_state=20)
 
-Z, t2 = ds.make_s_curve(1500, random_state=1)
+# Z, t2 = ds.make_s_curve(1500, random_state=1)
+#
+# rand = np.random.RandomState(seed=10)
+# Z += rand.randn(3)*10
+#
+# X = np.concatenate((X/20, Z/20), axis=0)
 
-rand = np.random.RandomState(seed=10)
-Z += rand.randn(3)*10
-
-X = np.concatenate((X/20, Z/20), axis=0)
-
-gsom = GSOM(lr = 0.1, beta=0.25, sf=0.9, wd=0.0025, fd=.9)
+gsom = GSOM(lr = 0.25, beta=0., sf=0.9, wd=0.00, fd=.9)
 
 Y = gsom.fit_transform(X)
 
@@ -22,9 +22,9 @@ Y = gsom.fit_transform(X)
 
 # Y = TSNE().fit_transform(X)
 
-Yc = Y[:1500].T
-Ym = Y[1500:].T
+Yc = Y.T#[:1500].T
+# Ym = Y[1500:].T
 
 plt.scatter(Yc[0], Yc[1], c = t, cmap = plt.cm.Spectral, alpha = 0.5)
-plt.scatter(Ym[0], Ym[1], c = t2/2.0 , cmap=plt.cm.rainbow, alpha = 0.5)
+# plt.scatter(Ym[0], Ym[1], c = t2/2.0 , cmap=plt.cm.rainbow, alpha = 0.5)
 plt.show()

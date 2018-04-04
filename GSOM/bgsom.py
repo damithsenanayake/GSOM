@@ -60,7 +60,7 @@ class GSOM(object):
 
     def smoothen(self, X, lr = 0.5):
         r_st =0.9
-        its =0
+        its =100
         print self.wd
         st = timeit.default_timer()
         Ydists = pairwise_distances(self.Y)
@@ -77,7 +77,7 @@ class GSOM(object):
                 # neighborhood =np.argsort(Ldist)[:5]
 
                 w = np.array(self.C)[neighborhood]
-                w +=  alpha * ((x-w) * np.array([np.exp(-(15.5)*Ldist[neighborhood]**2/radius**2)]).T- self.wd*w*(1-np.exp(-2.5*i/its)))
+                w +=  alpha * ((x-w) * np.array([np.exp(-(15.5)*Ldist[neighborhood]**2/radius**2)]).T- self.wd*-w*(1-np.exp(-2.5*i/its)))
                 if np.any(np.isinf(w)) or np.any(np.isnan(w)):
                     print 'error'
                 self.C[neighborhood] = w
@@ -227,12 +227,12 @@ class GSOM(object):
 ########################################################################################################################
 
     def LMDS(self, X):
-        r_st = .5
+        r_st = .3
         radius = r_st
 
         grid = self.predict(X).astype(float)
         n = X.shape[0]*0.5
-        its = 50
+        its = 70
         it = 0
         st = timeit.default_timer()
 

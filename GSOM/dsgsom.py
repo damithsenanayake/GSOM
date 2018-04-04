@@ -58,15 +58,15 @@ class GSOM(object):
 
 
     def smoothen(self, X):
-        r_st =.4
-        its = 50
+        r_st = .9
+        its = 100
         lr = self.lr * 0.5
         print self.wd
         st = timeit.default_timer()
         Ydists = pairwise_distances(self.Y)
 
         for i in range(its):
-            radius =r_st* np.exp(-8.5 * i**2 / float(its)**2)
+            radius =r_st* np.exp(-2. * i / float(its))
             alpha =lr -i * lr * 1.0 / its #* np.exp(-1.5*i/(its))
             sys.stdout.write('\r smoothing epoch %i: %s : radius: %s' % (i+1, str(alpha), str(radius)))
             sys.stdout.flush()
@@ -77,7 +77,7 @@ class GSOM(object):
                 # neighborhood =np.argsort(Ldist)[:5]
 
                 w = np.array(self.C)[neighborhood]
-                w +=  alpha * ((x-w) * np.array([np.exp(-(7.5)*Ldist[neighborhood]**2/radius**2)]).T- self.wd*w*(1-np.exp(-2.5*i/its)))
+                w +=  alpha * ((x-w) * np.array([np.exp(-(15.5)*Ldist[neighborhood]**2/radius**2)]).T- self.wd*w*(1-np.exp(-2.5*i/its)))
                 if np.any(np.isinf(w)) or np.any(np.isnan(w)):
                     print 'error'
                 self.C[neighborhood] = w
@@ -244,7 +244,7 @@ class GSOM(object):
             second_neighbours = order2[np.where(np.linalg.norm(np.array(self.grid.values())[order2] - np.array(self.grid[old]), axis=1) == 1)[0]]
             third_neighbours = order2L[np.where(np.linalg.norm(np.array(self.grid.values())[order2L] - np.array(self.grid[old]), axis=1) == 1)[0]]
             try:
-                w2 = self.neurons[self.grid.keys()[second_neighbours]]
+                w2 = self.neurons[self.grid.keys()[second_neighbours[0]]]
             except:
                 try:
                     w2 = self.neurons[self.grid.keys()[third_neighbours[0]]]
@@ -255,12 +255,12 @@ class GSOM(object):
 ########################################################################################################################
 
     def LMDS(self, X):
-        r_st = 0.5
+        r_st = 0.4
         radius = r_st
 
         grid = self.predict(X).astype(float)
         n = X.shape[0]*0.5
-        its = 50
+        its = 100
         it = 0
         st = timeit.default_timer()
 
@@ -269,14 +269,14 @@ class GSOM(object):
 
             sys.stdout.write('\r LMDS iteration %i : radius : %s : beta : %s' % (it, str(radius), str(self.beta *np.exp(-7.5 * it**2  / its**2 ))))
               # np.exp(-10.0* iter  / self.iterations)
-            Hdists = pairwise_distances(X)
-            Ldists = pairwise_distances(grid)
+            # Hdists = pairwise_distances(X)
+            # Ldists = pairwise_distances(grid)
 
             for i in range(X.shape[0]):
                 grid -= grid.min(axis=0)
                 grid /= grid.max(axis=0)
-                Ldist = Ldists[i]
-                Hdist = Hdists[i]
+                Ldist = np.linalg.norm(grid[i]-grid, axis=1)#Ldists[i]
+                Hdist = np.linalg.norm(X[i]-X, axis=1)#Hdists[i]
 
                 neighbors = np.where(Ldist < radius)[0]
                 # neighbors = np.argsort(Ldist)[:10]
