@@ -17,7 +17,7 @@ fi = pd.read_csv('~/data/mnist_train.csv', header=None)
 # test = pd.read_csv('../mnist_test.csv', header=None)
 samples = 2000
 
-dat =(np.array(fi)[:samples, 1:])#/255.0
+dat =(np.array(fi)[:samples, 1:])/255.0
 labels = np.array(fi)[:samples, 0]
 del fi
 gc.collect()

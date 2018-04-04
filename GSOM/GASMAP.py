@@ -5,7 +5,7 @@ from mpl_toolkits.mplot3d import Axes3D
 
 class GASMAP(object):
 
-    def t_dist(self, d, n=1):
+    def t_dist(self, d, n=2):
         dists= np.power((1+d**2), -n)
         return dists/dists.sum()
 #
@@ -22,7 +22,7 @@ class GASMAP(object):
 
     def fit_transform(self, X, colors):
         intdim = 3
-
+        self.wd = 0.0025
         g_max = 10000
 
         W = np.random.random((intdim, X.shape[1]))
@@ -48,12 +48,13 @@ class GASMAP(object):
         for i in range(maxiter):
             a_max = 2  # -(i%2==0)# (a_max_st*(1 - i * 1. / maxiter))
 
-            sf = 0.1
-            GT = -np.log(sf) * X.shape[1] * np.exp(-7.5 * (1. * i) ** 6 / maxiter ** 6)
+            sf = 0.99
+            GT = -np.log(sf) * X.shape[1] #* np.exp(-7.5 * (1. * i) ** 1 / maxiter ** 1)
             GTs.append(GT)
             QE.append(errors.sum())
             NG.append(G.shape[0])
-            struct_change = (i % 15 == 0)
+            struct_change = np.random.binomial(1, np.exp(-0.5*i**2/maxiter**2))#i % 20 == 0)
+            struct_change = struct_change and (i % 10 == 0)
             errors.fill(0)
             for x in X:
                 print '\r iteration : ', i, ' : n(G) : ', G.shape[0],
@@ -64,7 +65,7 @@ class GASMAP(object):
                 # if i%4 == 0:
                 # t, u = np.argsort(np.linalg.norm(W-W[s], axis=1))[1:3]
                 s = candidates[0]
-                lr = np.exp(0.5 * i ** 2 * 1. / maxiter ** 2) * lrst
+                lr = np.exp(0.5 * i ** 1 * 1. / maxiter ** 1) * lrst
                 try:
                     errors[s] += dists[s] ** 2
                 except:
@@ -72,6 +73,19 @@ class GASMAP(object):
 
                 neis = np.where(G[s])[0]
                 D = dists[neis]
+
+                m = D.mean()
+                sig = D.std()
+
+                zs = (D - m)/sig
+
+                delinds = np.where(zs < 1.5)[0]
+
+                delneis = neis[delinds]
+                if delneis.shape[0]:
+                    G[s][delneis]=0
+                    G[:, s][delneis]=0
+
                 d = np.linalg.norm(Y[neis] - Y[s], axis=1)
                 if d.shape[0] and d.max():
                     d /= d.max()
@@ -82,7 +96,7 @@ class GASMAP(object):
                 lamb = np.nan_to_num(lamb)
                 print ' moving node',
                 W[s] += lr * (x - W[s])
-                W[neis] += lr * lamb * (W[s] - W[neis])  # - lamb * 0.01* W[neis]
+                W[neis] += lr * lamb * (W[s] - W[neis])  -  self.wd*W[neis]*(1-np.exp(-2.5*i/maxiter))
                 hits[s] += 1
 
                 # Move Y
@@ -201,8 +215,8 @@ class GASMAP(object):
                 if G[i, j]:
                     plt.plot([Y[i, 0], Y[j, 0]], [Y[i, 1], Y[j, 1]], c='black')
         plt.show(block=False)
-        # #
-        fig2 = plt.figure()
+        # # #
+        # fig2 = plt.figure()
         predictions = []
 
         for x in X:
@@ -210,8 +224,8 @@ class GASMAP(object):
 
         disp = np.array(predictions)
 
-        plt.scatter(disp.T[0], disp.T[1], c=colors, cmap=plt.cm.hsv, alpha=0.2, s=16)
-        plt.show()
+        # plt.scatter(disp.T[0], disp.T[1], c=colors, cmap=plt.cm.hsv, alpha=0.2, s=16)
+        # plt.show()
         return  disp
 # print ages.max()
 # fig = plt.figure()
