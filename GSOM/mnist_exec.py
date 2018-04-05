@@ -36,12 +36,12 @@ kl = KMeans(10).fit(Y).labels_
 print 'instances : ', samples
 print 'ars :', adjusted_rand_score(labels, kl)
 print 'ami :', adjusted_mutual_info_score(labels, kl)
-plt.subplot(211)
+# plt.subplot(211)
 
 plt.scatter(x, y, edgecolors='none',c=plt.cm.jet(labels/10.0), alpha = 0.5, s = 15)
-plt.subplot(212)
-
-plt.scatter(x, y , edgecolors='none', c = 'grey', alpha = 0.5, s = 15)
+# plt.subplot(212)
+#
+# plt.scatter(x, y , edgecolors='none', c = 'grey', alpha = 0.5, s = 15)
 
 plt.show()
 

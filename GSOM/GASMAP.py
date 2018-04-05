@@ -5,7 +5,7 @@ from mpl_toolkits.mplot3d import Axes3D
 
 class GASMAP(object):
 
-    def t_dist(self, d, n=2):
+    def t_dist(self, d, n=4.5):
         dists= np.power((1+d**2), -n)
         return dists/dists.sum()
 #
@@ -24,13 +24,13 @@ class GASMAP(object):
         intdim = 3
         self.wd = 0.0025
         g_max = 10000
-
-        W = np.random.random((intdim, X.shape[1]))
-        Y = np.random.random((intdim, 2))
+        int_size = intdim
+        W = np.random.random((int_size, X.shape[1]))
+        Y = np.random.random((int_size, 2))
 
         G = np.zeros((W.shape[0], W.shape[0]))
-        errors = np.zeros(intdim)
-        gens = np.zeros(intdim)
+        errors = np.zeros(int_size)
+        gens = np.zeros(int_size)
         a_max_st = 3
         ages = np.zeros(G.shape)
 
@@ -38,7 +38,7 @@ class GASMAP(object):
 
         lrst = 0.5
         alpha = 0.01
-        maxiter = 200
+        maxiter = 100
         D = X.shape[1]
 
         QE = []
@@ -48,13 +48,13 @@ class GASMAP(object):
         for i in range(maxiter):
             a_max = 2  # -(i%2==0)# (a_max_st*(1 - i * 1. / maxiter))
 
-            sf = 0.99
+            sf = 0.97
             GT = -np.log(sf) * X.shape[1] #* np.exp(-7.5 * (1. * i) ** 1 / maxiter ** 1)
             GTs.append(GT)
             QE.append(errors.sum())
             NG.append(G.shape[0])
-            struct_change = np.random.binomial(1, np.exp(-0.5*i**2/maxiter**2))#i % 20 == 0)
-            struct_change = struct_change and (i % 10 == 0)
+            struct_change = np.random.binomial(1, np.exp(-2.5*i**2/maxiter**2))#i % 20 == 0)
+            struct_change = struct_change and (i % 3 == 0)
             errors.fill(0)
             for x in X:
                 print '\r iteration : ', i, ' : n(G) : ', G.shape[0],
