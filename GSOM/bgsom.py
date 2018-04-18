@@ -97,10 +97,11 @@ class GSOM(object):
         self.fit(X, sf = sf, fd = fd, lr = lr, beta=beta)
         return self.LMDS(X)
 
+
     def train_batch(self, X):
         i = 0
         lr = self.lr
-        while self.lr > 0.5:
+        while self.lr > 0.5*lr:
             c = 0
             t = X.shape[0]
             self.Herr=0
@@ -267,9 +268,6 @@ class GSOM(object):
                 grid[neighbors] += self.beta  * np.exp(-7.5 * it**2  / its**2 ) * dirs * (
                 grid[i] - grid[neighbors]) * hs
 
-
-                # if np.isnan(self.grid).any() or np.isinf(self.grid).any():
-                #     print 'error '
             it += 1
             n*=0.8
         print '\n LMDS time : ', timeit.default_timer() - st
