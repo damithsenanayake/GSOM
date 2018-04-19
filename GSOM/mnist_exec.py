@@ -1,4 +1,4 @@
-import matplotlib.pyplot as plt
+# import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
 import gc
@@ -27,12 +27,12 @@ gc.collect()
 # x, y = SelfOrganizingSwarm(iterations=10, alpha=1, beta=0.1, delta=0, theta=3.5).fit_transform(dat[:samples]).T
 
 # x, y = MovingMap(iterations=100, beta=1.5).fit_transform(dat[:samples]).T
-# Y= GSOM().fit_transform(dat,lr=1.,  beta=0.6, sf=0.99, fd = 1.9, wd=0.0275)
+Y= GSOM().fit_transform(dat,lr=1.,  beta=0.6, sf=0.99, fd = 1.9, wd=0.0275)
 # Y = TSNE().fit_transform(dat,perplexity=40)
-Y = PCA(2).fit_transform(dat)
+# Y = PCA(2).fit_transform(dat)
 x, y = Y.T
 # x, y = MDS().fit_transform(dat[:samples]).T
-fig = plt.figure()
+# fig = plt.figure()
 
 kl = KMeans(10).fit(Y).labels_
 # print " lr=1,  beta=0.3, sf=0.9, fd = 0.9, wd=0.025"
@@ -42,10 +42,10 @@ print 'ami :', adjusted_mutual_info_score(labels, kl)
 # plt.subplot(211)
 
 np.savetxt('mnist_'+str(samples)+'.csv', np.concatenate((Y, np.array([labels]).T),axis=1))
-plt.scatter(x, y, edgecolors='none',c=plt.cm.jet(labels/10.0), alpha = 0.5, s = 15)
-# plt.subplot(212)
+# plt.scatter(x, y, edgecolors='none',c=plt.cm.jet(labels/10.0), alpha = 0.5, s = 15)
+# # plt.subplot(212)
+# #
+# # plt.scatter(x, y , edgecolors='none', c = 'grey', alpha = 0.5, s = 15)
 #
-# plt.scatter(x, y , edgecolors='none', c = 'grey', alpha = 0.5, s = 15)
-
-plt.show()
+# plt.show()
 
