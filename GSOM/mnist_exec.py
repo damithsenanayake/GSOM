@@ -10,7 +10,7 @@ from sklearn.cluster import KMeans
 from sklearn.metrics import adjusted_mutual_info_score, adjusted_rand_score
 from SelfOrganizingSwarm import SelfOrganizingSwarm
 from sklearn.decomposition import PCA
-from TSNE import TSNE
+# from TSNE import TSNE
 
 print GSOM.__module__
 fi = pd.read_csv('~/data/mnist_train.csv', header=None)
