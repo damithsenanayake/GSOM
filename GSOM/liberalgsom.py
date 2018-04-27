@@ -55,12 +55,12 @@ class GSOM(object):
         self.Y -= self.Y.min(axis=0)
         self.Y /= self.Y.max(axis=0)
         self.C = np.array(self.neurons.values())
-        self.smoothen(X, lr=self.lr)
+        self.smoothen(X)
 
 
     def smoothen(self, X, lr = 0.5):
-        r_st =.9
-        its =25
+        r_st =0.9
+        its =100
         print self.wd
         st = timeit.default_timer()
         Ydists = pairwise_distances(self.Y)
@@ -189,7 +189,7 @@ class GSOM(object):
         neighbors = np.array([up, right, down, left])
         for nei in neighbors:
             try:
-                self.errors[str(list(nei))] += (self.errors[bmu] -self.GT/2)* self.fd# self.errors[str(list(nei))] * 1.0
+                self.errors[str(list(nei))] = self.errors[str(list(nei))] * 1.0
             except KeyError:
                 self.grid_changed=True
                 w = self.get_new_weight(bmu, nei)

@@ -4,12 +4,12 @@ import numpy as np
 import matplotlib.pyplot as plt
 Y =[]
 X = []
-for image_path in glob.glob("/media/senanayaked/New Volume/coil-20-proc/*.png"):
+for image_path in glob.glob("/home/senanayaked/Part2/NewVolume/coil-20-proc/*.png"):
     image = misc.imread(image_path)
     t = int(image_path.split('/')[-1].split('_')[0].replace('obj', ''))
     if t in [12, 14, 15, 16, 17, 18, 20]:
         continue
-    X.append(image[::2, ::2].flatten())
+    X.append(image.flatten())
     Y.append([t])
 
 X = np.array(X)
