@@ -1,4 +1,4 @@
-import matplotlib.pyplot as plt
+# import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
 import gc
@@ -43,10 +43,10 @@ print 'ami :', adjusted_mutual_info_score(labels, kl)
 # plt.subplot(211)
 
 np.savetxt('mnist_'+str(samples)+'.csv', np.concatenate((Y, np.array([labels]).T),axis=1))
-plt.scatter(x, y, edgecolors='none',c=plt.cm.jet(labels/10.0), alpha = 0.5, s = 15)
+# plt.scatter(x, y, edgecolors='none',c=plt.cm.jet(labels/10.0), alpha = 0.5, s = 15)
 # plt.subplot(212)
 #
 # plt.scatter(x, y , edgecolors='none', c = 'grey', alpha = 0.5, s = 15)
 
-plt.show()
+# plt.show()
 
