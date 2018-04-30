@@ -18,7 +18,7 @@ fi = pd.read_csv('~/data/mnist_train.csv', header=None)
 samples = 2000
 
 dat =(np.array(fi)[:samples, 1:])/255.0
-# dat = PCA(50).fit_transform(dat)
+dat = PCA(50).fit_transform(dat)
 # dat -= dat.min(axis=0)
 # dat /= dat.max(axis=0)
 labels = np.array(fi)[:samples, 0]
