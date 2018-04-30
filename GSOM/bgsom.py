@@ -60,7 +60,7 @@ class GSOM(object):
 
     def smoothen(self, X, lr = 0.5):
         r_st =.9
-        its =150
+        its =100
         print self.wd
         st = timeit.default_timer()
         Ydists = pairwise_distances(self.Y)
