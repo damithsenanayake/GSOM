@@ -65,8 +65,8 @@ class GSOM(object):
 
 
     def smoothen(self, X):
-        r_st = .9
-        its = 25
+        r_st = 1.41
+        its = 100
         lr = self.lr #* 0.5
         print self.wd
         st = timeit.default_timer()
