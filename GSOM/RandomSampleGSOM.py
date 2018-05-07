@@ -66,7 +66,7 @@ class GSOM(object):
 
     def smoothen(self, X):
         r_st = .9
-        its = 10
+        its = 25
         lr = self.lr #* 0.5
         print self.wd
         st = timeit.default_timer()
@@ -92,7 +92,7 @@ class GSOM(object):
                 # neighborhood =np.argsort(Ldist)[:5]
 
                 w = np.array(self.C)[neighborhood]
-                delts =  alpha * ((x-w) * np.array([np.exp(-(16.5)*Ldist[neighborhood]**2/radius**2)]).T- self.wd*w*(1-np.exp(-2.5*i/its)))
+                delts =  alpha * ((x-w) * np.array([np.exp(-(15.5)*Ldist[neighborhood]**2/radius**2)]).T- self.wd*w*(1-np.exp(-2.5*i/its)))
                 ''' Gradient Analysis With Weight Decay Coefficient'''
                 if (i == its-1):
                     dis = np.linalg.norm(x - w, axis=1)
