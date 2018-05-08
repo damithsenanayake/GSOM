@@ -6,6 +6,8 @@ import sys
 
 class GSOM(object):
 
+
+
     def __init__(self,lr = .1,  beta=0.45, sf=0.9, wd=0.04, fd=1.9):
         self.radius = 0
         self.lr = 0
@@ -33,6 +35,11 @@ class GSOM(object):
         self.range = 0
         self.Herr = 0
         self.current_gen = 0
+
+    def t_dist(self, ds):
+        ds/=ds.max()
+        return np.array(1/(1+ds**2))
+
 
     def fit(self, X ):
         self.dims = X.shape[1]
@@ -88,11 +95,16 @@ class GSOM(object):
                 except IndexError:
                     pass
                 Ldist = np.linalg.norm(self.Y-self.Y[bmu], axis = 1)#Ydists[bmu] #
+                Hdist = np.linalg.norm(self.C - self.C[bmu], axis=1)
+
+
                 neighborhood =np.where(Ldist < radius)[0]
+                H_l = np.array([self.t_dist(Ldist[neighborhood])]).T
+                H_h = np.array([np.exp(-(15.5) * Hdist[neighborhood] ** 2 / radius ** 2)]).T
                 # neighborhood =np.argsort(Ldist)[:5]
 
                 w = np.array(self.C)[neighborhood]
-                delts =  alpha * ((x-w) * np.array([np.exp(-(15.5)*Ldist[neighborhood]**2/radius**2)]).T- self.wd*w*(1-np.exp(-.5*i/its)))
+                delts =  alpha * ((x-w) * np.sqrt(H_l*H_h)- self.wd*w*(1-np.exp(-.5*i/its)))
                 ''' Gradient Analysis With Weight Decay Coefficient'''
                 if (i == its-1):
                     dis = np.linalg.norm(x - w, axis=1)
