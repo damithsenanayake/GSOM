@@ -3,7 +3,7 @@ import matplotlib.patches as mpatches
 import matplotlib.pyplot as plt
 from MovingMap import  MovingMap
 from SelfOrganizingSwarm import SelfOrganizingSwarm
-from sklearn.manifold import TSNE, MDS, Isomap, LocallyLinearEmbedding
+from sklearn.manifold import TSNE, MDS, Isomap, LocallyLinearEmbedding, Isomap, SpectralEmbedding
 from bgsom import GSOM as MLGSOM
 from cgsom import GSOM as GSOM
 from sklearn.cluster import KMeans
@@ -88,6 +88,53 @@ for i in range(10):
 
     print 'Adjusted Mutual Information :', amis[i]
     print 'Adjusted Rand Index         :', aris[i]
+ami_ = np.mean(np.array(amis)[np.array(amis).argsort()[5:]])
+ari_ = np.mean(np.array(aris)[np.array(aris).argsort()[5:]])
+
+print 'Average AMI : ', ami_
+print 'Average ARI : ', ari_
+
+print "################# Laplacian Eigenmaps ###############"
+
+amis = []
+aris = []
+
+for i in range(10):
+    Reducer = SpectralEmbedding()
+    Y = Reducer.fit_transform(D)
+    labs = KMeans(10).fit(Y).labels_
+    print '---- iteration ', str(i+1), ' --------'
+    amis.append(adjusted_mutual_info_score(c, labs))
+    aris.append(adjusted_rand_score(c, labs))
+
+    print 'Adjusted Mutual Information :', amis[i]
+    print 'Adjusted Rand Index         :', aris[i]
+
+
+#----- average over the best 5 scores -------
+
+ami_ = np.mean(np.array(amis)[np.array(amis).argsort()[5:]])
+ari_ = np.mean(np.array(aris)[np.array(aris).argsort()[5:]])
+
+print 'Average AMI : ', ami_
+print 'Average ARI : ', ari_
+
+print "################# ISOMAP ###############"
+
+amis = []
+aris = []
+
+for i in range(10):
+    Reducer = Isomap()
+    Y = Reducer.fit_transform(D)
+    labs = KMeans(10).fit(Y).labels_
+    print '---- iteration ', str(i+1), ' --------'
+    amis.append(adjusted_mutual_info_score(c, labs))
+    aris.append(adjusted_rand_score(c, labs))
+
+    print 'Adjusted Mutual Information :', amis[i]
+    print 'Adjusted Rand Index         :', aris[i]
+
 
 #----- average over the best 5 scores -------
 

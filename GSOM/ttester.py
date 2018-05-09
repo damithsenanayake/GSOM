@@ -1,6 +1,9 @@
 import numpy as np
 import scipy.stats as st
 
-ars = np.array([0.51,0.49,0.40,0.76,0.80])
+import matplotlib.pyplot as plt
 
-st.t
+x = np.array(range(100))
+y = np.exp(-6.*(x/100.)**2)
+plt.plot(x, y)
+plt.show()

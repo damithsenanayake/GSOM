@@ -99,8 +99,8 @@ class GSOM(object):
 
 
                 neighborhood =np.where(Ldist < radius)[0]
-                H_l = np.array([self.t_dist(Ldist[neighborhood])]).T
-                H_h = np.array([np.exp(-(15.5) * Hdist[neighborhood] ** 2 / radius ** 2)]).T
+                H_l = np.array([np.exp(-(15.5) * Ldist[neighborhood] ** 2 / Ldist.max() ** 2)]).T
+                H_h = np.array([np.exp(-(15.5) * Hdist[neighborhood] ** 2 / Hdist.max() ** 2)]).T
                 # neighborhood =np.argsort(Ldist)[:5]
 
                 w = np.array(self.C)[neighborhood]
