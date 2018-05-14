@@ -95,7 +95,7 @@ class GSOM(object):
                 # neighborhood =np.argsort(Ldist)[:5]
 
                 w = np.array(self.C)[neighborhood]
-                delts =  alpha * ((x-w) * np.array([np.exp(-(15.5)*Ldist[neighborhood]**3/radius**3)]).T- self.wd*w*(1-np.exp(-2.*(i*1.0/its)))*(i>=its-5))
+                delts =  alpha * ((x-w) * np.array([np.exp(-(15.5)*Ldist[neighborhood]**2/radius**2)]).T- self.wd*w*(1-np.exp(-2.*(i*1.0/its))))#*(i>=its-15))
                 ''' Gradient Analysis With Weight Decay Coefficient'''
                 if (i == its-1):
                     dis = np.linalg.norm(x - w, axis=1)
@@ -140,20 +140,20 @@ class GSOM(object):
         i = 0
         lr = self.lr
         self.spawns = 0
-        while self.lr > 0.5*lr:
+        while self.lr > 0.15*lr:
             c = 0
             t = X.shape[0]
             self.Herr=0
             self.hits = {}
 
-            Xtr = X[np.random.choice(range(t),np.floor((0.4+0.1*i)*t).astype(int)).astype(int)]
+            Xtr = X[np.random.choice(range(t),np.floor((0.5+0.1*i)*t).astype(int)).astype(int)]
 
             for x in Xtr:
                 c+=1
                 self.train_single(x)
                 sys.stdout.write('\r epoch %i :  %i%% : nodes - %i : LR - %s : radius : %s' %(i+1, c*100/t, len(self.neurons), str(self.lr), str(self.radius) ))
                 sys.stdout.flush()
-            self.lr *=0.9* (1 - 3.8 / len(self.neurons))# np.exp(-i/50.0)#
+            self.lr *=0.7* (1 - 3.8 / len(self.neurons))# np.exp(-i/50.0)#
             self.radius *=np.exp(-i/200.0)#(1 - 3.8 / len(self.w))
             if self.radius <=1:
                 break#self.radius = 1.1
@@ -166,7 +166,7 @@ class GSOM(object):
             # if self.lr >0.5*lr:#self.lr <= 0.5 *lr:
             self.prune()
 
-        self.lr = lr
+        # self.lr = lr
         print 'spawns ',self.spawns
 
 
