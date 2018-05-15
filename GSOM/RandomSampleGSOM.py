@@ -66,7 +66,7 @@ class GSOM(object):
 
     def smoothen(self, X):
         r_st = 0.9
-        its = 40
+        its = 30
         lr = self.lr #* 0.5
         print self.wd
         st = timeit.default_timer()
@@ -95,7 +95,7 @@ class GSOM(object):
                 # neighborhood =np.argsort(Ldist)[:5]
 
                 w = np.array(self.C)[neighborhood]
-                delts =  alpha * ((x-w) * np.array([np.exp(-(15.5)*Ldist[neighborhood]**2/radius**2)]).T- self.wd*w*(1-np.exp(-2.*(i*1.0/its))))#*(i>=its-15))
+                delts =  alpha * ((x-w) * np.array([np.exp(-(15.5)*Ldist[neighborhood]**2/radius**2)]).T- self.wd*w*(1-np.exp(-2.*(i*1.0/its))))#*(i>=its-5))
                 ''' Gradient Analysis With Weight Decay Coefficient'''
                 if (i == its-1):
                     dis = np.linalg.norm(x - w, axis=1)
@@ -165,7 +165,7 @@ class GSOM(object):
                 for g in growinds:
                     self.grow(self.errors.keys()[g])
                 self.Herr = np.array(self.errors.values()).max()
-            self.lr *= 0.9 * (1 - 3.8 / len(self.neurons))  # np.exp(-i/50.0)#
+            self.lr *= 0.7 * (1 - 3.8 / len(self.neurons))  # np.exp(-i/50.0)#
             self.radius *= np.exp(-i / 200.0)  # (1 - 3.8 / len(self.w))
             for k in self.errors.keys():
                 self.errors[k] = 0
