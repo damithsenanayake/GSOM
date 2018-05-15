@@ -38,7 +38,7 @@ class GSOM(object):
         self.dims = X.shape[1]
         self.GT = -self.dims * np.log(self.sf)  # /255.0
         init_vect = np.random.random(self.dims)
-        self.radius = np.exp(1)
+        self.radius = 3# np.exp(1)
         for i in range(2):
             for j in range(2):
                 self.neurons[str([i, j])] = init_vect
@@ -66,7 +66,7 @@ class GSOM(object):
 
     def smoothen(self, X):
         r_st = 0.9
-        its = 20
+        its = 40
         lr = self.lr #* 0.5
         print self.wd
         st = timeit.default_timer()
@@ -140,24 +140,33 @@ class GSOM(object):
         i = 0
         lr = self.lr
         self.spawns = 0
-        while self.lr > 0.15*lr:
+        while self.lr > 0.1*lr:
             c = 0
             t = X.shape[0]
             self.Herr=0
             self.hits = {}
 
-            Xtr = X[np.random.choice(range(t),np.floor((0.5+0.1*i)*t).astype(int)).astype(int)]
+            Xtr = X[np.random.choice(range(t),np.floor((0.4+0.1*i)*t).astype(int)).astype(int)]
 
             for x in Xtr:
                 c+=1
                 self.train_single(x)
                 sys.stdout.write('\r epoch %i :  %i%% : nodes - %i : LR - %s : radius : %s' %(i+1, c*100/t, len(self.neurons), str(self.lr), str(self.radius) ))
                 sys.stdout.flush()
-            self.lr *=0.7* (1 - 3.8 / len(self.neurons))# np.exp(-i/50.0)#
-            self.radius *=np.exp(-i/200.0)#(1 - 3.8 / len(self.w))
+
             if self.radius <=1:
                 break#self.radius = 1.1
             # if self.Herr > self.GT:
+            self.Herr = np.array(self.errors.values()).max()
+
+            while self.Herr >= self.GT and i<=6:
+                growinds = np.where(np.array(self.errors.values())>=self.GT)[0]
+                self.grid_changed=1
+                for g in growinds:
+                    self.grow(self.errors.keys()[g])
+                self.Herr = np.array(self.errors.values()).max()
+            self.lr *= 0.9 * (1 - 3.8 / len(self.neurons))  # np.exp(-i/50.0)#
+            self.radius *= np.exp(-i / 200.0)  # (1 - 3.8 / len(self.w))
             for k in self.errors.keys():
                 self.errors[k] = 0
             i += 1
@@ -187,15 +196,15 @@ class GSOM(object):
             self.errors[bmu] += err
         except KeyError:
             self.errors[bmu] = err
-        if self.errors[bmu] > self.Herr:
-                self.Herr = self.errors[bmu]
+        # if self.errors[bmu] > self.Herr:
+        #         self.Herr = self.errors[bmu]
 
-        if self.Herr > self.GT:
-        #if self.errors[bmu] > self.GT:
-            self.grow(bmu)
-            for k in np.array(self.neurons.keys())[neighbors]:
-                if not k == bmu:
-                    self.errors[k]+= (self.errors[bmu]*self.fd)
+        # if self.Herr > self.GT:
+        # #if self.errors[bmu] > self.GT:
+        #     self.grow(bmu)
+        #     for k in np.array(self.neurons.keys())[neighbors]:
+        #         if not k == bmu:
+        #             self.errors[k]+= (self.errors[bmu]*self.fd)
 
     def predict(self, X):
         hits =[]
@@ -223,7 +232,7 @@ class GSOM(object):
             del self.errors[ind]
             del self.ages[ind]
             i+=1
-        self.grid_changed = (del_cands.shape[0])
+        self.grid_changed =1# (del_cands.shape[0])
         sys.stdout.write('\ndeleted nodes : %i' % i)
 
 
@@ -273,6 +282,7 @@ class GSOM(object):
 
     def grow(self, bmu):
         # type: (object) -> object
+        # print ' n(G) = ',len(self.neurons.keys()),
         p = self.grid[bmu]
         up = p + np.array([0, +1])
         right = p + np.array([+1, 0])
@@ -328,7 +338,7 @@ class GSOM(object):
 
         grid = self.predict(X).astype(float)
         n = X.shape[0]*0.5
-        its = 50
+        its = 20
         it = 0
         st = timeit.default_timer()
 
