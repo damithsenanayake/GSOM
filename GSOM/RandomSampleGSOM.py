@@ -89,7 +89,8 @@ class GSOM(object):
                 Ldist = grid_dists[bmu]
                 neighborhood =np.where(Ldist < radius)[0]
                 Hdist = np.linalg.norm(self.C[neighborhood]- self.C[bmu], axis=1)
-                dis_coef = np.array([Hdist/Hdist.max()]).T
+                dis_coef = np.array([Hdist/Hdist.max()]).T * np.exp(-0.5*i**2/its**2)
+                dis_coef += 1
                 thet_d = np.array([np.exp(-(15.5)*Ldist[neighborhood]**2/radius**2)]).T
                 w = np.array(self.C)[neighborhood]
                 delts =  alpha * ((x-w) * dis_coef* (thet_d)- self.wd*w*(1-np.exp(-2.5*(i/float(its)))))#*(i>=its-5))
