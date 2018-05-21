@@ -19,7 +19,7 @@ fi = pd.read_csv('~/data/mnist_train.csv', header=None)
 samples = 6000
 
 dat =(np.array(fi)[:samples, 1:])#/255.0
-# dat = PCA(50).fit_transform(dat)
+dat = PCA(15).fit_transform(dat)
 print dat.shape
 # dat -= dat.min(axis=0)
 # dat /= dat.max(axis=0)
@@ -28,7 +28,7 @@ del fi
 gc.collect()
 # x, y = SelfOrganizingSwarm(iterations=10, alpha=1, beta=0.1, delta=0, theta=3.5).fit_transform(dat[:samples]).T
 st = timeit.default_timer()
-model = GSOM(lr=1.,  beta=0., sf=0.7, fd = .18, wd=.025)
+model = GSOM(lr=1.,  beta=0., sf=0.3, fd = .18, wd=.01)
 # x, y = MovingMap(iterations=100, beta=1.5).fit_transform(dat[:samples]).T
 Y= model.fit_transform(dat)
 # Y = PCA(2).fit_transform(dat)
