@@ -3,10 +3,10 @@ from sklearn.metrics.pairwise import  pairwise_distances_argmin_min
 from time import time
 import matplotlib.pyplot as plt
 
-x = np.arange(0, 100, 1)
+x = np.arange(0, 50, 1)
 y =[]
 for i in x:
-    y.append(int(np.ceil(2000* float(i / 20 + 1) * 20. / 100)))
+    y.append(int(np.ceil(2000* float(i / 10 + 1) * 10. / 50)))
 z = []
 
 plt.plot(x, y)
