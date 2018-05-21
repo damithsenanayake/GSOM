@@ -4,9 +4,9 @@ import numpy as np
 
 nsamples = 6000
 
-os.system('scp -i ~/nectar/firstpair.pem ubuntu@43.240.98.97:~/GSOM/GSOM/mnist_%i.csv ./scp_transfers/mnist_%i.csv'%(nsamples, nsamples))
+# os.system('scp -i ~/nectar/firstpair.pem ubuntu@43.240.98.97:~/GSOM/GSOM/mnist_%i.csv ./scp_transfers/mnist_%i.csv'%(nsamples, nsamples))
 
-d = np.loadtxt('./scp_transfers/mnist_%i.csv'%nsamples)
+d = np.loadtxt('./mnist_%i.csv'%nsamples)
 
 x, y , labels = d.T
 

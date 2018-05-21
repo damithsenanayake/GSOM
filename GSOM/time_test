@@ -1,0 +1,14 @@
+import numpy as np
+from sklearn.metrics.pairwise import  pairwise_distances_argmin_min
+from time import time
+import matplotlib.pyplot as plt
+
+x = np.arange(0, 100, 1)
+y =[]
+for i in x:
+    y.append(int(np.ceil(2000* float(i / 20 + 1) * 20. / 100)))
+z = []
+
+plt.plot(x, y)
+
+plt.show()

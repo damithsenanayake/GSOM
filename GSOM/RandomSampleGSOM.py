@@ -1,5 +1,5 @@
 import numpy as np
-from sklearn.metrics.pairwise import pairwise_distances
+from sklearn.metrics.pairwise import pairwise_distances, pairwise_distances_argmin
 import timeit
 
 import sys
@@ -35,6 +35,7 @@ class GSOM(object):
         self.current_gen = 0
 
     def fit(self, X ):
+        self.start_time = timeit.default_timer()
         self.dims = X.shape[1]
         self.GT = -self.dims * np.log(self.sf)  # /255.0
         init_vect = np.random.random(self.dims)
@@ -65,62 +66,34 @@ class GSOM(object):
 
 
     def smoothen(self, X):
+        self.thet_vis_bundle = {}
         r_st = 0.9
-        its = 30
-        lr = self.lr #* 0.5
+        its = 10
+        lr = self.lr
         print self.wd
         st = timeit.default_timer()
-        # Ydists = pairwise_distances(self.Y)
-        deltas = {}
-        distas = {}
+        grid_dists = pairwise_distances(self.Y, self.Y)
         for i in range(its):
-            self.hits = {}
-            for k in range(self.C.shape[0]):
-                self.hits[k] = 0
             radius =r_st* np.exp(-2. * i/float(its))#np.exp(-8.5 * i**2 / float(its)**2)
             alpha =lr -i * lr * 1.0 / its #* np.exp(-1.5*i/(its))
-            sys.stdout.write('\r smoothing epoch %i: %s : radius: %s' % (i+1, str(alpha), str(radius)))
-            sys.stdout.flush()
 
-            sample_size = int(np.ceil(X.shape[0]*float(i/10+1)*10./its))
+            sample_size = 6000#int(np.ceil(X.shape[0]*float(i/10+1)*10./its))
+            xix = 0
 
-            for x in X:#[: sample_size]:
-                bmu = np.argmin(np.linalg.norm(x - self.C, axis=1))
-                try:
-                    self.hits[bmu]+=1
-                except IndexError:
-                    pass
-                Ldist = np.linalg.norm(self.Y-self.Y[bmu], axis = 1)#Ydists[bmu] #
+            for x in X[: sample_size]:
+                et = timeit.default_timer() - self.start_time
+                xix += 1
+
+                print '\r smoothing epoch %i / %i: %s : radius: %s : training_sample : %i / %i : time : %s '%(i+1, its, str(alpha), str(radius), xix, sample_size, str(et)),
+                bmu = pairwise_distances_argmin(np.array([x]), self.C, axis=1)[0]#np.argmin(np.linalg.norm(x - self.C, axis=1))
+                Ldist = grid_dists[bmu]
                 neighborhood =np.where(Ldist < radius)[0]
-                # neighborhood =np.argsort(Ldist)[:5]
-
+                thet_d = np.array([np.exp(-(15.5)*Ldist[neighborhood]**2/radius**2)]).T
                 w = np.array(self.C)[neighborhood]
-                delts =  alpha * ((x-w) * np.array([np.exp(-(15.5)*Ldist[neighborhood]**2/radius**2)]).T- self.wd*w*(1-np.exp(-2.*(i*1.0/its))))#*(i>=its-5))
-                ''' Gradient Analysis With Weight Decay Coefficient'''
-                if (i == its-1):
-                    dis = np.linalg.norm(x - w, axis=1)
-                    if np.any(delts == None):
-                        pass
-                    for pos, nei in zip(range(neighborhood.shape[0]),neighborhood):
-                        try:
-                            deltas[nei].append(np.linalg.norm(delts[pos]))
-                            distas[nei].append(dis[pos])
-                        except KeyError:
-                            deltas[nei] = [np.linalg.norm(delts[pos])]
-                            distas[nei] = [dis[pos]]
-                        except AttributeError:
-                            deltas[nei] = [np.linalg.norm(delts[pos])]
-                            distas[nei] = [dis[pos]]
-
+                delts =  alpha * ((x-w) * (thet_d)- self.wd*w*(1-np.exp(-2.5*(i/float(its)))))#*(i>=its-5))
                 w += delts
-
                 self.C[neighborhood] = w
-            del_inds = np.where(np.array(self.hits.values())==0)[0]
-            self.deltas = deltas
-            self.distas = distas
-            # if i > 10.*its:
-            #     self.C = np.delete(self.C, del_inds, axis=0)
-            #     self.Y = np.delete(self.Y, del_inds, axis=0)
+
         print "\ntime for first smoothing iteration : ", (timeit.default_timer()-st), "\n"
 
 
@@ -151,12 +124,13 @@ class GSOM(object):
             for x in Xtr:
                 c+=1
                 self.train_single(x)
-                sys.stdout.write('\r epoch %i :  %i%% : nodes - %i : LR - %s : radius : %s' %(i+1, c*100/t, len(self.neurons), str(self.lr), str(self.radius) ))
+                et = timeit.default_timer() - self.start_time
+
+                sys.stdout.write('\r epoch %i :  %i%% : nodes - %i : LR - %s : radius : %s : time : %s' %(i+1, c*100/t, len(self.neurons), str(self.lr), str(self.radius), str(et)))
                 sys.stdout.flush()
 
             if self.radius <=1:
-                break#self.radius = 1.1
-            # if self.Herr > self.GT:
+                break
             self.Herr = np.array(self.errors.values()).max()
 
             while self.Herr >= self.GT and i<=6:
@@ -170,12 +144,9 @@ class GSOM(object):
             for k in self.errors.keys():
                 self.errors[k] = 0
             i += 1
-            prune = np.random.randint(0, 5)
 
-            # if self.lr >0.5*lr:#self.lr <= 0.5 *lr:
             self.prune()
 
-        # self.lr = lr
         print 'spawns ',self.spawns
 
 
@@ -196,15 +167,6 @@ class GSOM(object):
             self.errors[bmu] += err
         except KeyError:
             self.errors[bmu] = err
-        # if self.errors[bmu] > self.Herr:
-        #         self.Herr = self.errors[bmu]
-
-        # if self.Herr > self.GT:
-        # #if self.errors[bmu] > self.GT:
-        #     self.grow(bmu)
-        #     for k in np.array(self.neurons.keys())[neighbors]:
-        #         if not k == bmu:
-        #             self.errors[k]+= (self.errors[bmu]*self.fd)
 
     def predict(self, X):
         hits =[]
@@ -242,9 +204,9 @@ class GSOM(object):
 
     def find_bmu(self, x):
         nodes = np.asarray(self.neurons.values())
-        dists = np.linalg.norm(x - nodes, axis=1)
-        mink = np.argmin(dists)
-        dist = dists[mink]
+        mink= pairwise_distances_argmin(np.array([x]), nodes, axis=1)[0]# = np.linalg.norm(x - nodes, axis=1)
+        # mink = np.argmin(dists)
+        dist =np.linalg.norm(x - nodes, axis=1)[mink]
         # mink = pairwise_distances_argmin(nodes, np.array([x]))
         # try:
         #     dist =minkowski(self.neurons.values()[mink], x, p = 2)
@@ -344,8 +306,9 @@ class GSOM(object):
 
         while it < its and radius > 0.001 and self.beta*np.exp(-7.5 * it**2  / its**2 ) > 0.001:# or n>1:
             radius *=0.9# r_st *  np.exp(- 9.0*it  / (50))
+            et = timeit.default_timer() - self.start_time
 
-            sys.stdout.write('\r LMDS iteration %i : radius : %s : beta : %s' % (it, str(radius), str(self.beta *np.exp(-7.5 * it**2  / its**2 ))))
+            sys.stdout.write('\r LMDS iteration %i : radius : %s : beta : %s: time : %s ' % (it, str(radius), str(self.beta *np.exp(-7.5 * it**2  / its**2 )), str(et)))
               # np.exp(-10.0* iter  / self.iterations)
             Hdists = pairwise_distances(X)
             Ldists = pairwise_distances(grid)
