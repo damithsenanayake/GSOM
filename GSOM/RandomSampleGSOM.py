@@ -68,7 +68,7 @@ class GSOM(object):
     def smoothen(self, X):
         self.thet_vis_bundle = {}
         r_st = 0.9
-        its = 10
+        its = 20
         lr = self.lr
         print self.wd
         st = timeit.default_timer()
@@ -89,7 +89,7 @@ class GSOM(object):
                 Ldist = grid_dists[bmu]
                 neighborhood =np.where(Ldist < radius)[0]
                 Hdist = np.linalg.norm(self.C[neighborhood]- x, axis=1)
-                dis_coef = np.array([1-np.exp(-0.5*Hdist/Hdist.max())]).T#*np.exp(-5.*float(i)/its) #* 0.5#
+                dis_coef = np.array([Hdist/Hdist.max()]).T*np.exp(-5.*float(i)/its) #* 0.5#
                 dis_coef += 1
                 thet_d = np.array([np.exp(-(15.5)*Ldist[neighborhood]**2/radius**2)]).T
                 w = np.array(self.C)[neighborhood]
@@ -116,13 +116,13 @@ class GSOM(object):
         i = 0
         lr = self.lr
         self.spawns = 0
-        while self.lr > 0.1*lr:
+        while self.lr > 0.5*lr:
             c = 0
             t = X.shape[0]
             self.Herr=0
             self.hits = {}
 
-            Xtr = X[np.random.choice(range(t),np.floor((0.4+0.1*i)*t).astype(int)).astype(int)]
+            Xtr = X#[np.random.choice(range(t),np.floor((0.4+0.1*i)*t).astype(int)).astype(int)]
 
             for x in Xtr:
                 c+=1
@@ -136,13 +136,13 @@ class GSOM(object):
                 break
             self.Herr = np.array(self.errors.values()).max()
 
-            while self.Herr >= self.GT and i<=6:
+            while self.Herr >= self.GT and i<=5:
                 growinds = np.where(np.array(self.errors.values())>=self.GT)[0]
                 self.grid_changed=1
                 for g in growinds:
                     self.grow(self.errors.keys()[g])
                 self.Herr = np.array(self.errors.values()).max()
-            self.lr *= 0.7 * (1 - 3.8 / len(self.neurons))  # np.exp(-i/50.0)#
+            self.lr *= 0.9 * (1 - 3.8 / len(self.neurons))  # np.exp(-i/50.0)#
             self.radius *= np.exp(-i / 200.0)  # (1 - 3.8 / len(self.w))
             for k in self.errors.keys():
                 self.errors[k] = 0
