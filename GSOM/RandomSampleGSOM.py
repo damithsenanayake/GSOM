@@ -68,7 +68,7 @@ class GSOM(object):
     def smoothen(self, X):
         self.thet_vis_bundle = {}
         r_st = 0.9
-        its = 40
+        its = 10
         lr = self.lr
         print self.wd
         st = timeit.default_timer()
@@ -77,7 +77,7 @@ class GSOM(object):
             radius =r_st* np.exp(-2. * i/float(its))#np.exp(-8.5 * i**2 / float(its)**2)
             alpha =lr -i * lr * 1.0 / its #* np.exp(-1.5*i/(its))
 
-            sample_size = int(np.ceil(X.shape[0]*float(i/10+1)*10./its))
+            sample_size = 6000#int(np.ceil(X.shape[0]*float(i/10+1)*10./its))
             xix = 0
 
             for x in X[: sample_size]:
@@ -89,9 +89,9 @@ class GSOM(object):
                 Ldist = grid_dists[bmu]
                 neighborhood =np.where(Ldist < radius)[0]
                 Hdist = np.linalg.norm(self.C[neighborhood]- x, axis=1)
-                dis_coef = np.array([Hdist/Hdist.max()]).T#*np.exp(-5.*float(i**2)/its**2) #* 0.5#
+                dis_coef = np.array([1-np.exp(-0.5*Hdist/Hdist.max())]).T#*np.exp(-5.*float(i)/its) #* 0.5#
                 dis_coef += 1
-                thet_d = np.array([np.exp(-(12.5)*Ldist[neighborhood]**2/radius**2)]).T
+                thet_d = np.array([np.exp(-(15.5)*Ldist[neighborhood]**2/radius**2)]).T
                 w = np.array(self.C)[neighborhood]
                 delts =  alpha * ((x-w) * dis_coef* (thet_d)- self.wd*w*(1-np.exp(-2.5*(i/float(its)))))#*(i>=its-5))
                 w += delts
