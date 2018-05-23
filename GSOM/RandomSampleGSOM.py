@@ -77,7 +77,7 @@ class GSOM(object):
             radius =r_st* np.exp(-2. * i/float(its))#np.exp(-8.5 * i**2 / float(its)**2)
             alpha =lr -i * lr * 1.0 / its #* np.exp(-1.5*i/(its))
 
-            sample_size = 250#int(np.ceil(X.shape[0]*float(i/10+1)*10./its))
+            sample_size = 500#int(np.ceil(X.shape[0]*float(i/10+1)*10./its))
             xix = 0
             trinds = np.random.choice(X.shape[0],sample_size)
             for x in X[trinds]:
