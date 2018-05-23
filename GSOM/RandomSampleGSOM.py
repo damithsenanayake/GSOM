@@ -68,7 +68,7 @@ class GSOM(object):
     def smoothen(self, X):
         self.thet_vis_bundle = {}
         r_st = 0.9
-        its = 8
+        its = 40
         lr = self.lr
         print self.wd
         st = timeit.default_timer()
