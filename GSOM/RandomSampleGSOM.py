@@ -90,7 +90,7 @@ class GSOM(object):
                 neighborhood =np.where(Ldist < radius)[0]
                 if neighborhood.shape[0] == 0:
                     neighborhood = np.argsort(Ldist)[:5]
-                thet_d = np.array([np.exp(-(17.5)*Ldist[neighborhood]**2/np.max(radius, Ldist[neighborhood].max())**2)]).T
+                thet_d = np.array([np.exp(-(17.5)*Ldist[neighborhood]**2/np.max([radius, Ldist[neighborhood].max()])**2)]).T
                 w = np.array(self.C)[neighborhood]
                 delts =  alpha * ((x-w) * (thet_d)- self.wd*w*(1-np.exp(-2.5*(i/float(its)))))#*(i>=its-5))
                 w += delts
