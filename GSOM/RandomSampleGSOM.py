@@ -88,6 +88,8 @@ class GSOM(object):
                 bmu = pairwise_distances_argmin(np.array([x]), self.C, axis=1)[0]#np.argmin(np.linalg.norm(x - self.C, axis=1))
                 Ldist = grid_dists[bmu]
                 neighborhood =np.where(Ldist < radius)[0]
+                if neighborhood.shape[0] == 0:
+                    neighborhood = np.argsort(Ldist)[:5]
                 Hdist = np.linalg.norm(self.C[neighborhood]- self.C[bmu], axis=1)
                 dis_coef = 0#np.array([Hdist/Hdist.max()]).T*2#*np.exp(-5.*float(i)/its) #* 0.5#
                 dis_coef += 1
