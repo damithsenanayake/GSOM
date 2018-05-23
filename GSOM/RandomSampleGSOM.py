@@ -74,7 +74,7 @@ class GSOM(object):
         st = timeit.default_timer()
         grid_dists = pairwise_distances(self.Y, self.Y)
         for i in range(its):
-            radius =r_st* np.exp(-2. * i/float(its))#np.exp(-8.5 * i**2 / float(its)**2)
+            radius =r_st* np.exp(-1.5 * i/float(its))#np.exp(-8.5 * i**2 / float(its)**2)
             alpha =lr -i * lr * 1.0 / its #* np.exp(-1.5*i/(its))
 
             sample_size = 6000#int(np.ceil(X.shape[0]*float(i/10+1)*10./its))
@@ -91,7 +91,7 @@ class GSOM(object):
                 Hdist = np.linalg.norm(self.C[neighborhood]- self.C[bmu], axis=1)
                 dis_coef = 0#np.array([Hdist/Hdist.max()]).T*2#*np.exp(-5.*float(i)/its) #* 0.5#
                 dis_coef += 1
-                thet_d = np.array([np.exp(-(18.5)*Ldist[neighborhood]**2/radius**2)]).T
+                thet_d = np.array([np.exp(-(20.5)*Ldist[neighborhood]**2/radius**2)]).T
                 w = np.array(self.C)[neighborhood]
                 delts =  alpha * ((x-w) * (thet_d)- self.wd*w*(1-np.exp(-2.5*(i/float(its)))))#*(i>=its-5))
                 w += delts
