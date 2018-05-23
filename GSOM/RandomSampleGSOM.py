@@ -68,7 +68,7 @@ class GSOM(object):
     def smoothen(self, X):
         self.thet_vis_bundle = {}
         r_st = 0.9
-        its = 20
+        its = 40
         lr = self.lr
         print self.wd
         st = timeit.default_timer()
@@ -88,8 +88,8 @@ class GSOM(object):
                 bmu = pairwise_distances_argmin(np.array([x]), self.C, axis=1)[0]#np.argmin(np.linalg.norm(x - self.C, axis=1))
                 Ldist = grid_dists[bmu]
                 neighborhood =np.where(Ldist < radius)[0]
-                Hdist = np.linalg.norm(self.C[neighborhood]- x, axis=1)
-                dis_coef = np.array([Hdist/Hdist.max()]).T*np.exp(-5.*float(i)/its) #* 0.5#
+                Hdist = np.linalg.norm(self.C[neighborhood]- self.C[bmu], axis=1)
+                dis_coef = np.array([Hdist/Hdist.max()]).T*5#*np.exp(-5.*float(i)/its) #* 0.5#
                 dis_coef += 1
                 thet_d = np.array([np.exp(-(15.5)*Ldist[neighborhood]**2/radius**2)]).T
                 w = np.array(self.C)[neighborhood]
@@ -122,7 +122,7 @@ class GSOM(object):
             self.Herr=0
             self.hits = {}
 
-            Xtr = X#[np.random.choice(range(t),np.floor((0.4+0.1*i)*t).astype(int)).astype(int)]
+            Xtr = X[np.random.choice(range(t),np.floor((0.4+0.1*i)*t).astype(int)).astype(int)]
 
             for x in Xtr:
                 c+=1
