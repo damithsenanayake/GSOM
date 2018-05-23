@@ -68,7 +68,7 @@ class GSOM(object):
     def smoothen(self, X):
         self.thet_vis_bundle = {}
         r_st = 0.9
-        its = 0
+        its = 25
         lr = self.lr
         print self.wd
         st = timeit.default_timer()
@@ -85,15 +85,12 @@ class GSOM(object):
                 xix += 1
 
                 print '\r smoothing epoch %i / %i: %s : radius: %s : training_sample : %i / %i : time : %s '%(i+1, its, str(alpha), str(radius), xix, sample_size, str(et)),
-                bmu = pairwise_distances_argmin(np.array([x]), self.C, axis=1)[0]#np.argmin(np.linalg.norm(x - self.C, axis=1))
+                bmu = pairwise_distances_argmin(np.array([x]), self.C, axis=1)[0]
                 Ldist = grid_dists[bmu]
                 neighborhood =np.where(Ldist < radius)[0]
                 if neighborhood.shape[0] == 0:
                     neighborhood = np.argsort(Ldist)[:5]
-                Hdist = np.linalg.norm(self.C[neighborhood]- self.C[bmu], axis=1)
-                dis_coef = 0#np.array([Hdist/Hdist.max()]).T*2#*np.exp(-5.*float(i)/its) #* 0.5#
-                dis_coef += 1
-                thet_d = np.array([np.exp(-(17.5)*Ldist[neighborhood]**2/radius**2)]).T
+                thet_d = np.array([np.exp(-(17.5)*Ldist[neighborhood]**2/np.max(radius, Ldist[neighborhood].max())**2)]).T
                 w = np.array(self.C)[neighborhood]
                 delts =  alpha * ((x-w) * (thet_d)- self.wd*w*(1-np.exp(-2.5*(i/float(its)))))#*(i>=its-5))
                 w += delts
