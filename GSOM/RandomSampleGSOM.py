@@ -68,7 +68,7 @@ class GSOM(object):
     def smoothen(self, X):
         self.thet_vis_bundle = {}
         r_st = 0.9
-        its = 40
+        its = 0
         lr = self.lr
         print self.wd
         st = timeit.default_timer()
@@ -118,7 +118,7 @@ class GSOM(object):
         i = 0
         lr = self.lr
         self.spawns = 0
-        while self.lr > 0.5*lr:
+        while self.lr > 0.1*lr:
             c = 0
             t = X.shape[0]
             self.Herr=0
@@ -144,7 +144,7 @@ class GSOM(object):
                 for g in growinds:
                     self.grow(self.errors.keys()[g])
                 self.Herr = np.array(self.errors.values()).max()
-            self.lr *= 0.9 * (1 - 3.8 / len(self.neurons))  # np.exp(-i/50.0)#
+            self.lr *= 0.7 * (1 - 3.8 / len(self.neurons))  # np.exp(-i/50.0)#
             self.radius *= np.exp(-i / 200.0)  # (1 - 3.8 / len(self.w))
             for k in self.errors.keys():
                 self.errors[k] = 0
