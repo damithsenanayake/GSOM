@@ -68,7 +68,7 @@ class GSOM(object):
     def smoothen(self, X):
         self.thet_vis_bundle = {}
         r_st = 0.9
-        its = 10000
+        its = 1200
         lr = self.lr
         print self.wd
         st = timeit.default_timer()
@@ -92,7 +92,7 @@ class GSOM(object):
                     neighborhood = np.argsort(Ldist)[:5]
                 thet_d = np.array([np.exp(-(17.5)*Ldist[neighborhood]**2/np.max([radius, Ldist[neighborhood].max()])**2)]).T
                 w = np.array(self.C)[neighborhood]
-                delts =  alpha * ((x-w) * (thet_d)- self.wd*w*(1-np.exp(-2.5*(i/float(its)))))#*(i>=its-5))
+                delts =  alpha * ((x-w) * (thet_d)- self.wd*w*(1-thet_d))#*(1-np.exp(-2.5*(i/float(its)))))#*(i>=its-5))
                 w += delts
                 self.C[neighborhood] = w
 
