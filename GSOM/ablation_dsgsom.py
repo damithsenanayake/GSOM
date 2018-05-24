@@ -31,7 +31,7 @@ configs = []
 configs.append(GSOM())
 configs.append(DSGSOM())
 
-X=  normalize(X)
+# X=  normalize(X)
 
 # fig = plt.figure()
 
