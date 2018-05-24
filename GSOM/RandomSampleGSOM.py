@@ -68,7 +68,7 @@ class GSOM(object):
     def smoothen(self, X):
         self.thet_vis_bundle = {}
         r_st = 0.9
-        its = 6000
+        its = 0
         lr = self.lr
         print self.wd
         st = timeit.default_timer()
@@ -130,17 +130,25 @@ class GSOM(object):
 
                 sys.stdout.write('\r epoch %i :  %i%% : nodes - %i : LR - %s : radius : %s : time : %s' %(i+1, c*100/t, len(self.neurons), str(self.lr), str(self.radius), str(et)))
                 sys.stdout.flush()
+                self.Herr = np.array(self.errors.values()).max()
+
+                while self.Herr >= self.GT and i <= 5:
+                    growinds = np.where(np.array(self.errors.values()) >= self.GT)[0]
+                    self.grid_changed = 1
+                    for g in growinds:
+                        self.grow(self.errors.keys()[g])
+                    self.Herr = np.array(self.errors.values()).max()
 
             if self.radius <=1:
                 break
-            self.Herr = np.array(self.errors.values()).max()
-
-            while self.Herr >= self.GT and i<=5:
-                growinds = np.where(np.array(self.errors.values())>=self.GT)[0]
-                self.grid_changed=1
-                for g in growinds:
-                    self.grow(self.errors.keys()[g])
-                self.Herr = np.array(self.errors.values()).max()
+            # self.Herr = np.array(self.errors.values()).max()
+            #
+            # while self.Herr >= self.GT and i<=5:
+            #     growinds = np.where(np.array(self.errors.values())>=self.GT)[0]
+            #     self.grid_changed=1
+            #     for g in growinds:
+            #         self.grow(self.errors.keys()[g])
+            #     self.Herr = np.array(self.errors.values()).max()
             self.lr *= 0.9 * (1 - 3.8 / len(self.neurons))  # np.exp(-i/50.0)#
             self.radius *= np.exp(-i / 200.0)  # (1 - 3.8 / len(self.w))
             for k in self.errors.keys():
