@@ -7,7 +7,7 @@ import sys
 
 class GSOM(object):
 
-    def __init__(self):
+    def __init__(self,sf = 0.1, fd=0.5,  lr = 1, beta=0.1 , wd = 0.04):
         self.radius = 0
         self.lr = 0
         self.neurons = {}
@@ -18,7 +18,11 @@ class GSOM(object):
         self.cache = []
 
         self.means={}
-
+        self.wd = wd
+        self.sf = sf
+        self.fd = fd
+        self.lr = lr
+        self.beta = beta
 
         self.p_dist_matrix = None
         self.grid_changed = True
@@ -92,9 +96,8 @@ class GSOM(object):
 
         return np.array(hits)
 
-    def fit_transform(self, X ,sf = 0.1, fd=0.5,  lr = 1, beta=0.1 , wd = 0.04):
-        self.wd = wd
-        self.fit(X, sf = sf, fd = fd, lr = lr, beta=beta)
+    def fit_transform(self, X ):
+        self.fit(X, sf = self.sf, fd = self.fd, lr = self.lr, beta=self.beta)
         return self.LMDS(X)
 
 
