@@ -28,9 +28,9 @@ del fi
 gc.collect()
 # x, y = SelfOrganizingSwarm(iterations=10, alpha=1, beta=0.1, delta=0, theta=3.5).fit_transform(dat[:samples]).T
 st = timeit.default_timer()
-model = GSOM(lr=.6,  beta=0., sf=0.6, fd = .256, wd=.025)
+model = GSOM(lr=.6,  beta=0., sf=0.6, fd = .256, wd=.04)
 # x, y = MovingMap(iterations=100, beta=1.5).fit_transform(dat[:samples]).T
-Y= model.fit_transform(dat)
+# Y= model.fit_transform(dat)
 # Y = PCA(2).fit_transform(dat)
 
 et = timeit.default_timer() - st
@@ -41,7 +41,7 @@ print 'Total time : ', hrs, ':', mins, ':', secs
 # Y= GSOM().fit_transform(dat, lr=.6,  beta=0., sf=0.9, fd = 1.9, wd=0.025)
 # Y = TSNE().fit_transform(dat,perplexity=40)
 # Y = PCA(2).fit_transform(dat)
-# Y = TSNE(perplexity=40).fit_transform(dat)
+Y = TSNE(perplexity=40).fit_transform(dat)
 # Y-= Y.min(axis=0)
 # Y/= Y.max(axis=0)
 x, y = Y.T
