@@ -26,14 +26,14 @@ class GSOM(object):
 
         self.p_dist_matrix = None
         self.grid_changed = True
-        self.sf = 0
-        self.GT = 0
-        self.fd = 0
-
-        self.dims = 0
-        self.range = 0
-        self.Herr = 0
-        self.current_gen = 0
+        # self.sf = 0
+        # self.GT = 0
+        # self.fd = 0
+        #
+        # self.dims = 0
+        # self.range = 0
+        # self.Herr = 0
+        # self.current_gen = 0
 
     def fit(self, X, sf , fd,  lr, beta ):
         self.dims = X.shape[1]
