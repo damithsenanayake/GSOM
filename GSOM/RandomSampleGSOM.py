@@ -115,6 +115,7 @@ class GSOM(object):
         i = 0
         lr = self.lr
         self.spawns = 0
+        rad = self.radius
         while self.lr > 0.5*lr:
             c = 0
             t = X.shape[0]
@@ -150,7 +151,7 @@ class GSOM(object):
             #         self.grow(self.errors.keys()[g])
             #     self.Herr = np.array(self.errors.values()).max()
             self.lr *= 0.9 * (1 - 3.8 / len(self.neurons))  # np.exp(-i/50.0)#
-            self.radius *= np.exp(-i / 200.0)  # (1 - 3.8 / len(self.w))
+            self.radius = rad*np.exp(-2.5*i**2/float(200))  # (1 - 3.8 / len(self.w))
             for k in self.errors.keys():
                 self.errors[k] = 0
             i += 1
@@ -165,7 +166,7 @@ class GSOM(object):
         bmu, err = self.find_bmu(x)
         neighbors , dists = self.get_neighbourhood(bmu)
         # self.fd = 1.0 / len(neighbors)
-        hs = np.array([np.exp(-dists**2/(2*self.radius**2))]).T
+        hs = np.array([np.exp(-0.5*dists**2/(2*self.radius**2))]).T
         # hs.fill(1)
         weights = np.array(self.neurons.values())[neighbors]
 
