@@ -163,15 +163,18 @@ class GSOM(object):
 
 
     def train_single(self, x):
-        bmu, err = self.find_bmu(x)
+        # bmu, err = self.find_bmu(x)
+        W = np.array(self.neurons.values())
+        winner = pairwise_distances_argmin(np.array([x]), W, axis=1)[0]
+        bmu = self.neurons.keys()[winner]
         neighbors , dists = self.get_neighbourhood(bmu)
         # self.fd = 1.0 / len(neighbors)
-        hs = np.array([np.exp(-0.5*dists**2/(2*self.radius**2))]).T
+        hs = np.array([np.exp(-0.5*dists**2/(self.radius**2))]).T
         # hs.fill(1)
         weights = np.array(self.neurons.values())[neighbors]
 
         weights +=  (x - weights) * self.lr*hs #- self.lr * self.wd*weights
-
+        err = np.linalg.norm(W[winner]-x)
         for neighbor, w in zip(np.array(self.neurons.keys())[neighbors], weights):
             self.neurons[neighbor] = w
         try:
