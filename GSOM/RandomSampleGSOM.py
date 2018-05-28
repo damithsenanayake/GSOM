@@ -39,16 +39,16 @@ class GSOM(object):
         self.dims = X.shape[1]
         self.GT = -self.dims * np.log(self.sf)  # /255.0
         init_vect = np.random.random(self.dims)
-        self.radius = 10# np.exp(1)
-        for i in range(50):
-            for j in range(50):
+        self.radius = 20# np.exp(1)
+        for i in range(2):
+            for j in range(2):
                 self.neurons[str([i, j])] = init_vect
                 self.grid[str([i, j])] = [i, j]
                 self.errors[str([i, j])] = 0
 
 
         st = timeit.default_timer()
-        # self.train_batch(X[np.random.permutation(np.array(range(X.shape[0])))])
+        self.train_batch(X[np.random.permutation(np.array(range(X.shape[0])))])
         et = timeit.default_timer() - st
         print "\n elapsed time for growing : ", et , "\n"
         self.Y = np.array(self.grid.values()).astype(float)
@@ -68,7 +68,7 @@ class GSOM(object):
     def smoothen(self, X):
         self.thet_vis_bundle = {}
         r_st = 0.9
-        its = 1000
+        its = 0
         lr = self.lr
         print self.wd
         st = timeit.default_timer()
@@ -79,16 +79,19 @@ class GSOM(object):
         for i in range(its):
             # self.cand_hits = np.zeros(shape=(self.Y.shape[0])).astype(float)
             pows = None
+            sample_size = 100
+            if i %(X.shape[0]/100) == 0:
+                self.cand_hits.fill(0)
             if np.any(self.cand_hits):
-                pows = 1+10*self.cand_hits/self.cand_hits.max()
-                lrcoefs = 1+ 0.5*self.cand_hits/self.cand_hits.max()
+                pows = 1+5*self.cand_hits/self.cand_hits.max()
+                lrcoefs = 1+ 0.1*self.cand_hits/self.cand_hits.max()
             else :
                 pows = 1+self.cand_hits
                 lrcoefs = 1 + self.cand_hits
-            self.radii=r_st* np.exp(-2. *(1/pows) * i/float(its))#*pows#np.exp(-8.5 * i**2 / float(its)**2)
+            self.radii = r_st* np.exp(-2.* i**pows/float(its)**pows)
             alpha =lr -i * lr * 1.0 / its #* np.exp(-1.5*i/(its))
-            alphas = alpha *(lrcoefs)
-            sample_size = 100#int(np.ceil(X.shape[0]*float(i/10+1)*10./its))
+            alphas = alpha * (lrcoefs)
+            #int(np.ceil(X.shape[0]*float(i/10+1)*10./its))
             xix = 0
             trinds = np.random.choice(X.shape[0],sample_size)
             for x in X[trinds]:
@@ -146,23 +149,23 @@ class GSOM(object):
                 sys.stdout.flush()
                 self.Herr = np.array(self.errors.values()).max()
 
-                while self.Herr >= self.GT and i <= 5:
-                    growinds = np.where(np.array(self.errors.values()) >= self.GT)[0]
-                    self.grid_changed = 1
-                    for g in growinds:
-                        self.grow(self.errors.keys()[g])
-                    self.Herr = np.array(self.errors.values()).max()
+                # while self.Herr >= self.GT and i <= 5:
+                #     growinds = np.where(np.array(self.errors.values()) >= self.GT)[0]
+                #     self.grid_changed = 1
+                #     for g in growinds:
+                #         self.grow(self.errors.keys()[g])
+                #     self.Herr = np.array(self.errors.values()).max()
 
             if self.radius <=1:
                 break
             self.Herr = np.array(self.errors.values()).max()
 
-            # while self.Herr >= self.GT and i<=5:
-            #     growinds = np.where(np.array(self.errors.values())>=self.GT)[0]
-            #     self.grid_changed=1
-            #     for g in growinds:
-            #         self.grow(self.errors.keys()[g])
-            #     self.Herr = np.array(self.errors.values()).max()
+            while self.Herr >= self.GT and i<=5:
+                growinds = np.where(np.array(self.errors.values())>=self.GT)[0]
+                self.grid_changed=1
+                for g in growinds:
+                    self.grow(self.errors.keys()[g])
+                self.Herr = np.array(self.errors.values()).max()
             self.lr *= 0.9 * (1 - 3.8 / len(self.neurons))  # np.exp(-i/50.0)#
             self.radius = rad*np.exp(-2.*i/float(20))  # (1 - 3.8 / len(self.w))
             for k in self.errors.keys():
@@ -182,11 +185,11 @@ class GSOM(object):
         bmu = self.neurons.keys()[winner]
         neighbors , dists = self.get_neighbourhood(bmu)
         # self.fd = 1.0 / len(neighbors)
-        hs = np.array([np.exp(-10.5*dists**2/(self.radius**2))]).T
+        hs = np.array([np.exp(-12.5*dists**2/(self.radius**2))]).T
         # hs.fill(1)
         weights = np.array(self.neurons.values())[neighbors]
 
-        weights +=  (x - weights) * self.lr*hs #- self.lr * self.wd*weights
+        weights +=  (x - weights) * self.lr*hs - (1-10*self.lr)*self.lr * self.wd*weights
         err = np.linalg.norm(W[winner]-x)
         for neighbor, w in zip(np.array(self.neurons.keys())[neighbors], weights):
             self.neurons[neighbor] = w
