@@ -68,7 +68,7 @@ class GSOM(object):
     def smoothen(self, X):
         self.thet_vis_bundle = {}
         r_st = 0.9
-        its = 4000
+        its = 5000
         lr = self.lr
         print self.wd
         st = timeit.default_timer()
@@ -80,10 +80,10 @@ class GSOM(object):
             # self.cand_hits = np.zeros(shape=(self.Y.shape[0])).astype(float)
             pows = None
             sample_size = 100
-            if i %(X.shape[0]/100) == 0:
-                self.cand_hits.fill(0)
+            # if i %(X.shape[0]/100) == 0:
+            #     self.cand_hits.fill(0)
             if np.any(self.cand_hits):
-                pows = 1+0.5*self.cand_hits/self.cand_hits.max()
+                pows = 1+0.*self.cand_hits/self.cand_hits.max()
                 lrcoefs = 1+ 0.*self.cand_hits/self.cand_hits.max()
             else :
                 pows = 1+self.cand_hits
