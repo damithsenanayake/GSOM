@@ -68,7 +68,7 @@ class GSOM(object):
     def smoothen(self, X):
         self.thet_vis_bundle = {}
         r_st = 0.9
-        its = 0
+        its = 4000
         lr = self.lr
         print self.wd
         st = timeit.default_timer()
@@ -83,8 +83,8 @@ class GSOM(object):
             if i %(X.shape[0]/100) == 0:
                 self.cand_hits.fill(0)
             if np.any(self.cand_hits):
-                pows = 1+5*self.cand_hits/self.cand_hits.max()
-                lrcoefs = 1+ 0.1*self.cand_hits/self.cand_hits.max()
+                pows = 1+0.5*self.cand_hits/self.cand_hits.max()
+                lrcoefs = 1+ 0.*self.cand_hits/self.cand_hits.max()
             else :
                 pows = 1+self.cand_hits
                 lrcoefs = 1 + self.cand_hits
@@ -106,7 +106,7 @@ class GSOM(object):
                 neighborhood =np.where(Ldist < self.radii[bmu])[0]
                 if neighborhood.shape[0] == 0:
                     neighborhood = np.argsort(Ldist)[:5]
-                thet_d = np.array([np.exp(-(12.5)*Ldist[neighborhood]**2/np.max([self.radii[bmu], Ldist[neighborhood].max()])**2)]).T
+                thet_d = np.array([np.exp(-(15.5)*Ldist[neighborhood]**2/np.max([self.radii[bmu], Ldist[neighborhood].max()])**2)]).T
                 w = np.array(self.C)[neighborhood]
                 delts =  alphas[bmu] * ((x-w) * (thet_d)- self.wd*w*(1-np.exp(-2.5*(i**2/float(its)**2))))#*(1-thet_d))#*(1-np.exp(-2.5*(i/float(its)))))#*(i>=its-5))
                 w += delts
@@ -189,7 +189,7 @@ class GSOM(object):
         # hs.fill(1)
         weights = np.array(self.neurons.values())[neighbors]
 
-        weights +=  (x - weights) * self.lr*hs - (1-10*self.lr)*self.lr * self.wd*weights
+        weights +=  (x - weights) * self.lr*hs - (.5-.5*self.lr)*self.lr * self.wd*weights
         err = np.linalg.norm(W[winner]-x)
         for neighbor, w in zip(np.array(self.neurons.keys())[neighbors], weights):
             self.neurons[neighbor] = w

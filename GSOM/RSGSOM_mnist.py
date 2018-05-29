@@ -28,7 +28,7 @@ del fi
 gc.collect()
 # x, y = SelfOrganizingSwarm(iterations=10, alpha=1, beta=0.1, delta=0, theta=3.5).fit_transform(dat[:samples]).T
 st = timeit.default_timer()
-model = GSOM(lr=.1,  beta=0.0, sf=0.5, fd = .15, wd=.03)
+model = GSOM(lr=.1,  beta=0.0, sf=0.5, fd = .22, wd=.04)
 # x, y = MovingMap(iterations=100, beta=1.5).fit_transform(dat[:samples]).T
 Y= model.fit_transform(dat)
 # Y = PCA(2).fit_transform(dat)
@@ -52,13 +52,18 @@ kl = clusterer.fit(Y).labels_
 print 'instances : ', samples
 print 'ars :', adjusted_rand_score(labels, kl)
 print 'ami :', adjusted_mutual_info_score(labels, kl)
-# plt.subplot(211)
-fig = plt.figure()
+fig = plt.figure(figsize=(5, 10))
+plt.subplot(211)
+
 np.savetxt('mnist_'+str(samples)+'.csv', np.concatenate((Y, np.array([labels]).T),axis=1))
 plt.scatter(x, y, edgecolors='none',c=plt.cm.jet(labels/10.), alpha = 0.5, s = 15)
-plt.show(block=False)
-# plt.subplot(212)
+plt.subplot(212)
 #
+plt.scatter(x, y, edgecolors='none',c=plt.cm.jet(kl/10.), alpha = 0.5, s = 15)
+
+plt.show(block=False)
+
+
 fig =plt.figure()
 plt.scatter(model.Y.T[0], model.Y.T[1] , edgecolors='none', c = plt.cm.gist_rainbow(model.cand_hits/float(model.cand_hits.max())), alpha = 0.5, s = 15)
 plt.show(block=False)
