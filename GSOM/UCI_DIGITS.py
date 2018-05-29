@@ -24,8 +24,8 @@ print "################# PCA ###############"
 amis = []
 aris = []
 
-for i in range(10):
-    Reducer = PCA(2)
+for i in range(1):
+    Reducer = TSNE(perplexity=40)
     Y = Reducer.fit_transform(D)
     labs = KMeans(10).fit(Y).labels_
     print '---- iteration ', str(i+1), ' --------'
@@ -43,7 +43,8 @@ ari_ = np.mean(np.array(aris)[np.array(aris).argsort()[5:]])
 print 'Average AMI : ', ami_
 print 'Average ARI : ', ari_
 
-
+plt.scatter(Y.T[0], Y.T[1], c = c, alpha = 0.5)
+plt.show()
 ###### Test code for LLE ###########
 
 print "################# LLE ###############"
