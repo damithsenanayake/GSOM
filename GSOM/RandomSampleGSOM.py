@@ -157,9 +157,13 @@ class GSOM(object):
                 neighborhood =np.where(Ldist < self.radii[bmu])[0]
                 if neighborhood.shape[0] == 0:
                     neighborhood = np.argsort(Ldist)[:5]
+                ''' we're going to fuck shit up with this'''
+
+                Hdist = np.linalg.norm(self.C-self.C[bmu], axis=1)[neighborhood]
+                thet_D = np.array([np.exp(-3.5*Hdist**2/Hdist.max()**2)]).T
                 thet_d = np.array([np.exp(-(15.5)*Ldist[neighborhood]**2/np.max([self.radii[bmu], Ldist[neighborhood].max()])**2)]).T
                 w = np.array(self.C)[neighborhood]
-                delts =  np.array([alphas[neighborhood]]).T * ((x-w) * (thet_d)-self.wd*w*(1-np.exp(-1.5*(i/float(its)))))#*(1-thet_d))#*(1-np.exp(-2.5*(i/float(its)))))#*(i>=its-5))
+                delts =  np.array([alphas[neighborhood]]).T * ((x-w) * (thet_d)-self.wd*w*(1-thet_D)*(1-np.exp(-2.5*(i/float(its)))))#*(1-thet_d))#*(1-np.exp(-2.5*(i/float(its)))))#*(i>=its-5))
                 w += delts
                 self.C[neighborhood] = w
 
