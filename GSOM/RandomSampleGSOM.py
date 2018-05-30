@@ -68,7 +68,7 @@ class GSOM(object):
     def smoothen(self, X):
         self.thet_vis_bundle = {}
         r_st = 0.9
-        its = 5000
+        its = 30000
         lr = self.lr
         print self.wd
         st = timeit.default_timer()
@@ -79,18 +79,18 @@ class GSOM(object):
         for i in range(its):
             # self.cand_hits = np.zeros(shape=(self.Y.shape[0])).astype(float)
             pows = None
-            sample_size = 100
+            sample_size = 5
             # if i %(X.shape[0]/100) == 0:
             #     self.cand_hits.fill(0)
             if np.any(self.cand_hits):
-                pows = 1+0.*self.cand_hits/self.cand_hits.max()
-                lrcoefs = 1+ 0.*self.cand_hits/self.cand_hits.max()
+                pows = 1+1.*self.cand_hits/self.cand_hits.max()
+                lrcoefs = 1+ 1.*self.cand_hits/self.cand_hits.max()
             else :
                 pows = 1+self.cand_hits
                 lrcoefs = 1 + self.cand_hits
-            self.radii = r_st* np.exp(-2.* i**pows/float(its)**pows)
+            self.radii = r_st* np.exp(-2.* i**pows/(its**pows))
             alpha =lr -i * lr * 1.0 / its #* np.exp(-1.5*i/(its))
-            alphas = alpha * (lrcoefs)
+            alphas = alpha / (lrcoefs)
             #int(np.ceil(X.shape[0]*float(i/10+1)*10./its))
             xix = 0
             trinds = np.random.choice(X.shape[0],sample_size)
@@ -106,9 +106,9 @@ class GSOM(object):
                 neighborhood =np.where(Ldist < self.radii[bmu])[0]
                 if neighborhood.shape[0] == 0:
                     neighborhood = np.argsort(Ldist)[:5]
-                thet_d = np.array([np.exp(-(15.5)*Ldist[neighborhood]**2/np.max([self.radii[bmu], Ldist[neighborhood].max()])**2)]).T
+                thet_d = np.array([np.exp(-(12.5)*Ldist[neighborhood]**2/np.max([self.radii[bmu], Ldist[neighborhood].max()])**2)]).T
                 w = np.array(self.C)[neighborhood]
-                delts =  alphas[bmu] * ((x-w) * (thet_d)- self.wd*w*(1-np.exp(-2.5*(i**2/float(its)**2))))#*(1-thet_d))#*(1-np.exp(-2.5*(i/float(its)))))#*(i>=its-5))
+                delts =  alphas[bmu] * ((x-w) * (thet_d)- self.wd*w*(1-np.exp(-2.5*(i**6/float(its)**6))))#*(1-thet_d))#*(1-np.exp(-2.5*(i/float(its)))))#*(i>=its-5))
                 w += delts
                 self.C[neighborhood] = w
 
@@ -130,6 +130,7 @@ class GSOM(object):
     def train_batch(self, X):
         i = 0
         lr = self.lr
+        self.lrst  = lr
         self.spawns = 0
         rad = self.radius
         while self.lr > 0.5*lr:
@@ -185,11 +186,11 @@ class GSOM(object):
         bmu = self.neurons.keys()[winner]
         neighbors , dists = self.get_neighbourhood(bmu)
         # self.fd = 1.0 / len(neighbors)
-        hs = np.array([np.exp(-12.5*dists**2/(self.radius**2))]).T
+        hs = np.array([np.exp(-2.5*dists**2/(self.radius**2))]).T
         # hs.fill(1)
         weights = np.array(self.neurons.values())[neighbors]
 
-        weights +=  (x - weights) * self.lr*hs - (.5-.5*self.lr)*self.lr * self.wd*weights
+        weights +=  (x - weights) * self.lr*hs# - (1-1*self.lr/self.lrst)*self.lr * self.wd*weights
         err = np.linalg.norm(W[winner]-x)
         for neighbor, w in zip(np.array(self.neurons.keys())[neighbors], weights):
             self.neurons[neighbor] = w
