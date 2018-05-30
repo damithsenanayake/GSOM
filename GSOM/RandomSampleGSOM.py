@@ -70,7 +70,7 @@ class GSOM(object):
     def smoothen(self, X):
         self.thet_vis_bundle = {}
         r_st = 0.9
-        its = 0
+        its = 6000
         minlr = 0.000001
         redbase = np.exp(np.log(minlr)/its)
         lr = self.lr
@@ -84,7 +84,7 @@ class GSOM(object):
         for i in range(its):
             # self.cand_hits = np.zeros(shape=(self.Y.shape[0])).astype(float)
             pows = None
-            sample_size = 2
+            sample_size = 10
 
             lrcoefs = 1+ 1.*self.cand_hits/self.cand_hits.sum()
 
@@ -117,8 +117,8 @@ class GSOM(object):
 
     def smoothen_wd(self, X):
         self.thet_vis_bundle = {}
-        r_st = 0.9
-        its = 0
+        r_st = 0.5
+        its = 300
         minlr = 0.000001
         redbase = np.exp(np.log(minlr)/its)
         lr = self.lr
@@ -130,11 +130,11 @@ class GSOM(object):
         self.radii = np.zeros(shape = self.Y.shape[0])
         self.radii.fill(r_st)
         for i in range(its):
-            sample_size = 6000
+            sample_size = 400
             # if i %(X.shape[0]/100) == 0:
             #     self.cand_hits.fill(0)
             if np.any(self.cand_hits):
-                lrcoefs = 1+ 1.*self.cand_hits/self.cand_hits.max()
+                lrcoefs = 1+ 0.*self.cand_hits/self.cand_hits.max()
             else :
                 pows = 1+self.cand_hits
                 lrcoefs = 1 + self.cand_hits
@@ -159,7 +159,7 @@ class GSOM(object):
                     neighborhood = np.argsort(Ldist)[:5]
                 thet_d = np.array([np.exp(-(15.5)*Ldist[neighborhood]**2/np.max([self.radii[bmu], Ldist[neighborhood].max()])**2)]).T
                 w = np.array(self.C)[neighborhood]
-                delts =  np.array([alphas[neighborhood]]).T * ((x-w) * (thet_d)-self.wd*w*(1-np.exp(-2.5*(i**2/float(its)**2))))#*(1-thet_d))#*(1-np.exp(-2.5*(i/float(its)))))#*(i>=its-5))
+                delts =  np.array([alphas[neighborhood]]).T * ((x-w) * (thet_d)-self.wd*w*(1-np.exp(-1.5*(i/float(its)))))#*(1-thet_d))#*(1-np.exp(-2.5*(i/float(its)))))#*(i>=its-5))
                 w += delts
                 self.C[neighborhood] = w
 
