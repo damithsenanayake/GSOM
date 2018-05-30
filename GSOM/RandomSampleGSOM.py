@@ -160,7 +160,7 @@ class GSOM(object):
                 ''' we're going to fuck shit up with this'''
 
                 Hdist = np.linalg.norm(self.C-self.C[bmu], axis=1)[neighborhood]
-                thet_D = np.array([np.exp(-3.5*Hdist**2/Hdist.max()**2)]).T
+                thet_D = np.array([np.exp(-3.5*Hdist**4/Hdist.max()**4)]).T
                 thet_d = np.array([np.exp(-(15.5)*Ldist[neighborhood]**2/np.max([self.radii[bmu], Ldist[neighborhood].max()])**2)]).T
                 w = np.array(self.C)[neighborhood]
                 delts =  np.array([alphas[neighborhood]]).T * ((x-w) * (thet_d)-self.wd*w*(1-thet_D)*(1-np.exp(-2.5*(i/float(its)))))#*(1-thet_d))#*(1-np.exp(-2.5*(i/float(its)))))#*(i>=its-5))
