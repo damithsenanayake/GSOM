@@ -70,7 +70,7 @@ class GSOM(object):
     def smoothen(self, X):
         self.thet_vis_bundle = {}
         r_st = 0.9
-        its = 2400
+        its = 6000
         minlr = 0.000001
         redbase = np.exp(np.log(minlr)/its)
         lr = self.lr
@@ -118,7 +118,7 @@ class GSOM(object):
     def smoothen_wd(self, X):
         self.thet_vis_bundle = {}
         r_st = 0.5
-        its = 3000
+        its = 6000
         minlr = 0.000001
         redbase = np.exp(np.log(minlr)/its)
         lr = self.lr
