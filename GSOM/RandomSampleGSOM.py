@@ -70,7 +70,7 @@ class GSOM(object):
     def smoothen(self, X):
         self.thet_vis_bundle = {}
         r_st = 0.9
-        its = 6000
+        its = 0
         minlr = 0.000001
         redbase = np.exp(np.log(minlr)/its)
         lr = self.lr
@@ -86,7 +86,7 @@ class GSOM(object):
             pows = None
             sample_size = 10
 
-            lrcoefs = 1+ 1.*self.cand_hits/self.cand_hits.sum()
+            lrcoefs = 1+ 20.*self.cand_hits/self.cand_hits.sum()
 
             self.radii = r_st* np.exp(-2.* i/(its)) * lrcoefs
             alpha = lr - i * lr * 1.0 / its #* np.exp(-1.5*i/(its))
@@ -117,8 +117,8 @@ class GSOM(object):
 
     def smoothen_wd(self, X):
         self.thet_vis_bundle = {}
-        r_st = 0.5
-        its = 6000
+        r_st = 0.9
+        its = 8000
         minlr = 0.000001
         redbase = np.exp(np.log(minlr)/its)
         lr = self.lr
@@ -134,7 +134,7 @@ class GSOM(object):
             # if i %(X.shape[0]/100) == 0:
             #     self.cand_hits.fill(0)
             if np.any(self.cand_hits):
-                lrcoefs = 1+ 0.*self.cand_hits/self.cand_hits.max()
+                lrcoefs = 1+ 20.*self.cand_hits/self.cand_hits.sum()
             else :
                 pows = 1+self.cand_hits
                 lrcoefs = 1 + self.cand_hits
@@ -166,8 +166,13 @@ class GSOM(object):
                 delts =  np.array([alphas[neighborhood]]).T * ((x-w) * (thet_d)-self.wd*w*(1-thet_D)*(1-np.exp(-2.5*(i/float(its)))))#*(1-thet_d))#*(1-np.exp(-2.5*(i/float(its)))))#*(i>=its-5))
                 w += delts
                 self.C[neighborhood] = w
+                if i == its/2 and xix ==0:
+                    self.thet_vis_bundle['thet_d']=thet_d
+                    self.thet_vis_bundle['thet_D']=thet_D
+                    self.thet_vis_bundle['neighborhood']=neighborhood
 
         print "\ntime for first smoothing iteration : ", (timeit.default_timer()-st), "\n"
+
     def predict_inner(self, X):
         hits = []
         for x in X:
