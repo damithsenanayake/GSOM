@@ -28,7 +28,7 @@ del fi
 gc.collect()
 # x, y = SelfOrganizingSwarm(iterations=10, alpha=1, beta=0.1, delta=0, theta=3.5).fit_transform(dat[:samples]).T
 st = timeit.default_timer()
-model = GSOM(lr=.2,  beta=0., sf=0.6, fd = .12, wd=.3)
+model = GSOM(lr=.2,  beta=0., sf=0.5, fd = .1, wd=.06)
 # x, y = MovingMap(iterations=100, beta=1.5).fit_transform(dat[:samples]).T
 Y= model.fit_transform(dat)
 # Y = PCA(2).fit_transform(dat)
@@ -64,13 +64,13 @@ plt.scatter(x, y, edgecolors='none',c=plt.cm.jet(kl/10.), alpha = 0.5, s = 15)
 plt.show(block=False)
 
 
-fig =plt.figure()
-plt.scatter(model.Y.T[0], model.Y.T[1] , edgecolors='none', c = plt.cm.gist_rainbow(model.cand_hits/float(model.cand_hits.max())), alpha = 0.5, s = 15)
-plt.show(block=False)
-
-fig =plt.figure()
-plt.scatter(model.Y.T[0], model.Y.T[1] , edgecolors='none', c = plt.cm.gist_rainbow(model.radii/float(model.radii.max())), alpha = 0.5, s = 15)
-plt.show()
+# fig =plt.figure()
+# plt.scatter(model.Y.T[0], model.Y.T[1] , edgecolors='none', c = plt.cm.gist_rainbow(model.cand_hits/float(model.cand_hits.max())), alpha = 0.5, s = 15)
+# plt.show(block=False)
+#
+# fig =plt.figure()
+# plt.scatter(model.Y.T[0], model.Y.T[1] , edgecolors='none', c = plt.cm.gist_rainbow(model.radii/float(model.radii.max())), alpha = 0.5, s = 15)
+# plt.show(block=False)
 
 ''' Theta Analysis '''
 
@@ -94,12 +94,12 @@ blues[:, 3]= thetd.T[0]
 plt.figure(figsize=(5,10))
 plt.subplot(211)
 plt.scatter(x, y, s=15, alpha =0.001, c = 'grey')
-plt.scatter(x[neighborhood], y[neighborhood],c=reds)
+plt.scatter(x[neighborhood], y[neighborhood],c=reds, edgecolors='none')
 plt.title('input space')
 
 plt.subplot(212)
 plt.scatter(x, y, s=15, alpha =0.001, c = 'grey')
-plt.scatter(x[neighborhood], y[neighborhood], c=blues)
+plt.scatter(x[neighborhood], y[neighborhood], c=blues, edgecolors='none')
 plt.title('output space')
 
 plt.show()
