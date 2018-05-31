@@ -117,8 +117,8 @@ class GSOM(object):
 
     def smoothen_wd(self, X):
         self.thet_vis_bundle = {}
-        r_st = 0.9
-        its = 8000
+        r_st = .9
+        its = 72000
         minlr = 0.000001
         redbase = np.exp(np.log(minlr)/its)
         lr = self.lr
@@ -160,13 +160,15 @@ class GSOM(object):
                 ''' we're going to fuck shit up with this'''
 
                 Hdist = np.linalg.norm(self.C-self.C[bmu], axis=1)[neighborhood]
-                thet_D = np.array([np.exp(-.5*Hdist**2/Hdist.max()**2)]).T
+                thet_D = np.array([np.exp(-15.5*Hdist**4/Hdist.max()**4)]).T
                 thet_d = np.array([np.exp(-(15.5)*Ldist[neighborhood]**2/np.max([self.radii[bmu], Ldist[neighborhood].max()])**2)]).T
                 w = np.array(self.C)[neighborhood]
                 delts =  np.array([alphas[neighborhood]]).T * ((x-w) * (thet_d)-self.wd*w*(1-thet_D)*(1-np.exp(-2.5*(i/float(its)))))#*(1-thet_d))#*(1-np.exp(-2.5*(i/float(its)))))#*(i>=its-5))
                 w += delts
                 self.C[neighborhood] = w
-                if i == its/2 and xix ==0:
+                if i == its-1 and xix ==1:
+                    self.thet_vis_bundle['Y']=self.Y
+                    self.thet_vis_bundle['bmu']=bmu
                     self.thet_vis_bundle['thet_d']=thet_d
                     self.thet_vis_bundle['thet_D']=thet_D
                     self.thet_vis_bundle['neighborhood']=neighborhood
