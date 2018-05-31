@@ -26,7 +26,7 @@ print dat.shape
 labels = np.array(fi)[:samples, 0]
 del fi
 gc.collect()
-model = GSOM(lr=.1,  beta=0., sf=0.7, fd = .18, wd=.2)
+model = GSOM(lr=.1,  beta=0., sf=0.7, fd = .18, wd=.3)
 # x, y = MovingMap(iterations=100, beta=1.5).fit_transform(dat[:samples]).T
 Y= model.fit_transform(dat)
 x, y = Y.T
