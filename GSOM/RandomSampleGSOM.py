@@ -42,7 +42,7 @@ class GSOM(object):
         self.radius = 30# np.exp(1)
         for i in range(2):
             for j in range(2):
-                self.neurons[str([i, j])] = init_vect
+                self.neurons[str([i, j])] = np.random.random(self.dims)
                 self.grid[str([i, j])] = [i, j]
                 self.errors[str([i, j])] = 0
 
@@ -123,7 +123,6 @@ class GSOM(object):
         st = timeit.default_timer()
         grid_dists = pairwise_distances(self.Y, self.Y)
         self.cand_hits = np.ones(shape=(self.Y.shape[0])).astype(float)
-        alphas = np.ones(shape=self.Y.shape[0]) * lr
         self.radii = np.zeros(shape = self.Y.shape[0])
         self.radii.fill(r_st)
         for i in range(its):
@@ -131,11 +130,11 @@ class GSOM(object):
             # if i %(X.shape[0]/100) == 0:
             #     self.cand_hits.fill(0)
             if np.any(self.cand_hits):
-                lrcoefs = 1+ 20.*self.cand_hits/self.cand_hits.sum()
+                lrcoefs = 1+ 1.*self.cand_hits/self.cand_hits.max()
             else :
                 pows = 1+self.cand_hits
                 lrcoefs = 1 + self.cand_hits
-            self.radii = r_st* np.exp(-2.* i/(its)) * lrcoefs
+            self.radii = r_st* np.exp(-2.* i/(its)) / lrcoefs
             alpha = lr - i * lr * 1.0 / its #* np.exp(-1.5*i/(its))
             alphas = alpha * (lrcoefs)
             # alphas = alphas *  redbase * lrcoefs
@@ -157,13 +156,13 @@ class GSOM(object):
                 ''' we're going to fuck shit up with this'''
 
                 Hdist = np.linalg.norm(self.C-self.C[bmu], axis=1)[neighborhood]
-                thet_D = np.array([np.exp(-15.5*Hdist**4/Hdist.max()**4)]).T
+                thet_D = np.array([np.exp(-15.5*Hdist**6/Hdist.max()**6)]).T
                 thet_d = np.array([np.exp(-(15.5)*Ldist[neighborhood]**2/np.max([self.radii[bmu], Ldist[neighborhood].max()])**2)]).T
                 w = np.array(self.C)[neighborhood]
-                delts =  np.array([alphas[neighborhood]]).T * ((x-w) * (thet_d)-self.wd*w*(1-thet_D)*(1-np.exp(-2.5*(i/float(its)))))#*(1-thet_d))#*(1-np.exp(-2.5*(i/float(its)))))#*(i>=its-5))
+                delts =  np.array([alphas[neighborhood]]).T * ((x-w) * (thet_d)-self.wd*w*(1-thet_D))#*(1-np.exp(-2.5*(i/float(its)))))#*(1-thet_d))#*(1-np.exp(-2.5*(i/float(its)))))#*(i>=its-5))
                 w += delts
                 self.C[neighborhood] = w
-                if i == its-1 and xix ==1:
+                if i == its/2 and xix ==1:
                     self.thet_vis_bundle['Y']=self.Y
                     self.thet_vis_bundle['bmu']=bmu
                     self.thet_vis_bundle['thet_d']=thet_d
@@ -386,7 +385,7 @@ class GSOM(object):
 ########################################################################################################################
 
     def LMDS(self, X):
-        r_st = 0.9
+        r_st = 0.4
         radius = r_st
 
         grid = self.predict(X).astype(float)
@@ -396,7 +395,7 @@ class GSOM(object):
         st = timeit.default_timer()
 
         while it < its and radius > 0.001 and self.beta*np.exp(-7.5 * it**2  / its**2 ) > 0.001:# or n>1:
-            radius *=0.9# r_st *  np.exp(- 9.0*it  / (50))
+            radius *=0.95# r_st *  np.exp(- 9.0*it  / (50))
             et = timeit.default_timer() - self.start_time
 
             sys.stdout.write('\r LMDS iteration %i : radius : %s : beta : %s: time : %s ' % (it, str(radius), str(self.beta *np.exp(-7.5 * it**2  / its**2 )), str(et)))
