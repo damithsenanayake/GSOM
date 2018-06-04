@@ -292,7 +292,7 @@ class GSOM(object):
     def smoothen_wd(self, X):
         self.thet_vis_bundle = {}
         r_st = .5
-        its = 10000
+        its = 6000
 
         lr = self.lr
         print self.wd
@@ -335,7 +335,7 @@ class GSOM(object):
                 Hdist = np.linalg.norm(self.C - self.C[bmu], axis=1)[neighborhood]
                 if Hdist.max():
                     Hdist /= Hdist.max()
-                thet_D = np.array([np.exp(-45.5 * Hdist ** 75)]).T
+                thet_D = np.array([np.exp(-45.5 * Hdist ** 60)]).T
                 thet_d = np.array([np.exp(-(12.5) * Ldist[neighborhood] ** 2 / np.max(
                     [self.radii[bmu], Ldist[neighborhood].max()]) ** 2)]).T
                 w = np.array(self.C)[neighborhood]
