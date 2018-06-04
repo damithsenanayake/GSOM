@@ -3,7 +3,7 @@ import pandas as pd
 import numpy as np
 import gc
 from MovingMap import  MovingMap
-from RandomSampleGSOM import GSOM
+from LPGSOM import GSOM
 from sklearn.preprocessing import normalize
 from sklearn.manifold import MDS, TSNE, LocallyLinearEmbedding
 from sklearn.cluster import KMeans, DBSCAN
@@ -28,7 +28,7 @@ del fi
 gc.collect()
 # x, y = SelfOrganizingSwarm(iterations=10, alpha=1, beta=0.1, delta=0, theta=3.5).fit_transform(dat[:samples]).T
 st = timeit.default_timer()
-model = GSOM(lr=.2,  beta=0.0, sf=0.1, fd = .2, wd=.07)
+model = GSOM(lr=1.,  beta=0., sf=0.9, fd = .18, wd=.08)
 # x, y = MovingMap(iterations=100, beta=1.5).fit_transform(dat[:samples]).T
 Y= model.fit_transform(dat)
 # Y = PCA(2).fit_transform(dat)
@@ -70,7 +70,7 @@ plt.scatter(x, y, edgecolors='none',c=plt.cm.jet(kl/10.), alpha = 0.5, s = 15)
 #
 # fig =plt.figure()
 # plt.scatter(model.Y.T[0], model.Y.T[1] , edgecolors='none', c = plt.cm.gist_rainbow(model.radii/float(model.radii.max())), alpha = 0.5, s = 15)
-plt.show()
+plt.show(block=False)
 
 ''' Theta Analysis '''
 
@@ -90,16 +90,16 @@ blues = rgbas + np.array([0, 1, 0, 0])
 reds[:, 3]=1- thetD.T[0]
 blues[:, 3]= thetd.T[0]
 #
-#
-# plt.figure(figsize=(5,10))
+
+plt.figure(figsize=(10,10))
 # plt.subplot(211)
-# plt.scatter(x, y, s=15, alpha =0.001, c = 'grey')
-# plt.scatter(x[neighborhood], y[neighborhood],c=reds, edgecolors='none')
-# plt.title('input space')
-#
+plt.scatter(x, y, s=15, alpha =0.001, c = 'grey')
+plt.scatter(x[neighborhood], y[neighborhood],c=reds, edgecolors='none')
+plt.title('input space')
+
 # plt.subplot(212)
 # plt.scatter(x, y, s=15, alpha =0.001, c = 'grey')
-# plt.scatter(x[neighborhood], y[neighborhood], c=blues, edgecolors='none')
-# plt.title('output space')
-#
-# plt.show()
+plt.scatter(x[neighborhood], y[neighborhood], c=blues, edgecolors='none')
+plt.title('output space')
+
+plt.show()
