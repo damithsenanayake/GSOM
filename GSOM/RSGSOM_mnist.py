@@ -28,7 +28,7 @@ del fi
 gc.collect()
 # x, y = SelfOrganizingSwarm(iterations=10, alpha=1, beta=0.1, delta=0, theta=3.5).fit_transform(dat[:samples]).T
 st = timeit.default_timer()
-model = GSOM(lr=.1,  beta=0., sf=0.9, fd = .18, wd=.008)
+model = GSOM(lr=.8,  beta=0., sf=0.2, fd = .07, wd=.08)
 # x, y = MovingMap(iterations=100, beta=1.5).fit_transform(dat[:samples]).T
 Y= model.fit_transform(dat)
 # Y = PCA(2).fit_transform(dat)
@@ -61,45 +61,45 @@ plt.subplot(212)
 #
 plt.scatter(x, y, edgecolors='none',c=plt.cm.jet(kl/10.), alpha = 0.5, s = 15)
 
-plt.show(block=False)
-
-#
-# fig =plt.figure()
-# plt.scatter(model.Y.T[0], model.Y.T[1] , edgecolors='none', c = plt.cm.gist_rainbow(model.cand_hits/float(model.cand_hits.max())), alpha = 0.5, s = 15)
 # plt.show(block=False)
 #
-# fig =plt.figure()
-# plt.scatter(model.Y.T[0], model.Y.T[1] , edgecolors='none', c = plt.cm.gist_rainbow(model.radii/float(model.radii.max())), alpha = 0.5, s = 15)
-# plt.show(block=False)
-
-''' Theta Analysis '''
-
-bundle = model.thet_vis_bundle
-
-x, y = bundle['Y'].T
-thetD = bundle['thet_D']
-thetd = bundle['thet_d']
-neighborhood = bundle['neighborhood']
-bmu = bundle['bmu']
-
-rgbas = np.zeros((neighborhood.shape[0], 4))
-
-reds = rgbas + np.array([1, 0, 0,0])
-blues = rgbas + np.array([0, 1, 0, 0])
-
-reds[:, 3]= thetD.T[0]
-blues[:, 3]= thetd.T[0]
+# #
+# # fig =plt.figure()
+# # plt.scatter(model.Y.T[0], model.Y.T[1] , edgecolors='none', c = plt.cm.gist_rainbow(model.cand_hits/float(model.cand_hits.max())), alpha = 0.5, s = 15)
+# # plt.show(block=False)
+# #
+# # fig =plt.figure()
+# # plt.scatter(model.Y.T[0], model.Y.T[1] , edgecolors='none', c = plt.cm.gist_rainbow(model.radii/float(model.radii.max())), alpha = 0.5, s = 15)
+# # plt.show(block=False)
 #
-
-plt.figure(figsize=(10,10))
-# plt.subplot(211)
-plt.scatter(x, y, s=15, alpha =0.001, c = 'grey')
-plt.scatter(x[neighborhood], y[neighborhood],c=reds, edgecolors='none')
-plt.title('input space')
-
-# plt.subplot(212)
+# ''' Theta Analysis '''
+#
+# bundle = model.thet_vis_bundle
+#
+# x, y = bundle['Y'].T
+# thetD = bundle['thet_D']
+# thetd = bundle['thet_d']
+# neighborhood = bundle['neighborhood']
+# bmu = bundle['bmu']
+#
+# rgbas = np.zeros((neighborhood.shape[0], 4))
+#
+# reds = rgbas + np.array([1, 0, 0,0])
+# blues = rgbas + np.array([0, 1, 0, 0])
+#
+# reds[:, 3]= thetD.T[0]
+# blues[:, 3]= thetd.T[0]
+# #
+#
+# plt.figure(figsize=(10,10))
+# # plt.subplot(211)
 # plt.scatter(x, y, s=15, alpha =0.001, c = 'grey')
-plt.scatter(x[neighborhood], y[neighborhood], c=blues, edgecolors='none')
-plt.title('output space')
+# plt.scatter(x[neighborhood], y[neighborhood],c=reds, edgecolors='none')
+# plt.title('input space')
+#
+# # plt.subplot(212)
+# # plt.scatter(x, y, s=15, alpha =0.001, c = 'grey')
+# plt.scatter(x[neighborhood], y[neighborhood], c=blues, edgecolors='none')
+# plt.title('output space')
 
 plt.show()
