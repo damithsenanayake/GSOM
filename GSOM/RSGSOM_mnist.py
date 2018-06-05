@@ -28,7 +28,7 @@ del fi
 gc.collect()
 # x, y = SelfOrganizingSwarm(iterations=10, alpha=1, beta=0.1, delta=0, theta=3.5).fit_transform(dat[:samples]).T
 st = timeit.default_timer()
-model = GSOM(lr=0.5,  beta=0., sf=0.9, fd = .18, wd=.08)
+model = GSOM(lr=.1,  beta=0., sf=0.9, fd = .18, wd=.008)
 # x, y = MovingMap(iterations=100, beta=1.5).fit_transform(dat[:samples]).T
 Y= model.fit_transform(dat)
 # Y = PCA(2).fit_transform(dat)
@@ -61,16 +61,16 @@ plt.subplot(212)
 #
 plt.scatter(x, y, edgecolors='none',c=plt.cm.jet(kl/10.), alpha = 0.5, s = 15)
 
-# plt.show(block=False)
+plt.show(block=False)
 
-
+#
 # fig =plt.figure()
 # plt.scatter(model.Y.T[0], model.Y.T[1] , edgecolors='none', c = plt.cm.gist_rainbow(model.cand_hits/float(model.cand_hits.max())), alpha = 0.5, s = 15)
 # plt.show(block=False)
 #
 # fig =plt.figure()
 # plt.scatter(model.Y.T[0], model.Y.T[1] , edgecolors='none', c = plt.cm.gist_rainbow(model.radii/float(model.radii.max())), alpha = 0.5, s = 15)
-plt.show(block=False)
+# plt.show(block=False)
 
 ''' Theta Analysis '''
 
@@ -87,7 +87,7 @@ rgbas = np.zeros((neighborhood.shape[0], 4))
 reds = rgbas + np.array([1, 0, 0,0])
 blues = rgbas + np.array([0, 1, 0, 0])
 
-reds[:, 3]=1- thetD.T[0]
+reds[:, 3]= thetD.T[0]
 blues[:, 3]= thetd.T[0]
 #
 

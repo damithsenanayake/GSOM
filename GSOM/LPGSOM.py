@@ -40,8 +40,8 @@ class GSOM(object):
         self.GT = -self.dims * np.log(self.sf)  # /255.0
         init_vect = np.random.random(self.dims)
         self.radius = 10# np.exp(1)
-        for i in range(70):
-            for j in range(70):
+        for i in range(50):
+            for j in range(50):
                 self.neurons[str([i, j])] = np.random.random(self.dims)
                 self.grid[str([i, j])] = [i, j]
                 self.errors[str([i, j])] = 0
@@ -88,7 +88,7 @@ class GSOM(object):
         self.spawns = 0
         rad = self.radius
         wd_orig = self.wd
-        its = 10
+        its = 5
         self.it_rate = 0
         while i< its:#self.lr > 0.5*lr:
             c = 0
@@ -104,12 +104,12 @@ class GSOM(object):
             for x in Xtr:
                 c+=1
                 self.train_single(x)
-                while self.Herr >= self.GT and not(i) :  # and i<=5:
-                    growinds = np.where(np.array(self.errors.values()) >= self.GT)[0]
-                    self.grid_changed = 1
-                    for g in growinds:
-                        self.grow(self.errors.keys()[g])
-                    self.Herr = np.array(self.errors.values()).max()
+                # while self.Herr >= self.GT and not i :  # and i<=5:
+                #     growinds = np.where(np.array(self.errors.values()) >= self.GT)[0]
+                #     self.grid_changed = 1
+                #     for g in growinds:
+                #         self.grow(self.errors.keys()[g])
+                #     self.Herr = np.array(self.errors.values()).max()
                 et = timeit.default_timer() - self.start_time
 
                 sys.stdout.write('\r epoch %i :  %i%% : nodes - %i : LR - %s : radius : %s : time : %s' %(i+1, c*100/t, len(self.neurons), str(self.lr), str(self.radius), str(et)))
@@ -120,14 +120,14 @@ class GSOM(object):
                 break
             self.Herr = np.array(self.errors.values()).max()
 
-            while self.Herr >= self.GT and i%3:#and i<=5:
+            while self.Herr >= self.GT and i< its-1:#and i<=5:
                 growinds = np.where(np.array(self.errors.values())>=self.GT)[0]
                 self.grid_changed=1
                 for g in growinds:
                     self.grow(self.errors.keys()[g])
                 self.Herr = np.array(self.errors.values()).max()
             self.lr *= 0.9 #* (1 - 3.8 / len(self.neurons))  # np.exp(-i/50.0)#
-            # self.radius = rad*np.exp(-2.*i/float(40))  # (1 - 3.8 / len(self.w))
+            self.radius = rad*np.exp(-2.*i/float(its))  # (1 - 3.8 / len(self.w))
             # self.radius = rad *(1-i*1./its)
             for k in self.errors.keys():
                 self.errors[k] = 0
@@ -150,13 +150,13 @@ class GSOM(object):
         neighbors = np.where(l_dists<self.radius)[0]#np.argsort(l_dists)[:20]
         dists = l_dists[neighbors]
         h_dists = np.linalg.norm(np.array(self.neurons.values())-np.array(self.neurons[bmu]), axis=1)[neighbors]
-        theta_D = np.array([1-np.exp(-15.5*h_dists**40 / (h_dists.max())**40)]).T
-        hs = np.array([np.exp(-10.5*dists**2/(self.radius**2))]).T
+        theta_D = np.array([1-np.exp(-15.5*h_dists**10 / (h_dists.max())**10)]).T
+        hs = np.array([np.exp(-.5*dists**2/(self.radius**2))]).T
         # hs.fill(1)
         weights = np.array(self.neurons.values())[neighbors]
 
         weights += (x - weights) * self.lr*hs
-        weights -= weights * theta_D * self.wd# - theta_D*self.wd*weights#*self.it_rate#- (1-1*self.lr/self.lrst)*self.lr * self.wd*weights
+        # weights -= weights * theta_D * self.wd# - theta_D*self.wd*weights#*self.it_rate#- (1-1*self.lr/self.lrst)*self.lr * self.wd*weights
         err = np.linalg.norm(W[winner]-x)
         for neighbor, w in zip(np.array(self.neurons.keys())[neighbors], weights):
             self.neurons[neighbor] = w
@@ -292,8 +292,8 @@ class GSOM(object):
     def smoothen_wd(self, X):
         self.thet_vis_bundle = {}
         r_st = .5
-        its = 6000
-
+        its = 2500
+        self.sigmas = np.zeros(self.Y.shape[0])
         lr = self.lr
         print self.wd
         st = timeit.default_timer()
@@ -310,11 +310,10 @@ class GSOM(object):
             else:
                 pows = 1 + self.cand_hits
                 lrcoefs = 1 + self.cand_hits
-            self.radii = r_st * np.exp(-2. * i / (its)) / lrcoefs
+            self.radii = r_st * np.exp(-(2. * i**lrcoefs) / (its**lrcoefs)) #* lrcoefs
             alpha = lr - i * lr * 1.0 / its  # * np.exp(-1.5*i/(its))
             alphas = alpha * (lrcoefs)
-            # alphas = alphas *  redbase * lrcoefs
-            # int(np.ceil(X.shape[0]*float(i/10+1)*10./its))
+
             xix = 0
             trinds = np.random.choice(X.shape[0], sample_size)
             for x in X[trinds]:
@@ -333,17 +332,28 @@ class GSOM(object):
                 ''' we're going to fuck shit up with this'''
 
                 Hdist = np.linalg.norm(self.C - self.C[bmu], axis=1)[neighborhood]
+                # self.sigmas[bmu] *= self.cand_hits[bmu]-2
+                # self.sigmas[bmu] += Hdist.max()
+                # self.sigmas[bmu] /= self.cand_hits[bmu]-1
+
+                # if Hdist.max():
+                # signext = Hdist.max()
+                # if self.sigmas[bmu]:
+                #     Hdist /= self.sigmas[bmu]#Hdist.max()
+                # else:
+                #     Hdist /= signext
                 if Hdist.max():
-                    Hdist /= Hdist.max()
-                thet_D = np.array([np.exp(-45.5 * Hdist ** 60)]).T
-                thet_d = np.array([np.exp(-(12.5) * Ldist[neighborhood] ** 2 / np.max(
+                    Hdist/=Hdist.max()
+                # self.sigmas[bmu]=signext
+                thet_D = np.array([np.exp(-2.5 * Hdist ** 20)]).T
+                thet_D = thet_D.max() - thet_D
+                thet_d = np.array([np.exp(-(15.5) * Ldist[neighborhood] ** 2 / np.max(
                     [self.radii[bmu], Ldist[neighborhood].max()]) ** 2)]).T
                 w = np.array(self.C)[neighborhood]
-                delts = np.array([alphas[neighborhood]]).T * ((x - w) * (thet_d)) -( self.wd * w * (
-                1 - thet_D))  # *(1-np.exp(-2.5*(i/float(its)))))#*(1-thet_d))#*(1-np.exp(-2.5*(i/float(its)))))#*(i>=its-5))
+                delts = np.array([alphas[neighborhood]]).T * ((x - w) * (thet_d) - 1./lr* self.wd * w * (thet_D))#*(1-np.exp(-.5*(i**2/float(its)**2))))  # *(1-np.exp(-2.5*(i/float(its)))))#*(1-thet_d))#*(1-np.exp(-2.5*(i/float(its)))))#*(i>=its-5))
                 w += delts
                 self.C[neighborhood] = w
-                if i == its / 2 and xix == 1:
+                if i == its -1 and xix == 1:
                     self.thet_vis_bundle['Y'] = self.Y
                     self.thet_vis_bundle['bmu'] = bmu
                     self.thet_vis_bundle['thet_d'] = thet_d
