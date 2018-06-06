@@ -144,14 +144,14 @@ class GSOM(object):
         neighbors = np.where(l_dists<self.radius)[0]#np.argsort(l_dists)[:20]
         dists = l_dists[neighbors]
         h_dists = np.linalg.norm(np.array(self.neurons.values())-np.array(self.neurons[bmu]), axis=1)[neighbors]
-        theta_D = np.array([1-np.exp(-2.5*h_dists**2 / (h_dists.max())**2)]).T
-        hs = np.array([np.exp(-.5*dists**2/(self.radius**2))]).T
+        theta_D = np.array([1-np.exp(-.5*h_dists**2 / (h_dists.max())**2)]).T
+        hs = np.array([np.exp(-4.5*dists**2/(self.radius**2))]).T
         # hs.fill(1)
         weights = np.array(self.neurons.values())[neighbors]
         err = np.linalg.norm(W[winner]-x)
 
         weights += (x - weights) * self.lr*hs
-        # weights -= weights * theta_D * self.wd# - theta_D*self.wd*weights#*self.it_rate#- (1-1*self.lr/self.lrst)*self.lr * self.wd*weights
+        weights -= weights * theta_D * self.wd * self.lr# - theta_D*self.wd*weights#*self.it_rate#- (1-1*self.lr/self.lrst)*self.lr * self.wd*weights
         for neighbor, w in zip(np.array(self.neurons.keys())[neighbors], weights):
             self.neurons[neighbor] = w
         try:
