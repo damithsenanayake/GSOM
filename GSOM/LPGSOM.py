@@ -37,19 +37,19 @@ class GSOM(object):
     def fit(self, X ):
         self.start_time = timeit.default_timer()
         self.dims = X.shape[1]
-        self.GT = -self.dims * np.log(self.sf)  # /255.0
+        self.GT = -self.dims * np.log(self.sf)*(X.max()-X.min())  # /255.0
         init_vect = np.random.random(self.dims)
-        self.radius = 4# np.exp(1)
-        for i in range(50):
-            for j in range(50):
+        self.radius = 10# np.exp(1)
+        for i in range(2):
+            for j in range(2):
                 self.neurons[str([i, j])] = np.random.random(self.dims)
                 self.grid[str([i, j])] = [i, j]
                 self.errors[str([i, j])] = 0
 
 
         st = timeit.default_timer()
-        # self.train_batch(X[np.random.permutation(np.array(range(X.shape[0])))])
-        self.lr/=2.
+        self.train_batch(X[np.random.permutation(np.array(range(X.shape[0])))])
+        # self.lr/=2.
         et = timeit.default_timer() - st
         print "\n elapsed time for growing : ", et , "\n"
         self.Y = np.array(self.grid.values()).astype(float)
@@ -62,8 +62,8 @@ class GSOM(object):
 
         for n in range(self.n_graph.shape[0]):
             self.n_graph[np.where(np.linalg.norm(gridar[n]-gridar, axis=1)==1)[0]]=1
-        # np.savetxt('y.csv',self.Y)
-        # np.savetxt('c.csv', self.C)
+        np.savetxt('y.csv',self.Y)
+        np.savetxt('c.csv', self.C)
         # self.Y = np.loadtxt('y.csv', dtype=float)
         # self.C = np.loadtxt('c.csv', dtype=float)
         self.smoothen_wd(X)
@@ -91,10 +91,12 @@ class GSOM(object):
         self.spawns = 0
         rad = self.radius
         wd_orig = self.wd
-        its = 7
+        its = 3
+        self.its = its
         self.it_rate = 0
         while i< its:#self.lr > 0.5*lr:
             c = 0
+            self.i = i
             s_size = 6000
             t = X.shape[0]
             self.Herr=0
@@ -147,13 +149,13 @@ class GSOM(object):
         neighbors = np.where(l_dists<self.radius)[0]#np.argsort(l_dists)[:20]
         dists = l_dists[neighbors]
         h_dists = np.linalg.norm(np.array(self.neurons.values())-np.array(self.neurons[bmu]), axis=1)[neighbors]
-        theta_D = np.array([1-np.exp(-1*h_dists**4 / (h_dists.max())**4)]).T
-        hs = np.array([np.exp(-.5*dists**2/(self.radius**2))]).T
+        theta_D = np.array([1-np.exp(-4.5*h_dists**6 / (h_dists.max())**6)]).T
+        hs = np.array([np.exp(-15.5*dists**2/(self.radius**2))]).T
         # hs.fill(1)
         weights = np.array(self.neurons.values())[neighbors]
         err = np.linalg.norm(W[winner]-x)
 
-        weights += (x - weights) * self.lr*hs# - weights * theta_D * self.wd# * self.lr/self.lrst
+        weights += (x - weights) * self.lr*hs - (1-np.exp(-4.5*self.i**2/float(self.its)**2))* weights * theta_D * self.wd# * self.lr/self.lrst
         # weights -= weights * theta_D * self.wd #* self.lr# - theta_D*self.wd*weights#*self.it_rate#- (1-1*self.lr/self.lrst)*self.lr * self.wd*weights
         for neighbor, w in zip(np.array(self.neurons.keys())[neighbors], weights):
             self.neurons[neighbor] = w
@@ -288,8 +290,8 @@ class GSOM(object):
 
     def smoothen_wd(self, X):
         self.thet_vis_bundle = {}
-        r_st = .7
-        its =8# X.shape[0]
+        r_st = .5
+        its =0# X.shape[0]
         self.sigmas = np.zeros(self.Y.shape[0])
         lr = self.lr
         print self.wd
@@ -327,12 +329,11 @@ class GSOM(object):
                 ''' we're going to fuck shit up with this'''
 
                 Hdist = np.linalg.norm(self.C - self.C[bmu], axis=1)[neighborhood]
-                thet_D = np.array([np.exp(-15.5 * Hdist ** 8 / Hdist.max() ** 8)]).T
+                thet_D = np.array([np.exp(-10.5 * Hdist ** 4 / Hdist.max() ** 4)]).T
                 thet_D = 1- thet_D
                 thet_d = np.array([np.exp( -(15.5) * Ldist[neighborhood] ** 2 / self.radii[bmu]** 2)]).T
                 w = np.array(self.C)[neighborhood]
-                delts = np.array([alphas[neighborhood]]).T * ((x - w) * (thet_d) )-(self.lr * self.wd * w * (
-                thet_D))
+                delts = np.array([alphas[neighborhood]]).T * ((x - w) * (thet_d)) #- self.wd * w * ( thet_D))
                 w += delts
                 self.C[neighborhood] = w
                 if i == its/2 and xix == 1:
