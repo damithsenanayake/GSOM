@@ -21,14 +21,14 @@ samples = 6000
 dat =(np.array(fi)[:samples, 1:])#/255.0
 dat = PCA(50).fit_transform(dat)
 print dat.shape
-dat -= dat.min()
-dat /= dat.max()
+# dat -= dat.min()
+# dat /= dat.max()
 labels = np.array(fi)[:samples, 0]
 del fi
 gc.collect()
 # x, y = SelfOrganizingSwarm(iterations=10, alpha=1, beta=0.1, delta=0, theta=3.5).fit_transform(dat[:samples]).T
 st = timeit.default_timer()
-model = GSOM(lr=.01,  beta=0., sf=0.99, fd = .25, wd=.08)
+model = GSOM(lr=.5,  beta=0., sf=0.99, fd = .25, wd=.02)
 # x, y = MovingMap(iterations=100, beta=1.5).fit_transform(dat[:samples]).T
 Y= model.fit_transform(dat)
 # Y = PCA(2).fit_transform(dat)

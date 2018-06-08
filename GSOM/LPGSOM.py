@@ -40,8 +40,8 @@ class GSOM(object):
         self.GT = -self.dims * np.log(self.sf)  # /255.0
         init_vect = np.random.random(self.dims)
         self.radius = 4# np.exp(1)
-        for i in range(2):
-            for j in range(2):
+        for i in range(50):
+            for j in range(50):
                 self.neurons[str([i, j])] = np.random.random(self.dims)
                 self.grid[str([i, j])] = [i, j]
                 self.errors[str([i, j])] = 0
@@ -64,8 +64,8 @@ class GSOM(object):
             self.n_graph[np.where(np.linalg.norm(gridar[n]-gridar, axis=1)==1)[0]]=1
         # np.savetxt('y.csv',self.Y)
         # np.savetxt('c.csv', self.C)
-        self.Y = np.loadtxt('y.csv', dtype=float)
-        self.C = np.loadtxt('c.csv', dtype=float)
+        # self.Y = np.loadtxt('y.csv', dtype=float)
+        # self.C = np.loadtxt('c.csv', dtype=float)
         self.smoothen_wd(X)
 
 
@@ -124,7 +124,7 @@ class GSOM(object):
 
 
             self.lr *= 0.9 #* (1 - 3.8 / len(self.neurons))  # np.exp(-i/50.0)#
-            # self.radius = rad*np.exp(-2.*i**2/float(its**2))  # (1 - 3.8 / len(self.w))
+            self.radius = rad*np.exp(-2.*i**2/float(its**2))  # (1 - 3.8 / len(self.w))
             # self.radius = rad *(1-i*1./its)
             # for k in self.errors.keys():
             #     self.errors[k] = 0
@@ -153,7 +153,7 @@ class GSOM(object):
         weights = np.array(self.neurons.values())[neighbors]
         err = np.linalg.norm(W[winner]-x)
 
-        weights += (x - weights) * self.lr*hs - weights * theta_D * self.wd# * self.lr/self.lrst
+        weights += (x - weights) * self.lr*hs# - weights * theta_D * self.wd# * self.lr/self.lrst
         # weights -= weights * theta_D * self.wd #* self.lr# - theta_D*self.wd*weights#*self.it_rate#- (1-1*self.lr/self.lrst)*self.lr * self.wd*weights
         for neighbor, w in zip(np.array(self.neurons.keys())[neighbors], weights):
             self.neurons[neighbor] = w
@@ -288,8 +288,8 @@ class GSOM(object):
 
     def smoothen_wd(self, X):
         self.thet_vis_bundle = {}
-        r_st = .5
-        its =5# X.shape[0]
+        r_st = .7
+        its =8# X.shape[0]
         self.sigmas = np.zeros(self.Y.shape[0])
         lr = self.lr
         print self.wd
@@ -323,25 +323,23 @@ class GSOM(object):
                 # if (i+20 >= 2000):
                 self.cand_hits[bmu] += 1
                 neighborhood = np.where(Ldist < self.radii[bmu])[0]
-                if neighborhood.shape[0] == 0:
-                    neighborhood = np.argsort(Ldist)[:5]
+
                 ''' we're going to fuck shit up with this'''
 
                 Hdist = np.linalg.norm(self.C - self.C[bmu], axis=1)[neighborhood]
-                thet_D = np.array([np.exp(-15.5 * Hdist ** 10 / Hdist.max() ** 10)]).T
+                thet_D = np.array([np.exp(-15.5 * Hdist ** 8 / Hdist.max() ** 8)]).T
                 thet_D = 1- thet_D
-                thet_d = np.array([np.exp(
-                    -(15.5) * Ldist[neighborhood] ** 2 / np.max([self.radii[bmu], Ldist[neighborhood].max()]) ** 2)]).T
+                thet_d = np.array([np.exp( -(15.5) * Ldist[neighborhood] ** 2 / self.radii[bmu]** 2)]).T
                 w = np.array(self.C)[neighborhood]
-                delts = np.array([alphas[neighborhood]]).T * ((x - w) * (thet_d) )-( self.wd * w * (
+                delts = np.array([alphas[neighborhood]]).T * ((x - w) * (thet_d) )-(self.lr * self.wd * w * (
                 thet_D))
                 w += delts
                 self.C[neighborhood] = w
-                if i == its -1 and xix == 1:
+                if i == its/2 and xix == 1:
                     self.thet_vis_bundle['Y'] = self.Y
                     self.thet_vis_bundle['bmu'] = bmu
-                    self.thet_vis_bundle['thet_d'] = thet_d
-                    self.thet_vis_bundle['thet_D'] = thet_D
+                    self.thet_vis_bundle['thet_d'] = np.array([alphas[neighborhood]]).T * (thet_d)
+                    self.thet_vis_bundle['thet_D'] = thet_D * self.wd
                     self.thet_vis_bundle['neighborhood'] = neighborhood
 
         print "\ntime for first smoothing iteration : ", (timeit.default_timer() - st), "\n"

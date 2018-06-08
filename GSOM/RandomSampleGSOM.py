@@ -40,16 +40,16 @@ class GSOM(object):
         self.GT = -self.dims * np.log(self.sf)  # /255.0
         init_vect = np.random.random(self.dims)
         self.radius = 30# np.exp(1)
-        for i in range(2):
-            for j in range(2):
+        for i in range(40):
+            for j in range(40):
                 self.neurons[str([i, j])] = np.random.random(self.dims)
                 self.grid[str([i, j])] = [i, j]
                 self.errors[str([i, j])] = 0
 
 
         st = timeit.default_timer()
-        self.train_batch(X[np.random.permutation(np.array(range(X.shape[0])))])
-        # self.lr/=2.
+        # self.train_batch(X[np.random.permutation(np.array(range(X.shape[0])))])
+        self.lr/=2.
         et = timeit.default_timer() - st
         print "\n elapsed time for growing : ", et , "\n"
         self.Y = np.array(self.grid.values()).astype(float)
