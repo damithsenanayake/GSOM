@@ -39,7 +39,7 @@ class GSOM(object):
         self.dims = X.shape[1]
         self.GT = -self.dims * np.log(self.sf)*(X.max()-X.min())  # /255.0
         init_vect = np.random.random(self.dims)
-        perplexity = 400
+        perplexity = 600
         self.radius = np.sqrt(perplexity/2)# np.exp(1)
         for i in range(2):
             for j in range(2):
