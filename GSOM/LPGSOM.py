@@ -155,7 +155,7 @@ class GSOM(object):
         weights = np.array(self.neurons.values())[neighbors]
         err = np.linalg.norm(W[winner]-x)
 
-        weights += (x - weights) * self.lr*hs - (np.exp(-4.5*self.i**3/float(self.its)**3))* weights * theta_D*self.wd# * 2.5*self.wd/self.its# * self.lr/self.lrst
+        weights += (x - weights) * self.lr*hs - (np.exp(-4.5*self.i**2/float(self.its)**2))* weights * theta_D*self.wd# * 2.5*self.wd/self.its# * self.lr/self.lrst
         # weights -= weights * theta_D * self.wd #* self.lr# - theta_D*self.wd*weights#*self.it_rate#- (1-1*self.lr/self.lrst)*self.lr * self.wd*weights
         for neighbor, w in zip(np.array(self.neurons.keys())[neighbors], weights):
             self.neurons[neighbor] = w
