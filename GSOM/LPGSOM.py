@@ -39,7 +39,8 @@ class GSOM(object):
         self.dims = X.shape[1]
         self.GT = -self.dims * np.log(self.sf)*(X.max()-X.min())  # /255.0
         init_vect = np.random.random(self.dims)
-        self.radius = 10# np.exp(1)
+        perplexity = 400
+        self.radius = np.sqrt(perplexity/2)# np.exp(1)
         for i in range(2):
             for j in range(2):
                 self.neurons[str([i, j])] = np.random.random(self.dims)
@@ -126,7 +127,7 @@ class GSOM(object):
 
 
             self.lr *= 0.9 #* (1 - 3.8 / len(self.neurons))  # np.exp(-i/50.0)#
-            self.radius = rad*np.exp(-2.*i**2/float(its**2))  # (1 - 3.8 / len(self.w))
+            # self.radius = rad*np.exp(-2.*i**2/float(its**2))  # (1 - 3.8 / len(self.w))
             # self.radius = rad *(1-i*1./its)
             # for k in self.errors.keys():
             #     self.errors[k] = 0
@@ -143,6 +144,10 @@ class GSOM(object):
         W = np.array(self.neurons.values())
         winner = pairwise_distances_argmin(np.array([x]), W, axis=1)[0]
         bmu = self.neurons.keys()[winner]
+        try:
+            self.hits[bmu] += 1
+        except KeyError:
+            self.hits[bmu] = 1
         # neighbors , dists = self.get_neighbourhood(bmu)
         # self.fd = 1.0 / len(neighbors)
         l_dists = np.linalg.norm(np.array(self.grid.values())-np.array(self.grid.values()[winner]), axis=1)
@@ -155,7 +160,7 @@ class GSOM(object):
         weights = np.array(self.neurons.values())[neighbors]
         err = np.linalg.norm(W[winner]-x)
 
-        weights += (x - weights) * self.lr*hs - (np.exp(-4.5*self.i**2/float(self.its)**2))* weights * theta_D*self.wd# * 2.5*self.wd/self.its# * self.lr/self.lrst
+        weights += (x - weights)  * self.lr*hs - (np.exp(-4.5*(self.i)**6/float(self.its)**6))* weights * theta_D*self.wd# * 2.5*self.wd/self.its# * self.lr/self.lrst
         # weights -= weights * theta_D * self.wd #* self.lr# - theta_D*self.wd*weights#*self.it_rate#- (1-1*self.lr/self.lrst)*self.lr * self.wd*weights
         for neighbor, w in zip(np.array(self.neurons.keys())[neighbors], weights):
             self.neurons[neighbor] = w
