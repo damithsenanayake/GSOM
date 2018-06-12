@@ -61,7 +61,7 @@ class GSOM(object):
         gridar = np.array(self.grid.values())
 
         for n in range(self.n_graph.shape[0]):
-            self.n_graph[np.where(np.linalg.norm(gridar[n]-gridar, axis=1)==1)[0]]=1
+            self.n_graph[n][np.where(np.linalg.norm(gridar[n]-gridar, axis=1)==1)[0]]=1
         np.savetxt('y.csv',self.Y)
         np.savetxt('c.csv', self.C)
         # self.Y = np.loadtxt('y.csv', dtype=float)
