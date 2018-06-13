@@ -92,7 +92,7 @@ class GSOM(object):
         self.spawns = 0
         rad = self.radius
         wd_orig = self.wd
-        its = 10
+        its = 8
         self.its = its
         self.it_rate = 0
         while i< its:#self.lr > 0.5*lr:
@@ -124,8 +124,8 @@ class GSOM(object):
             if self.radius <=1:
                 break
             self.Herr = np.array(self.errors.values()).max()
-            self.lr = self.lrst * np.exp(-2.5*((i)/float(its))**2)* (1 - 3.8 / len(self.neurons))#1#0.7 #  # np.exp(-i/50.0)#
-            self.radius = rad*np.exp(-.85*(self.i)**2/float(self.its)**2)  # (1 - 3.8 / len(self.w))
+            self.lr = self.lrst * np.exp(-0.5*((i)/float(its))**2)* (1 - 3.8 / len(self.neurons))#1#0.7 #  # np.exp(-i/50.0)#
+            self.radius = rad*np.exp(-.5*(self.i)**2/float(self.its)**2)  # (1 - 3.8 / len(self.w))
             # self.radius = rad *(1-i*1./its)
             # for k in self.errors.keys():
             #     self.errors[k] = 0
@@ -263,7 +263,7 @@ class GSOM(object):
                 self.errors[str(list(nei))] = 0#self.errors[bmu]*self.fd
                 self.ages[str(list(nei))]=0
 
-        self.errors[bmu] = 0*self.GT / 2
+        self.errors[bmu] = self.GT / 2
 
 
     def get_new_weight(self, old, new):
