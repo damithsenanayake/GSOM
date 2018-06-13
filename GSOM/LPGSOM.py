@@ -124,8 +124,8 @@ class GSOM(object):
             if self.radius <=1:
                 break
             self.Herr = np.array(self.errors.values()).max()
-            self.lr = self.lrst * np.exp(-2.5*((i)/float(its))**2)#1#0.7 #* (1 - 3.8 / len(self.neurons))  # np.exp(-i/50.0)#
-            # self.radius = rad*np.exp(-.5*(self.i)**2/float(self.its)**2)  # (1 - 3.8 / len(self.w))
+            self.lr = self.lrst * np.exp(-2.5*((i)/float(its))**2)* (1 - 3.8 / len(self.neurons))#1#0.7 #  # np.exp(-i/50.0)#
+            self.radius = rad*np.exp(-.5*(self.i)**2/float(self.its)**2)  # (1 - 3.8 / len(self.w))
             # self.radius = rad *(1-i*1./its)
             # for k in self.errors.keys():
             #     self.errors[k] = 0
