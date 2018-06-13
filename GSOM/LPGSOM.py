@@ -39,7 +39,7 @@ class GSOM(object):
         self.dims = X.shape[1]
         self.GT = -self.dims * np.log(self.sf)*(X.max()-X.min())  # /255.0
         init_vect = np.random.random(self.dims)
-        perplexity = 200
+        perplexity = 600
         self.radius = np.sqrt(perplexity/2)# np.exp(1)
         for i in range(2):
             for j in range(2):
@@ -124,10 +124,8 @@ class GSOM(object):
             if self.radius <=1:
                 break
             self.Herr = np.array(self.errors.values()).max()
-
-
-            self.lr *= 0.9 #* (1 - 3.8 / len(self.neurons))  # np.exp(-i/50.0)#
-            self.radius = rad*np.exp(-.5*(self.i)**2/float(self.its)**2)  # (1 - 3.8 / len(self.w))
+            self.lr = self.lrst * np.exp(-2.5*((i)/float(its))**2)#1#0.7 #* (1 - 3.8 / len(self.neurons))  # np.exp(-i/50.0)#
+            # self.radius = rad*np.exp(-.5*(self.i)**2/float(self.its)**2)  # (1 - 3.8 / len(self.w))
             # self.radius = rad *(1-i*1./its)
             # for k in self.errors.keys():
             #     self.errors[k] = 0
@@ -154,8 +152,8 @@ class GSOM(object):
         neighbors = np.where(l_dists<self.radius)[0]#np.argsort(l_dists)[:20]
         dists = l_dists[neighbors]
         h_dists = np.linalg.norm(np.array(self.neurons.values())-np.array(self.neurons[bmu]), axis=1)[neighbors]
-        theta_D = np.array([1-np.exp(-.5*h_dists**6 / (h_dists.max())**6)]).T
-        hs = np.array([np.exp(-8.5*dists**2/(self.radius**2))]).T
+        theta_D = np.array([1-np.exp(-.5*h_dists**2 / (h_dists.max())**2)]).T
+        hs = np.array([np.exp(-15.5*dists**2/(self.radius**2))]).T
         # hs.fill(1)
         weights = np.array(self.neurons.values())[neighbors]
         err = np.linalg.norm(W[winner]-x)
