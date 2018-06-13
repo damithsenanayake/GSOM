@@ -92,7 +92,7 @@ class GSOM(object):
         self.spawns = 0
         rad = self.radius
         wd_orig = self.wd
-        its = 7
+        its = 10
         self.its = its
         self.it_rate = 0
         while i< its:#self.lr > 0.5*lr:
@@ -152,13 +152,13 @@ class GSOM(object):
         neighbors = np.where(l_dists<self.radius)[0]#np.argsort(l_dists)[:20]
         dists = l_dists[neighbors]
         h_dists = np.linalg.norm(np.array(self.neurons.values())-np.array(self.neurons[bmu]), axis=1)[neighbors]
-        theta_D = np.array([1-np.exp(-.5*h_dists**2 / (h_dists.max())**2)]).T
+        theta_D = np.array([2-np.exp(-.5*h_dists**2 / (h_dists.max())**2)]).T
         hs = np.array([np.exp(-15.5*dists**2/(self.radius**2))]).T
         # hs.fill(1)
         weights = np.array(self.neurons.values())[neighbors]
         err = np.linalg.norm(W[winner]-x)
 
-        weights += (x - weights)  * self.lr*hs - (np.exp(-4.5*(self.i)**6/float(self.its)**6))* weights * theta_D*self.wd# * 2.5*self.wd/self.its# * self.lr/self.lrst
+        weights += (x - weights)  * self.lr*hs - (np.exp(-4.5*(self.i)**4/float(self.its)**4))* weights * theta_D*self.wd# * 2.5*self.wd/self.its# * self.lr/self.lrst
         # weights -= weights * theta_D * self.wd #* self.lr# - theta_D*self.wd*weights#*self.it_rate#- (1-1*self.lr/self.lrst)*self.lr * self.wd*weights
         for neighbor, w in zip(np.array(self.neurons.keys())[neighbors], weights):
             self.neurons[neighbor] = w
