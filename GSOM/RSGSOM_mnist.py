@@ -3,7 +3,7 @@ import pandas as pd
 import numpy as np
 import gc
 from MovingMap import  MovingMap
-from LPGSOM import GSOM
+from DSGSOM import GSOM
 from sklearn.preprocessing import normalize
 from sklearn.manifold import MDS, TSNE, LocallyLinearEmbedding
 from sklearn.cluster import KMeans, DBSCAN
@@ -12,6 +12,11 @@ from SelfOrganizingSwarm import SelfOrganizingSwarm
 from sklearn.decomposition import PCA
 # from TSNE import TSNE
 import timeit
+import warnings
+
+with warnings.catch_warnings():
+    warnings.filterwarnings("ignore", category=DeprecationWarning)
+    import md5, sha
 
 print GSOM.__module__
 fi = pd.read_csv('~/data/mnist_train.csv', header=None)
@@ -28,7 +33,7 @@ del fi
 gc.collect()
 # x, y = SelfOrganizingSwarm(iterations=10, alpha=1, beta=0.1, delta=0, theta=3.5).fit_transform(dat[:samples]).T
 st = timeit.default_timer()
-model = GSOM(lr=.1,  beta=0., sf=0.92, fd = .1, wd=.07)
+model = GSOM(lrst=.1,  beta=0., sf=0.8, fd = .15, wd=.07)
 # x, y = MovingMap(iterations=100, beta=1.5).fit_transform(dat[:samples]).T
 Y= model.fit_transform(dat)
 # Y = PCA(2).fit_transform(dat)
