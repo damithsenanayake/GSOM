@@ -21,6 +21,7 @@ class GSOM(object):
 
     def train_batch(self, X):
         its = 8
+        self.wd = 1./(its*np.log10(X.shape[0]))
         st = timeit.default_timer()
         self.GT = - (X.max()-X.min()) * X.shape[1]* np.log(self.sf)
         self.grid = np.array([[i,j] for i in range(2) for j in range(2)])
@@ -28,7 +29,7 @@ class GSOM(object):
         self.errors = np.zeros(self.grid.shape[0])
         for i in range(its):
             self.rad = self.radst# * np.exp(-.5*(i/float(its))**2)
-            self.lr = self.lrst* np.exp(-.5 *(i/float(its))**4)
+            self.lr = self.lrst#* np.exp(-.5 *(i/float(its))**4)
             xix = 0
             if self.rad < 1:
                 break
@@ -47,34 +48,35 @@ class GSOM(object):
                 print ('\riter %i : %i / %i : |G| = %i : radius :%.4f : LR: %.4f  p(g): %.4f Rrad: %.2f'%(i+1,xix, X.shape[0], self.W.shape[0], self.rad, self.lr,  np.exp(-8.*(i/float(its))**2), (self.n_neighbors*1./self.W.shape[0]) )),' time = %.2f'%(et),
 
                 ''' Growing When Necessary '''
-                while self.errors.max() >= self.GT :#and np.random.binomial(1, np.exp(-8.*(i/float(its))**2)):
-                    # cands = np.where(self.errors >= self.GT)[0]
-                    # for g_node in cands:
-                    g_node = self.errors.argmax()
-                    up = self.grid[g_node] + np.array([0, 1])
-                    left = self.grid[g_node] + np.array([-1, 0])
-                    down = self.grid[g_node] + np.array([0, -1])
-                    right = self.grid[g_node] + np.array([1, 0])
+                if np.random.binomial(1, np.exp(-8.*(i/float(its))**2)):
+                    while self.errors.max() >= self.GT :#and np.random.binomial(1, np.exp(-8.*(i/float(its))**2)):
+                        # cands = np.where(self.errors >= self.GT)[0]
+                        # for g_node in cands:
+                        g_node = self.errors.argmax()
+                        up = self.grid[g_node] + np.array([0, 1])
+                        left = self.grid[g_node] + np.array([-1, 0])
+                        down = self.grid[g_node] + np.array([0, -1])
+                        right = self.grid[g_node] + np.array([1, 0])
 
-                    imm_neis = [up, left, down, right]
+                        imm_neis = [up, left, down, right]
 
-                    for nei in imm_neis:
-                        if self.point_exists(self.grid, nei):
-                            n_point = self.find_point(self.grid, nei)
-                            self.errors[n_point]+=self.errors[n_point]*self.fd
-                        else:
-                            gdists_new = np.linalg.norm(nei-self.grid, axis=1)
-                            gdists_old = np.linalg.norm(self.grid - self.grid[g_node], axis=1)
-                            closest2_new = np.argsort(gdists_new)[:2]
-                            if np.any(gdists_old[closest2_new]==1):
-                                w = self.W[closest2_new].mean(axis=0)
+                        for nei in imm_neis:
+                            if self.point_exists(self.grid, nei):
+                                n_point = self.find_point(self.grid, nei)
+                                self.errors[n_point]+=self.errors[n_point]*self.fd
                             else:
-                                w = self.W[closest2_new[0]]*2-self.W[closest2_new[1]]
+                                gdists_new = np.linalg.norm(nei-self.grid, axis=1)
+                                gdists_old = np.linalg.norm(self.grid - self.grid[g_node], axis=1)
+                                closest2_new = np.argsort(gdists_new)[:2]
+                                if np.any(gdists_old[closest2_new]==1):
+                                    w = self.W[closest2_new].mean(axis=0)
+                                else:
+                                    w = self.W[closest2_new[0]]*2-self.W[closest2_new[1]]
 
-                            self.W = np.append(self.W, np.array([w]), axis=0)
-                            self.errors = np.append(self.errors, self.GT/2)
-                            self.grid = np.append(self.grid, np.array([nei]), axis=0)
-                    self.errors[g_node]=self.GT/2
+                                self.W = np.append(self.W, np.array([w]), axis=0)
+                                self.errors = np.append(self.errors, self.GT/2)
+                                self.grid = np.append(self.grid, np.array([nei]), axis=0)
+                        self.errors[g_node]=self.GT/2
 
 
     def point_exists(self, space, point):
