@@ -40,7 +40,7 @@ class GSOM(object):
                 neighbors = np.where(ldist < self.rad)
                 hdist = np.linalg.norm(self.W[neighbors] - self.W[bmu], axis=1)
                 theta_d = np.array([np.exp(-15.5 * (ldist[neighbors]/self.rad)**2)]).T
-                theta_D = np.array([1-np.exp(-45.5*(hdist/hdist.max())**6)]).T
+                theta_D = np.array([1-np.exp(-45.5*(hdist/hdist.max())**4)]).T
                 self.errors[bmu]+= np.linalg.norm(self.W[bmu]-x)
                 self.W[neighbors]+= (x-self.W[neighbors])*theta_d*self.lr - theta_D*self.wd*self.W[neighbors]*(np.exp(-8.5*((i-its*0.5)/float(its))**2))
                 et = timeit.default_timer()-st
