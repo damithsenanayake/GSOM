@@ -20,7 +20,7 @@ class GSOM(object):
         return self.predict(X)
 
     def train_batch(self, X):
-        its = 2
+        its = 20
         st = timeit.default_timer()
         self.GT = -X.shape[1]* np.log(self.sf)* (X.max()-X.min())
         self.grid = np.array([[i,j] for i in range(2) for j in range(2)])
