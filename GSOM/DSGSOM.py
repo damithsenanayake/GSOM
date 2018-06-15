@@ -42,7 +42,6 @@ class GSOM(object):
                 bmu = pairwise_distances_argmin(np.array([x]), self.W, axis=1)[0]
                 ldist = np.linalg.norm(self.grid - self.grid[bmu], axis=1)
                 neighbors = np.where(ldist < self.rad)
-                hdist = np.linalg.norm(self.W[neighbors] - self.W[bmu], axis=1)
                 theta_d = np.array([np.exp(-15.5 * (ldist[neighbors]/self.rad)**2)]).T
                 self.errors[bmu]+= np.linalg.norm(self.W[bmu]-x)
                 self.W[neighbors]+= (x-self.W[neighbors])*theta_d*self.lr - self.lr*self.wd*self.W[neighbors]*(np.exp(-12.5*((i-its)/float(its))**4))
