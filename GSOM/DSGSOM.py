@@ -20,7 +20,7 @@ class GSOM(object):
         return self.predict(X)
 
     def train_batch(self, X):
-        its = 20
+        its = 2
         st = timeit.default_timer()
         self.GT = -X.shape[1]* np.log(self.sf)* (X.max()-X.min())
         self.grid = np.array([[i,j] for i in range(2) for j in range(2)])
@@ -44,9 +44,8 @@ class GSOM(object):
                 neighbors = np.where(ldist < self.rad)
                 hdist = np.linalg.norm(self.W[neighbors] - self.W[bmu], axis=1)
                 theta_d = np.array([np.exp(-15.5 * (ldist[neighbors]/self.rad)**2)]).T
-                theta_D = np.array([1-np.exp(-70.5*(hdist/hdist.max())**12)]).T
                 self.errors[bmu]+= np.linalg.norm(self.W[bmu]-x)
-                self.W[neighbors]+= (x-self.W[neighbors])*theta_d*self.lr - self.lr*theta_D*self.wd*self.W[neighbors]*(np.exp(-12.5*((i-its*.5)/float(its))**4))
+                self.W[neighbors]+= (x-self.W[neighbors])*theta_d*self.lr - self.lr*self.wd*self.W[neighbors]*(np.exp(-12.5*((i-its)/float(its))**4))
                 et = timeit.default_timer()-st
                 print ('\riter %i : %i / %i : |G| = %i : radius :%.4f : LR: %.4f  p(g): %.4f Rrad: %.2f'%(i+1,xix, X.shape[0], self.W.shape[0], self.rad, self.lr,  np.exp(-8.*(i/float(its))**2), (self.n_neighbors*1./self.W.shape[0]) )),' time = %.2f'%(et),
 
