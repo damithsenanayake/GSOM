@@ -10,7 +10,7 @@ class GSOM(object):
         self.lrst = lrst
         self.sf = sf
         self.fd = fd
-        self.wd = wd
+        self.wdst = wd
         self.beta = 0
         self.radst = np.sqrt(n_neighbors/2)
         self.n_neighbors = n_neighbors
@@ -20,16 +20,19 @@ class GSOM(object):
         return self.predict(X)
 
     def train_batch(self, X):
-        its = 8
-        self.wd = 1./(its*np.log10(X.shape[0]))
+        its = 20
         st = timeit.default_timer()
-        self.GT = - (X.max()-X.min()) * X.shape[1]* np.log(self.sf)
+        self.GT = -X.shape[1]* np.log(self.sf)* (X.max()-X.min())
         self.grid = np.array([[i,j] for i in range(2) for j in range(2)])
         self.W = np.random.random(size=(self.grid.shape[0], X.shape[1]))
         self.errors = np.zeros(self.grid.shape[0])
+        self.lr=self.lrst
         for i in range(its):
-            self.rad = self.radst# * np.exp(-.5*(i/float(its))**2)
-            self.lr = self.lrst#* np.exp(-.5 *(i/float(its))**4)
+            self.growing_it = 1#np.random.binomial(1, np.exp(-2.5*(i/float(its))**2))
+            self.rad = self.radst #* np.exp(-.5*(i/float(its))**2)
+            self.lr = self.lr*.99#* np.exp(-2.2 *(i/float(its)))
+            self.wd = self.wdst
+
             xix = 0
             if self.rad < 1:
                 break
@@ -41,14 +44,14 @@ class GSOM(object):
                 neighbors = np.where(ldist < self.rad)
                 hdist = np.linalg.norm(self.W[neighbors] - self.W[bmu], axis=1)
                 theta_d = np.array([np.exp(-15.5 * (ldist[neighbors]/self.rad)**2)]).T
-                theta_D = np.array([1-np.exp(-45.5*(hdist/hdist.max())**4)]).T
+                theta_D = np.array([1-np.exp(-70.5*(hdist/hdist.max())**12)]).T
                 self.errors[bmu]+= np.linalg.norm(self.W[bmu]-x)
-                self.W[neighbors]+= (x-self.W[neighbors])*theta_d*self.lr - theta_D*self.wd*self.W[neighbors]*(np.exp(-8.5*((i-its*0.5)/float(its))**2))
+                self.W[neighbors]+= (x-self.W[neighbors])*theta_d*self.lr - self.lr*theta_D*self.wd*self.W[neighbors]*(np.exp(-12.5*((i-its*.5)/float(its))**4))
                 et = timeit.default_timer()-st
                 print ('\riter %i : %i / %i : |G| = %i : radius :%.4f : LR: %.4f  p(g): %.4f Rrad: %.2f'%(i+1,xix, X.shape[0], self.W.shape[0], self.rad, self.lr,  np.exp(-8.*(i/float(its))**2), (self.n_neighbors*1./self.W.shape[0]) )),' time = %.2f'%(et),
 
                 ''' Growing When Necessary '''
-                if np.random.binomial(1, np.exp(-8.*(i/float(its))**2)):
+                if 1:#np.random.binomial(1, np.exp(-2.5*(i/float(its))**2)):
                     while self.errors.max() >= self.GT :#and np.random.binomial(1, np.exp(-8.*(i/float(its))**2)):
                         # cands = np.where(self.errors >= self.GT)[0]
                         # for g_node in cands:
