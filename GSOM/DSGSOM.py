@@ -27,12 +27,12 @@ class GSOM(object):
         self.grid = np.array([[i,j] for i in range(2) for j in range(2)])
         self.W = np.random.random(size=(self.grid.shape[0], X.shape[1]))
         self.errors = np.zeros(self.grid.shape[0])
-        self.hits = np.zeros(self.grid.shape[0])
         self.lr=self.lrst
         for i in range(its):
+            self.hits = np.zeros(self.grid.shape[0])
             self.growing_it = 1#np.random.binomial(1, np.exp(-2.5*(i/float(its))**2))
             self.rad = self.radst #* np.exp(-.5*(i/float(its))**2)
-            self.lr = self.lr#*.99#* np.exp(-2.2 *(i/float(its)))
+            self.lr = self.lr*.99#* np.exp(-2.2 *(i/float(its)))
             self.wd = self.wdst
             '''Distribute Errors to propagate growth over the non hit areas'''
             while self.errors.max() >= self.GT and i<1.7*its:
@@ -52,16 +52,26 @@ class GSOM(object):
                 theta_d = np.array([np.exp(-15.5 * (ldist[neighbors]/r)**2)]).T
                 hdist = np.linalg.norm(self.W[neighbors]-x, axis=1)
                 hdist/=hdist.max()
-                theta_D = np.array([1- np.exp(-4.5*hdist**6)]).T
+                theta_D = np.array([1- np.exp(-10.5*hdist**12)]).T
                 self.errors[bmu]+= np.linalg.norm(self.W[bmu]-x)
-                self.W[neighbors]+= (x-self.W[neighbors])*theta_d*self.lr -self.wd*self.W[neighbors]*theta_D*(np.exp(-20.5*((its-i)/float(its))**2))
+                self.W[neighbors]+= (x-self.W[neighbors])*theta_d*self.lr -self.lr*self.wd*self.W[neighbors]*theta_D#*(np.exp(-4.5*((its-i)/float(its))**6))
                 et = timeit.default_timer()-st
                 print ('\riter %i : %i / %i : |G| = %i : radius :%.4f : LR: %.4f  p(g): %.4f Rrad: %.2f'%(i+1,xix, X.shape[0], self.W.shape[0], r, self.lr,  np.exp(-8.*(i/float(its))**2), (self.n_neighbors*1./self.W.shape[0]) )),' time = %.2f'%(et),
 
                 ''' Growing When Necessary '''
                 if self.errors[bmu] >= self.GT and i<1.7*its:
                     self.error_dist(bmu)
+        self.smoothen(X)
 
+    def smoothen(self, X):
+        its = 0
+        print ''
+        for i in range(its):
+            for x in X:
+                bmu = pairwise_distances_argmin(np.array([x]), self.W, axis=1)[0]
+                neighbors = np.argsort(np.linalg.norm(self.grid[bmu]-self.grid, axis=1))[:5]
+                self.W[neighbors] += (x-self.W[neighbors])*self.lr/2.
+                print '\r %i / %i smoothen'%(i, its),
 
     def error_dist(self, g_node):
         up = self.grid[g_node] + np.array([0, 1])
@@ -88,7 +98,7 @@ class GSOM(object):
                 self.errors = np.append(self.errors, 0)
                 self.grid = np.append(self.grid, np.array([nei]), axis=0)
                 self.hits = np.append(self.hits, 0)
-        self.errors[g_node] = self.GT / 2
+        self.errors[g_node] = 0#self.GT / 2
 
 
     def point_exists(self, space, point):
@@ -113,9 +123,9 @@ class GSOM(object):
         it = 0
         st = timeit.default_timer()
 
-        while it < its :#and radius > 0.001 and self.beta*np.exp(-7.5 * it**2  / its**2 ) > 0.001:# or n>1:
+        while it < its and radius > 0.001 and self.beta*np.exp(-7.5 * it**2  / its**2 ) > 0.001:# or n>1:
             et = timeit.default_timer() - self.start_time
-
+            radius = np.exp(-4.5*(it*1./its)**2)*r_st
             print '\r LMDS iteration %i : radius : %s : beta : %s: time : %s ' % (it, str(radius), str(self.beta *np.exp(-7.5 * it**2  / its**2 )), str(et)),
               # np.exp(-10.0* iter  / self.iterations)
             Hdists = pairwise_distances(X)
@@ -127,8 +137,8 @@ class GSOM(object):
                 Ldist = Ldists[i]
                 Hdist = Hdists[i]
 
-                # neighbors = np.where(Ldist < radius)[0]
-                neighbors = np.argsort(Ldist)[:100]
+                neighbors = np.where(Ldist < radius)[0]
+                # neighbors = np.argsort(Ldist)[:100]
                 if len(neighbors.shape) == 0 or neighbors.shape[0] == 1 or not Ldist[neighbors].any():
                     continue
                 d = Ldist[neighbors] / Ldist[neighbors].sum()
@@ -150,4 +160,5 @@ class GSOM(object):
             it += 1
             n*=0.8
         print '\n LMDS time : ', timeit.default_timer() - st
+        print '\n ', self.W.shape[0]
         return grid
