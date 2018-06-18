@@ -1,6 +1,6 @@
 
 import numpy as np
-from sklearn.metrics.pairwise import pairwise_distances_argmin
+from sklearn.metrics.pairwise import pairwise_distances_argmin, pairwise_distances
 import timeit
 
 
@@ -11,17 +11,18 @@ class GSOM(object):
         self.sf = sf
         self.fd = fd
         self.wdst = wd
-        self.beta = 0
+        self.beta = beta
         self.radst = np.sqrt(n_neighbors/2)
         self.n_neighbors = n_neighbors
 
     def fit_transform(self, X):
         self.train_batch(X)
-        return self.predict(X)
+        return self.LMDS(X)#self.predict(X)
 
     def train_batch(self, X):
-        its = 50
+        its = 10
         st = timeit.default_timer()
+        self.start_time = st
         self.GT = -X.shape[1]* np.log(self.sf)* (X.max()-X.min())
         self.grid = np.array([[i,j] for i in range(2) for j in range(2)])
         self.W = np.random.random(size=(self.grid.shape[0], X.shape[1]))
@@ -34,7 +35,7 @@ class GSOM(object):
             self.lr = self.lr#*.99#* np.exp(-2.2 *(i/float(its)))
             self.wd = self.wdst
             '''Distribute Errors to propagate growth over the non hit areas'''
-            while self.errors.max() >= self.GT:
+            while self.errors.max() >= self.GT and i<1.7*its:
                 self.error_dist(self.errors.argmax())
 
             xix = 0
@@ -58,7 +59,7 @@ class GSOM(object):
                 print ('\riter %i : %i / %i : |G| = %i : radius :%.4f : LR: %.4f  p(g): %.4f Rrad: %.2f'%(i+1,xix, X.shape[0], self.W.shape[0], r, self.lr,  np.exp(-8.*(i/float(its))**2), (self.n_neighbors*1./self.W.shape[0]) )),' time = %.2f'%(et),
 
                 ''' Growing When Necessary '''
-                if self.errors[bmu] >= self.GT:
+                if self.errors[bmu] >= self.GT and i<1.7*its:
                     self.error_dist(bmu)
 
 
@@ -101,3 +102,52 @@ class GSOM(object):
         for x in X:
             Y.append(self.grid[np.argmin(np.linalg.norm(x-self.W, axis=1))])
         return np.array(Y)
+
+    def LMDS(self, X):
+        r_st = 0.4
+        radius = r_st
+
+        grid = self.predict(X).astype(float)
+        n = X.shape[0]*0.5
+        its = 20
+        it = 0
+        st = timeit.default_timer()
+
+        while it < its :#and radius > 0.001 and self.beta*np.exp(-7.5 * it**2  / its**2 ) > 0.001:# or n>1:
+            et = timeit.default_timer() - self.start_time
+
+            print '\r LMDS iteration %i : radius : %s : beta : %s: time : %s ' % (it, str(radius), str(self.beta *np.exp(-7.5 * it**2  / its**2 )), str(et)),
+              # np.exp(-10.0* iter  / self.iterations)
+            Hdists = pairwise_distances(X)
+            Ldists = pairwise_distances(grid)
+
+            for i in range(X.shape[0]):
+                grid -= grid.min(axis=0)
+                grid /= grid.max(axis=0)
+                Ldist = Ldists[i]
+                Hdist = Hdists[i]
+
+                # neighbors = np.where(Ldist < radius)[0]
+                neighbors = np.argsort(Ldist)[:100]
+                if len(neighbors.shape) == 0 or neighbors.shape[0] == 1 or not Ldist[neighbors].any():
+                    continue
+                d = Ldist[neighbors] / Ldist[neighbors].sum()
+                d[np.isnan(d)] = 0
+                D = Hdist[neighbors] / Hdist[neighbors].sum()
+                D[np.isnan(D)] = 0
+                dirs = np.array([d - D]).T
+                try:
+                    ds = d/d.max()
+                    hs = np.exp(-0.5 * ds**2)
+                    hs = np.array([hs]).T
+                except:
+                    break
+                if len(neighbors) == 0:
+                    pass
+                grid[neighbors] += self.beta  * np.exp(-7.5 * it**2  / its**2 ) * dirs * (
+                grid[i] - grid[neighbors]) * hs
+
+            it += 1
+            n*=0.8
+        print '\n LMDS time : ', timeit.default_timer() - st
+        return grid
