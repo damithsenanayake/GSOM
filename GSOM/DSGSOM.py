@@ -20,18 +20,22 @@ class GSOM(object):
         return self.predict(X)
 
     def train_batch(self, X):
-        its = 20
+        its = 50
         st = timeit.default_timer()
         self.GT = -X.shape[1]* np.log(self.sf)* (X.max()-X.min())
         self.grid = np.array([[i,j] for i in range(2) for j in range(2)])
         self.W = np.random.random(size=(self.grid.shape[0], X.shape[1]))
         self.errors = np.zeros(self.grid.shape[0])
+        self.hits = np.zeros(self.grid.shape[0])
         self.lr=self.lrst
         for i in range(its):
             self.growing_it = 1#np.random.binomial(1, np.exp(-2.5*(i/float(its))**2))
             self.rad = self.radst #* np.exp(-.5*(i/float(its))**2)
-            self.lr = self.lr*.99#* np.exp(-2.2 *(i/float(its)))
+            self.lr = self.lr#*.99#* np.exp(-2.2 *(i/float(its)))
             self.wd = self.wdst
+            '''Distribute Errors to propagate growth over the non hit areas'''
+            while self.errors.max() >= self.GT:
+                self.error_dist(self.errors.argmax())
 
             xix = 0
             if self.rad < 1:
@@ -40,44 +44,50 @@ class GSOM(object):
                 xix += 1
                 ''' Training For Instances'''
                 bmu = pairwise_distances_argmin(np.array([x]), self.W, axis=1)[0]
+                self.hits[bmu]+=1
+                r = self.rad#*(1 + self.hits[bmu] / self.hits.max())
                 ldist = np.linalg.norm(self.grid - self.grid[bmu], axis=1)
-                neighbors = np.where(ldist < self.rad)
-                theta_d = np.array([np.exp(-15.5 * (ldist[neighbors]/self.rad)**2)]).T
+                neighbors = np.where(ldist < r)
+                theta_d = np.array([np.exp(-15.5 * (ldist[neighbors]/r)**2)]).T
+                hdist = np.linalg.norm(self.W[neighbors]-x, axis=1)
+                hdist/=hdist.max()
+                theta_D = np.array([1- np.exp(-4.5*hdist**6)]).T
                 self.errors[bmu]+= np.linalg.norm(self.W[bmu]-x)
-                self.W[neighbors]+= (x-self.W[neighbors])*theta_d*self.lr - self.lr*self.wd*self.W[neighbors]*(np.exp(-12.5*((i-its)/float(its))**4))
+                self.W[neighbors]+= (x-self.W[neighbors])*theta_d*self.lr -self.wd*self.W[neighbors]*theta_D*(np.exp(-20.5*((its-i)/float(its))**2))
                 et = timeit.default_timer()-st
-                print ('\riter %i : %i / %i : |G| = %i : radius :%.4f : LR: %.4f  p(g): %.4f Rrad: %.2f'%(i+1,xix, X.shape[0], self.W.shape[0], self.rad, self.lr,  np.exp(-8.*(i/float(its))**2), (self.n_neighbors*1./self.W.shape[0]) )),' time = %.2f'%(et),
+                print ('\riter %i : %i / %i : |G| = %i : radius :%.4f : LR: %.4f  p(g): %.4f Rrad: %.2f'%(i+1,xix, X.shape[0], self.W.shape[0], r, self.lr,  np.exp(-8.*(i/float(its))**2), (self.n_neighbors*1./self.W.shape[0]) )),' time = %.2f'%(et),
 
                 ''' Growing When Necessary '''
-                if 1:#np.random.binomial(1, np.exp(-2.5*(i/float(its))**2)):
-                    while self.errors.max() >= self.GT :#and np.random.binomial(1, np.exp(-8.*(i/float(its))**2)):
-                        # cands = np.where(self.errors >= self.GT)[0]
-                        # for g_node in cands:
-                        g_node = self.errors.argmax()
-                        up = self.grid[g_node] + np.array([0, 1])
-                        left = self.grid[g_node] + np.array([-1, 0])
-                        down = self.grid[g_node] + np.array([0, -1])
-                        right = self.grid[g_node] + np.array([1, 0])
+                if self.errors[bmu] >= self.GT:
+                    self.error_dist(bmu)
 
-                        imm_neis = [up, left, down, right]
 
-                        for nei in imm_neis:
-                            if self.point_exists(self.grid, nei):
-                                n_point = self.find_point(self.grid, nei)
-                                self.errors[n_point]+=self.errors[n_point]*self.fd
-                            else:
-                                gdists_new = np.linalg.norm(nei-self.grid, axis=1)
-                                gdists_old = np.linalg.norm(self.grid - self.grid[g_node], axis=1)
-                                closest2_new = np.argsort(gdists_new)[:2]
-                                if np.any(gdists_old[closest2_new]==1):
-                                    w = self.W[closest2_new].mean(axis=0)
-                                else:
-                                    w = self.W[closest2_new[0]]*2-self.W[closest2_new[1]]
+    def error_dist(self, g_node):
+        up = self.grid[g_node] + np.array([0, 1])
+        left = self.grid[g_node] + np.array([-1, 0])
+        down = self.grid[g_node] + np.array([0, -1])
+        right = self.grid[g_node] + np.array([1, 0])
 
-                                self.W = np.append(self.W, np.array([w]), axis=0)
-                                self.errors = np.append(self.errors, self.GT/2)
-                                self.grid = np.append(self.grid, np.array([nei]), axis=0)
-                        self.errors[g_node]=self.GT/2
+        imm_neis = [up, left, down, right]
+
+        for nei in imm_neis:
+            if self.point_exists(self.grid, nei):
+                n_point = self.find_point(self.grid, nei)
+                self.errors[n_point] += self.errors[n_point] * self.fd
+            else:
+                gdists_new = np.linalg.norm(nei - self.grid, axis=1)
+                gdists_old = np.linalg.norm(self.grid - self.grid[g_node], axis=1)
+                closest2_new = np.argsort(gdists_new)[:2]
+                if np.any(gdists_old[closest2_new] == 1):
+                    w = self.W[closest2_new].mean(axis=0)
+                else:
+                    w = self.W[closest2_new[0]] * 2 - self.W[closest2_new[1]]
+
+                self.W = np.append(self.W, np.array([w]), axis=0)
+                self.errors = np.append(self.errors, 0)
+                self.grid = np.append(self.grid, np.array([nei]), axis=0)
+                self.hits = np.append(self.hits, 0)
+        self.errors[g_node] = self.GT / 2
 
 
     def point_exists(self, space, point):
