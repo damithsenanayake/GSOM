@@ -20,7 +20,7 @@ class GSOM(object):
         return self.LMDS(X)#self.predict(X)
 
     def train_batch(self, X):
-        its = 10
+        its = 30
         st = timeit.default_timer()
         self.start_time = st
         self.GT = -X.shape[1]* np.log(self.sf)* (X.max()-X.min())
@@ -30,9 +30,8 @@ class GSOM(object):
         self.lr=self.lrst
         for i in range(its):
             self.hits = np.zeros(self.grid.shape[0])
-            self.growing_it = 1#np.random.binomial(1, np.exp(-2.5*(i/float(its))**2))
             self.rad = self.radst #* np.exp(-.5*(i/float(its))**2)
-            self.lr = self.lr*.99#* np.exp(-2.2 *(i/float(its)))
+            self.lr = self.lr #* np.exp(-.5 *(i/float(its))**2)
             self.wd = self.wdst
             '''Distribute Errors to propagate growth over the non hit areas'''
             while self.errors.max() >= self.GT and i<1.7*its:
@@ -46,20 +45,19 @@ class GSOM(object):
                 ''' Training For Instances'''
                 bmu = pairwise_distances_argmin(np.array([x]), self.W, axis=1)[0]
                 self.hits[bmu]+=1
-                r = self.rad#*(1 + self.hits[bmu] / self.hits.max())
+                r = self.rad
                 ldist = np.linalg.norm(self.grid - self.grid[bmu], axis=1)
                 neighbors = np.where(ldist < r)
-                theta_d = np.array([np.exp(-15.5 * (ldist[neighbors]/r)**2)]).T
+                theta_d = np.array([np.exp(-17.5 * (ldist[neighbors]/r)**2)]).T
                 hdist = np.linalg.norm(self.W[neighbors]-x, axis=1)
                 hdist/=hdist.max()
                 theta_D = np.array([1- np.exp(-10.5*hdist**12)]).T
                 self.errors[bmu]+= np.linalg.norm(self.W[bmu]-x)
-                self.W[neighbors]+= (x-self.W[neighbors])*theta_d*self.lr -self.lr*self.wd*self.W[neighbors]*theta_D#*(np.exp(-4.5*((its-i)/float(its))**6))
+                self.W[neighbors]+= (x-self.W[neighbors])*theta_d*self.lr -self.lr*self.wd*self.W[neighbors]*theta_D*(np.exp(-4.5*((its-i)/float(its))**6))
                 et = timeit.default_timer()-st
                 print ('\riter %i : %i / %i : |G| = %i : radius :%.4f : LR: %.4f  p(g): %.4f Rrad: %.2f'%(i+1,xix, X.shape[0], self.W.shape[0], r, self.lr,  np.exp(-8.*(i/float(its))**2), (self.n_neighbors*1./self.W.shape[0]) )),' time = %.2f'%(et),
-
                 ''' Growing When Necessary '''
-                if self.errors[bmu] >= self.GT and i<1.7*its:
+                if self.errors[bmu] >= self.GT:# and i<1.7*its:
                     self.error_dist(bmu)
         self.smoothen(X)
 
