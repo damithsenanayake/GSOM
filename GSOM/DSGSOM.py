@@ -20,7 +20,7 @@ class GSOM(object):
         return self.LMDS(X)#self.predict(X)
 
     def train_batch(self, X):
-        its = 30
+        its = 20
         st = timeit.default_timer()
         self.start_time = st
         self.GT = -X.shape[1]* np.log(self.sf)* (X.max()-X.min())
@@ -53,7 +53,7 @@ class GSOM(object):
                 hdist/=hdist.max()
                 theta_D = np.array([1- np.exp(-10.5*hdist**12)]).T
                 self.errors[bmu]+= np.linalg.norm(self.W[bmu]-x)
-                self.W[neighbors]+= (x-self.W[neighbors])*theta_d*self.lr -self.lr*self.wd*self.W[neighbors]*theta_D*(np.exp(-4.5*((its-i)/float(its))**6))
+                self.W[neighbors]+= (x-self.W[neighbors])*theta_d*self.lr -self.lr*self.wd*self.W[neighbors]*theta_D*(np.exp(-15.5*((its-i)/float(its))**6))
                 et = timeit.default_timer()-st
                 print ('\riter %i : %i / %i : |G| = %i : radius :%.4f : LR: %.4f  p(g): %.4f Rrad: %.2f'%(i+1,xix, X.shape[0], self.W.shape[0], r, self.lr,  np.exp(-8.*(i/float(its))**2), (self.n_neighbors*1./self.W.shape[0]) )),' time = %.2f'%(et),
                 ''' Growing When Necessary '''
