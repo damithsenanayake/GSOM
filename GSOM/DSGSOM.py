@@ -20,7 +20,7 @@ class GSOM(object):
         return self.LMDS(X)#self.predict(X)
 
     def train_batch(self, X):
-        its = 20
+        its = 10
         st = timeit.default_timer()
         self.start_time = st
         self.GT = -X.shape[1]* np.log(self.sf)* (X.max()-X.min())
@@ -48,12 +48,12 @@ class GSOM(object):
                 r = self.rad
                 ldist = np.linalg.norm(self.grid - self.grid[bmu], axis=1)
                 neighbors = np.where(ldist < r)
-                theta_d = np.array([np.exp(-17.5 * (ldist[neighbors]/r)**2)]).T
+                theta_d = np.array([np.exp(-15.5 * (ldist[neighbors]/r)**2)]).T
                 hdist = np.linalg.norm(self.W[neighbors]-x, axis=1)
                 hdist/=hdist.max()
-                theta_D = np.array([1- np.exp(-10.5*hdist**12)]).T
+                theta_D = np.array([1- np.exp(-25.5*hdist**20)]).T
                 self.errors[bmu]+= np.linalg.norm(self.W[bmu]-x)
-                self.W[neighbors]+= (x-self.W[neighbors])*theta_d*self.lr -self.lr*self.wd*self.W[neighbors]*theta_D*(np.exp(-15.5*((its-i)/float(its))**6))
+                self.W[neighbors]+= (x-self.W[neighbors])*theta_d*self.lr -self.lr*self.wd*self.W[neighbors]*theta_D*(np.exp(-15.5*((its-i)/float(its))**3))
                 et = timeit.default_timer()-st
                 print ('\riter %i : %i / %i : |G| = %i : radius :%.4f : LR: %.4f  p(g): %.4f Rrad: %.2f'%(i+1,xix, X.shape[0], self.W.shape[0], r, self.lr,  np.exp(-8.*(i/float(its))**2), (self.n_neighbors*1./self.W.shape[0]) )),' time = %.2f'%(et),
                 ''' Growing When Necessary '''
@@ -62,7 +62,7 @@ class GSOM(object):
         self.smoothen(X)
 
     def smoothen(self, X):
-        its = 0
+        its = 2
         print ''
         for i in range(its):
             for x in X:
