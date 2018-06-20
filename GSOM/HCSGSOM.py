@@ -20,7 +20,7 @@ class GSOM(object):
         return self.LMDS(X)#self.predict(X)
 
     def train_batch(self, X):
-        its = 20
+        its = 5
         st = timeit.default_timer()
         self.start_time = st
         self.GT = -X.shape[1]* np.log(self.sf)* (X.max()-X.min())
@@ -28,8 +28,6 @@ class GSOM(object):
         self.W = np.random.random(size=(self.grid.shape[0], X.shape[1]))
         self.errors = np.zeros(self.grid.shape[0])
         self.lr=self.lrst
-        fract_start = .5
-        fract = fract_start
         for i in range(its):
 
             # Normalized Time Variable for the learning rules.
@@ -45,7 +43,7 @@ class GSOM(object):
                 self.error_dist(self.errors.argmax())
             # fract =fract_start* (1-i*1./its)# fract_start * np.exp(-0.5 *(i/float(its))**2)
             # fract *= 0.92
-            fract = fract_start * np.exp(-1.5*ntime)
+            fract = np.exp(-4.*ntime**1.5)
             xix = 0
             if self.rad < 1:
                 break
