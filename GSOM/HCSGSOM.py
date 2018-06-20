@@ -28,7 +28,7 @@ class GSOM(object):
         self.W = np.random.random(size=(self.grid.shape[0], X.shape[1]))
         self.errors = np.zeros(self.grid.shape[0])
         self.lr=self.lrst
-        fract_start = 1.
+        fract_start = .5
         fract = fract_start
         for i in range(its):
             self.hits = np.zeros(self.grid.shape[0])
@@ -36,9 +36,10 @@ class GSOM(object):
             self.lr = self.lr #* np.exp(-.5 *(i/float(its))**2)
             self.wd = self.wdst
             '''Distribute Errors to propagate growth over the non hit areas'''
-            while self.errors.max() >= self.GT and i<1.7*its:
+            while self.errors.max() >= self.GT:
                 self.error_dist(self.errors.argmax())
-            fract = fract * np.exp(-1.5 *(i/float(its))**2)
+            fract =fract_start* (1-i*1./its)# fract_start * np.exp(-0.5 *(i/float(its))**2)
+            # fract *= 0.9
             xix = 0
             if self.rad < 1:
                 break
@@ -53,7 +54,7 @@ class GSOM(object):
 
                 ldist = np.linalg.norm(self.grid - self.grid[bmu], axis=1)
                 neighbors = np.where(ldist < r)
-                theta_d = np.array([np.exp(-15.5 * (ldist[neighbors]/r)**2)]).T
+                theta_d = np.array([np.exp(-4.5 * (ldist[neighbors]/r)**2)]).T
                 hdist = np.linalg.norm(self.W[decayers]-x, axis=1)
                 hdist/=hdist.max()
                 theta_D = np.array([1- np.exp(-25.5*hdist**20)]).T
@@ -61,7 +62,7 @@ class GSOM(object):
                 self.W[neighbors]+= (x-self.W[neighbors])*theta_d*self.lr
                 ''' Separating Weight Decay'''
 
-                self.W[decayers]-=self.lr*self.wd*self.W[decayers]*theta_D#*(np.exp(-1.5*((its-i)/float(its))**2))
+                self.W[decayers]-=self.lr*self.wd*self.W[decayers]*theta_D*(np.exp(-.5*((its-i)/float(its))**4))
                 et = timeit.default_timer()-st
                 print ('\riter %i : %i / %i : |G| = %i : radius :%.4f : LR: %.4f  p(g): %.4f Rrad: %.2f : wdFract: %.4f'%(i+1,xix, X.shape[0], self.W.shape[0], r, self.lr,  np.exp(-8.*(i/float(its))**2), (self.n_neighbors*1./self.W.shape[0]), fract )),' time = %.2f'%(et),
                 ''' Growing When Necessary '''
