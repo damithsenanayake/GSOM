@@ -31,6 +31,11 @@ class GSOM(object):
         fract_start = .5
         fract = fract_start
         for i in range(its):
+
+            # Normalized Time Variable for the learning rules.
+
+            ntime = i*1./max(its-1,1)
+
             self.hits = np.zeros(self.grid.shape[0])
             self.rad = self.radst #* np.exp(-.5*(i/float(its))**2)
             self.lr = self.lr #* np.exp(-.5 *(i/float(its))**2)
@@ -38,8 +43,9 @@ class GSOM(object):
             '''Distribute Errors to propagate growth over the non hit areas'''
             while self.errors.max() >= self.GT:
                 self.error_dist(self.errors.argmax())
-            fract =fract_start* (1-i*1./its)# fract_start * np.exp(-0.5 *(i/float(its))**2)
-            # fract *= 0.9
+            # fract =fract_start* (1-i*1./its)# fract_start * np.exp(-0.5 *(i/float(its))**2)
+            # fract *= 0.92
+            fract = fract_start * np.exp(-1.5*ntime)
             xix = 0
             if self.rad < 1:
                 break
@@ -57,14 +63,14 @@ class GSOM(object):
                 theta_d = np.array([np.exp(-4.5 * (ldist[neighbors]/r)**2)]).T
                 hdist = np.linalg.norm(self.W[decayers]-x, axis=1)
                 hdist/=hdist.max()
-                theta_D = np.array([1- np.exp(-25.5*hdist**20)]).T
+                theta_D = np.array([1- np.exp(-4.5*hdist**10)]).T
                 self.errors[bmu]+= np.linalg.norm(self.W[bmu]-x)
                 self.W[neighbors]+= (x-self.W[neighbors])*theta_d*self.lr
                 ''' Separating Weight Decay'''
 
-                self.W[decayers]-=self.lr*self.wd*self.W[decayers]*theta_D*(np.exp(-.5*((its-i)/float(its))**4))
+                self.W[decayers]-=self.lr*self.wd*self.W[decayers]*theta_D#*(np.exp(-.5*((its-i)/float(its))**4))
                 et = timeit.default_timer()-st
-                print ('\riter %i : %i / %i : |G| = %i : radius :%.4f : LR: %.4f  p(g): %.4f Rrad: %.2f : wdFract: %.4f'%(i+1,xix, X.shape[0], self.W.shape[0], r, self.lr,  np.exp(-8.*(i/float(its))**2), (self.n_neighbors*1./self.W.shape[0]), fract )),' time = %.2f'%(et),
+                print ('\riter %i : %i / %i : |G| = %i : radius :%.4f : LR: %.4f  p(g): %.4f Rrad: %.2f : wdFract: %.4f'%(i+1,xix, X.shape[0], self.W.shape[0], r, self.lr,  np.exp(-8.*ntime**2), (self.n_neighbors*1./self.W.shape[0]), fract )),' time = %.2f'%(et),
                 ''' Growing When Necessary '''
                 if self.errors[bmu] >= self.GT:# and i<1.7*its:
                     self.error_dist(bmu)
