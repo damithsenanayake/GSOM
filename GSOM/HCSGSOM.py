@@ -20,7 +20,7 @@ class GSOM(object):
         return self.LMDS(X)#self.predict(X)
 
     def train_batch(self, X):
-        its = 100
+        its = 20
         st = timeit.default_timer()
         self.start_time = st
         self.GT = -X.shape[1]* np.log(self.sf)* (X.max()-X.min())
@@ -36,17 +36,19 @@ class GSOM(object):
 
             self.hits = np.zeros(self.grid.shape[0])
             self.rad = self.radst #* np.exp(-.5*(i/float(its))**2)
-            self.lr = self.lr #* np.exp(-.5 *(i/float(its))**2)
+            self.lr = self.lr #* np.exp(-.5 *ntime**2)
             self.wd = self.wdst
             '''Distribute Errors to propagate growth over the non hit areas'''
             while self.errors.max() >= self.GT:
                 self.error_dist(self.errors.argmax())
             # fract =fract_start* (1-i*1./its)# fract_start * np.exp(-0.5 *(i/float(its))**2)
             # fract *= 0.92
-            fract = np.exp(-4.*ntime**1.5)
+            # if i < its-3:
+            #     fract =0.2#np.exp(-3.*ntime**1.)
+            # else:
+            #     fract = 0
             xix = 0
-            if self.rad < 1:
-                break
+            fract = 0.5*(np.sqrt(1-ntime**2))#(-ntime**2+1)*0.8#* np.exp(-1.5* ntime ** 2)
             for x in X:
                 xix += 1
                 ''' Training For Instances'''
@@ -58,10 +60,10 @@ class GSOM(object):
 
                 ldist = np.linalg.norm(self.grid - self.grid[bmu], axis=1)
                 neighbors = np.where(ldist < r)
-                theta_d = np.array([np.exp(-4.5 * (ldist[neighbors]/r)**2)]).T
+                theta_d = np.array([np.exp(-12.5 * (ldist[neighbors]/r)**2)]).T
                 hdist = np.linalg.norm(self.W[decayers]-x, axis=1)
                 hdist/=hdist.max()
-                theta_D = np.array([1- np.exp(-4.5*hdist**10)]).T
+                theta_D = np.array([1- np.exp(-20.5*hdist**6)]).T
                 self.errors[bmu]+= np.linalg.norm(self.W[bmu]-x)
                 self.W[neighbors]+= (x-self.W[neighbors])*theta_d*self.lr
                 ''' Separating Weight Decay'''
