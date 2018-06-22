@@ -41,14 +41,9 @@ class GSOM(object):
             '''Distribute Errors to propagate growth over the non hit areas'''
             while self.errors.max() >= self.GT:
                 self.error_dist(self.errors.argmax())
-            # fract =fract_start* (1-i*1./its)# fract_start * np.exp(-0.5 *(i/float(its))**2)
-            # fract *= 0.92
-            # if i < its-3:
-            #     fract =0.2#np.exp(-3.*ntime**1.)
-            # else:
-            #     fract = 0
+
             xix = 0
-            fract = 0.5*(np.sqrt(1-ntime**2))#(-ntime**2+1)*0.8#* np.exp(-1.5* ntime ** 2)
+            fract = 0.85**i#0.5*np.exp(-3.9*ntime**4)#(-ntime**2+1)*0.8#* np.exp(-1.5* ntime ** 2)
             for x in X:
                 xix += 1
                 ''' Training For Instances'''
