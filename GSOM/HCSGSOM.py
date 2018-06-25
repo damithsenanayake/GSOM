@@ -69,7 +69,7 @@ class GSOM(object):
                 self.W[neighbors]+= (x-self.W[neighbors])*theta_d*self.lr
                 ''' Separating Weight Decay'''
 
-                self.W[decayers]-=self.lr*self.wd*self.W[decayers]*theta_D#*(np.exp(-.5*(1-ntime)**2))
+                self.W[decayers]-=self.lr*self.wd*self.W[decayers]*theta_D*(np.exp(-.5*(ntime)**2))
                 et = timeit.default_timer()-st
                 print ('\riter %i : %i / %i : |G| = %i : radius :%.4f : LR: %.4f  p(g): %.4f Rrad: %.2f : wdFract: %.4f'%(i+1,xix, X.shape[0], self.W.shape[0], r, self.lr,  np.exp(-8.*ntime**2), (self.n_neighbors*1./self.W.shape[0]), fract )),' time = %.2f'%(et),
                 ''' Growing When Necessary '''
