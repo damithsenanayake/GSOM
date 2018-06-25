@@ -20,7 +20,7 @@ class GSOM(object):
         return self.LMDS(X)#self.predict(X)
 
     def train_batch(self, X):
-        its = 30
+        its = 15
         st = timeit.default_timer()
         self.start_time = st
         self.GT = -X.shape[1]* np.log(self.sf)* (X.max()-X.min())
@@ -45,12 +45,12 @@ class GSOM(object):
                 self.error_dist(self.errors.argmax())
 
             xix = 0
-            fract = 0.9**(i)#0.5*np.exp(-3.9*ntime**4)#(-ntime**2+1)*0.8#* np.exp(-1.5* ntime ** 2)
-            is_trad = fract < (self.n_neighbors*1./self.W.shape[0])
+            fract =1.*np.exp(-2.5*ntime**2)# np.exp(-4.5*ntime**2)#np.exp(-5.5* ntime **2 ) #1-ntime#0.9**(i)#0.5*np.exp(-3.9*ntime**4)#(-ntime**2+1)*0.8#*
+            is_trad = fract < min(fract, 0.*self.n_neighbors*1./self.W.shape[0])
             trad_its += is_trad
-            if trad_its >2:
-                break
-            for x in X:
+            # if i == 5:#trad_its:
+            #     break
+            for x in np.random.permutation(X):
                 xix += 1
                 ''' Training For Instances'''
                 bmu = pairwise_distances_argmin(np.array([x]), self.W, axis=1)[0]
@@ -61,7 +61,7 @@ class GSOM(object):
 
                 ldist = np.linalg.norm(self.grid - self.grid[bmu], axis=1)
                 neighbors = np.where(ldist < r)
-                theta_d = np.array([np.exp(-12.5 * (ldist[neighbors]/r)**2)]).T
+                theta_d = np.array([np.exp(-0.5 * (ldist[neighbors]/r)**2)]).T
                 hdist = np.linalg.norm(self.W[decayers]-x, axis=1)
                 hdist/=hdist.max()
                 theta_D = np.array([1- np.exp(-20.5*hdist**6)]).T
@@ -69,7 +69,7 @@ class GSOM(object):
                 self.W[neighbors]+= (x-self.W[neighbors])*theta_d*self.lr
                 ''' Separating Weight Decay'''
 
-                self.W[decayers]-=self.lr*self.wd*self.W[decayers]*theta_D*(np.exp(-.5*(ntime)**2))
+                self.W[decayers]-=self.lr*self.wd*self.W[decayers]*theta_D#*(np.exp(-.5*(1-ntime)**2))
                 et = timeit.default_timer()-st
                 print ('\riter %i : %i / %i : |G| = %i : radius :%.4f : LR: %.4f  p(g): %.4f Rrad: %.2f : wdFract: %.4f'%(i+1,xix, X.shape[0], self.W.shape[0], r, self.lr,  np.exp(-8.*ntime**2), (self.n_neighbors*1./self.W.shape[0]), fract )),' time = %.2f'%(et),
                 ''' Growing When Necessary '''
