@@ -25,7 +25,7 @@ class GSOM(object):
         self.start_time = st
         self.GT = -X.shape[1]* np.log(self.sf)* (X.max()-X.min())
         self.grid = np.array([[i,j] for i in range(2) for j in range(2)])
-        self.W = np.random.random(size=(self.grid.shape[0], X.shape[1]))
+        self.W = np.zeros(shape=(self.grid.shape[0], X.shape[1]))
         self.errors = np.zeros(self.grid.shape[0])
         self.lr=self.lrst
         is_trad = 0
