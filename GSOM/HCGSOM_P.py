@@ -48,8 +48,8 @@ class GSOM(object):
             fract =0.9**i#np.exp(-4.5*ntime**2)# np.exp(-4.5*ntime**2)#np.exp(-5.5* ntime **2 ) #1-ntime#0.9**(i)#0.5*np.exp(-3.9*ntime**4)#(-ntime**2+1)*0.8#*
             is_trad = fract < min(fract, self.n_neighbors*1./self.W.shape[0])
             trad_its += is_trad
-            # if i == 5:#trad_its:
-            #     break
+            if trad_its:
+                break
             for x in np.random.permutation(X):
                 xix += 1
                 ''' Training For Instances'''
@@ -69,7 +69,7 @@ class GSOM(object):
                 self.W[neighbors]+= (x-self.W[neighbors])*theta_d*self.lr
                 ''' Separating Weight Decay'''
 
-                self.W[decayers]-=self.lr*self.wd*self.W[decayers]*theta_D*(np.exp(-.5*(1-ntime)**2))
+                self.W[decayers]-=self.lr*self.wd*self.W[decayers]*theta_D*(np.exp(-.5*(1-ntime)**1.5))
                 et = timeit.default_timer()-st
                 print ('\riter %i : %i / %i : |G| = %i : radius :%.4f : LR: %.4f  p(g): %.4f Rrad: %.2f : wdFract: %.4f'%(i+1,xix, X.shape[0], self.W.shape[0], r, self.lr,  np.exp(-8.*ntime**2), (self.n_neighbors*1./self.W.shape[0]), fract )),' time = %.2f'%(et),
                 ''' Growing When Necessary '''

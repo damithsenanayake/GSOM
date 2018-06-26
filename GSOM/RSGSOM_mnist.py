@@ -33,7 +33,7 @@ del fi
 gc.collect()
 # x, y = SelfOrganizingSwarm(iterations=10, alpha=1, beta=0.1, delta=0, theta=3.5).fit_transform(dat[:samples]).T
 st = timeit.default_timer()
-model = GSOM(lrst=.1,  beta=0., sf=0.9, fd = .8, wd=.02 , n_neighbors=40)
+model = GSOM(lrst=.1,  beta=0., sf=0.9, fd = .8, wd=.02 , n_neighbors=30)
 
 # x, y = MovingMap(iterations=100, beta=1.5).fit_transform(dat[:samples]).T
 Y= model.fit_transform(dat)
