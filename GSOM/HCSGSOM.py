@@ -75,6 +75,9 @@ class GSOM(object):
                 ''' Growing When Necessary '''
                 if self.errors[bmu] >= self.GT:# and i<1.7*its:
                     self.error_dist(bmu)
+
+            self.prune_mid_training()
+
         ''' Moving Average Filter to identify contiguous regions in the map '''
         self.mean_filter()
 
@@ -82,7 +85,12 @@ class GSOM(object):
         self.prune_map(np.where(self.hits==0)[0])
         self.smoothen(X)
 
+    def prune_mid_training(self):
+        ''' Moving Average Filter to identify contiguous regions in the map '''
+        self.mean_filter()
 
+        ''' Prune nodes in the non-continguous regions of the map to shave of training time '''
+        self.prune_map(np.where(self.hits == 0)[0])
 
     def mean_filter(self):
         self.new_hits = np.zeros(self.hits.shape)
@@ -99,7 +107,7 @@ class GSOM(object):
 
 
     def smoothen(self, X):
-        its = 2
+        its = 0
         print ''
         for i in range(its):
             for x in X:
