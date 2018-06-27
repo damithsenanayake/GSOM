@@ -20,7 +20,7 @@ class GSOM(object):
         return self.predict(X)
 
     def train_batch(self, X):
-        its = 20
+        its = 30
         st = timeit.default_timer()
         self.start_time = st
         self.GT = -X.shape[1]* np.log(self.sf)* (X.max()-X.min())
@@ -40,7 +40,6 @@ class GSOM(object):
             self.hits = np.zeros(self.grid.shape[0])
             self.rad = self.radst #* np.exp(-.5*(i/float(its))**2)
             self.lr = self.lr #* np.exp(-.5 *ntime**2)
-            self.wd = self.wdst
             '''Distribute Errors to propagate growth over the non hit areas'''
             while self.errors.max() >= self.GT:
                 self.error_dist(self.errors.argmax())
