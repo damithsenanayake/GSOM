@@ -20,7 +20,7 @@ class GSOM(object):
         return self.predict(X)
 
     def train_batch(self, X):
-        its = 30
+        its = 35
         st = timeit.default_timer()
         self.start_time = st
         self.GT = -X.shape[1]* np.log(self.sf)* (X.max()-X.min())
@@ -50,7 +50,7 @@ class GSOM(object):
             trad_its += is_trad
             if trad_its:
                 break
-            for x in np.random.permutation(X):
+            for x in X:
                 xix += 1
                 ''' Training For Instances'''
                 bmu = pairwise_distances_argmin(np.array([x]), self.W, axis=1)[0]
@@ -107,7 +107,7 @@ class GSOM(object):
 
 
     def smoothen(self, X):
-        its = 5
+        its = 0
         print ''
         for i in range(its):
             for x in X:
