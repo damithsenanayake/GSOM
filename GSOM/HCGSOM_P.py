@@ -20,7 +20,7 @@ class GSOM(object):
         return self.predict(X)
 
     def train_batch(self, X):
-        its = 25
+        its = 20
         st = timeit.default_timer()
         self.start_time = st
         self.GT = -X.shape[1]* np.log(self.sf)* (X.max()-X.min())
@@ -30,6 +30,7 @@ class GSOM(object):
         self.lr=self.lrst
         is_trad = 0
         trad_its = 0
+        self.wd = 1./its
         for i in range(its):
 
             # Normalized Time Variable for the learning rules.
@@ -45,7 +46,7 @@ class GSOM(object):
                 self.error_dist(self.errors.argmax())
 
             xix = 0
-            fract =0.9**i#np.exp(-4.5*ntime**2)# np.exp(-4.5*ntime**2)#np.exp(-5.5* ntime **2 ) #1-ntime#0.9**(i)#0.5*np.exp(-3.9*ntime**4)#(-ntime**2+1)*0.8#*
+            fract = np.exp(-2.8*(ntime))#0.9**i
             is_trad = fract < min(fract, self.n_neighbors*1./self.W.shape[0])
             trad_its += is_trad
             if trad_its:
@@ -69,7 +70,7 @@ class GSOM(object):
                 self.W[neighbors]+= (x-self.W[neighbors])*theta_d*self.lr
                 ''' Separating Weight Decay'''
 
-                self.W[decayers]-=self.lr*self.wd*self.W[decayers]*theta_D*(np.exp(-.5*(1-ntime)**1.5))
+                self.W[decayers]-=self.lr*self.wd*self.W[decayers]*theta_D#*(np.exp(-.5*(1-ntime)**1.5))
                 et = timeit.default_timer()-st
                 print ('\riter %i : %i / %i : |G| = %i : radius :%.4f : LR: %.4f  p(g): %.4f Rrad: %.2f : wdFract: %.4f'%(i+1,xix, X.shape[0], self.W.shape[0], r, self.lr,  np.exp(-8.*ntime**2), (self.n_neighbors*1./self.W.shape[0]), fract )),' time = %.2f'%(et),
                 ''' Growing When Necessary '''
@@ -107,13 +108,15 @@ class GSOM(object):
 
 
     def smoothen(self, X):
-        its = 0
+        its = 5
         print ''
         for i in range(its):
             for x in X:
                 bmu = pairwise_distances_argmin(np.array([x]), self.W, axis=1)[0]
-                neighbors = np.argsort(np.linalg.norm(self.grid[bmu]-self.grid, axis=1))[:5]
-                self.W[neighbors] += (x-self.W[neighbors])*self.lr/2.
+                ldists = np.linalg.norm(self.grid[bmu]-self.grid, axis=1)
+                neighbors = np.argsort(ldists)[:self.n_neighbors*2]
+                hs = np.exp(-0.5*(ldists[neighbors]/ldists[neighbors].max())**2)
+                self.W[neighbors] += (x-self.W[neighbors])*self.lr*np.array([hs]).T
                 print '\r %i / %i smoothen'%(i, its),
 
     def error_dist(self, g_node):
