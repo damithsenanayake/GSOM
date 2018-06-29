@@ -70,14 +70,14 @@ class GSOM(object):
                 ''' Training For Instances'''
                 bmu = pairwise_distances_argmin(np.array([x]), self.W, axis=1)[0]
                 self.hits[bmu]+=1
-                decayers = np.argsort(np.linalg.norm(self.grid[bmu] - self.grid, axis=1))[dix]
+                decayers = np.argsort(np.linalg.norm(self.grid[bmu] - self.grid, axis=1))[:dix]
                 ldist = np.linalg.norm(self.grid - self.grid[bmu], axis=1)
                 neighbors = np.where(ldist < r)
                 theta_d = np.array([np.exp(-0.5 * (ldist[neighbors]/r)**2)]).T
                 hdist = np.linalg.norm(self.W[decayers]-x, axis=1)
                 if hdist.shape[0]:
                     hdist/=hdist.max()
-                theta_D = 1#np.array([np.exp(-20.5*(1-hdist)**6)]).T
+                theta_D = np.array([np.exp(-20.5*(1-hdist)**6)]).T
                 self.errors[bmu]+= np.linalg.norm(self.W[bmu]-x)
                 self.W[neighbors]+= (x-self.W[neighbors])*theta_d*self.lr
 
