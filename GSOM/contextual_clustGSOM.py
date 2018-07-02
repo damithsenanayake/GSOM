@@ -30,8 +30,8 @@ class GSOM(object):
         if self.pca_ncomp:
             X = PCA(min(X.shape[0], X.shape[1], self.pca_ncomp)).fit_transform(X)
 
-
-        its = 15
+        scale = pairwise_distances(X, X).max()
+        its = 25
         st = timeit.default_timer()
         self.start_time = st
         self.GT = -X.shape[1]* np.log(self.sf)* (X.max()-X.min())
@@ -40,7 +40,8 @@ class GSOM(object):
         self.errors = np.zeros(self.grid.shape[0])
         self.lr=self.lrst
         trad_its = 0
-        self.wd = 0.04#1./(np.log10(X.shape[0])*np.sqrt(X.shape[1]))
+        self.wd = 0.05#1./(np.log10(X.shape[0])*np.sqrt(X.shape[1])*np.sqrt(its))
+        im_count = 0
 
         for i in range(its):
 
@@ -54,9 +55,8 @@ class GSOM(object):
             # '''Distribute Errors to propagate growth over the non hit areas'''
             # while self.errors.max() >= self.GT:
             #     self.error_dist(self.errors.argmax())
-
             xix = 0
-            fract = np.exp(-3.5*(ntime))#0.9**i
+            fract = (1-ntime)#0.9**i#np.exp( - 3.5 * (ntime))
             is_trad = fract < min(fract, self.n_neighbors*1./self.W.shape[0])
             trad_its += is_trad
             if trad_its:
@@ -70,19 +70,24 @@ class GSOM(object):
                 ''' Training For Instances'''
                 bmu = pairwise_distances_argmin(np.array([x]), self.W, axis=1)[0]
                 self.hits[bmu]+=1
-                decayers = np.argsort(np.linalg.norm(self.grid[bmu] - self.grid, axis=1))[:dix]
+                decayers = np.argsort(np.linalg.norm(self.grid[bmu] - self.grid, axis=1))[self.n_neighbors:dix]
                 ldist = np.linalg.norm(self.grid - self.grid[bmu], axis=1)
                 neighbors = np.where(ldist < r)
                 theta_d = np.array([np.exp(-0.5 * (ldist[neighbors]/r)**2)]).T
                 hdist = np.linalg.norm(self.W[decayers]-x, axis=1)
                 if hdist.shape[0]:
+                    hdist -= hdist.min()
                     hdist/=hdist.max()
-                theta_D = np.array([1-np.exp(-20.5*(hdist)**6)]).T
+                theta_D = np.array([np.exp(-4.5*(1-hdist)**6)]).T
                 self.errors[bmu]+= np.linalg.norm(self.W[bmu]-x)
                 self.W[neighbors]+= (x-self.W[neighbors])*theta_d*self.lr
 
+                # if xix%50 ==0:
+                #     np.savetxt('map_growth/' + str(im_count) + '.csv', self.grid, delimiter=',')
+                #     im_count+=1
+
                 ''' Separating Weight Decay'''
-                self.W[decayers]-=self.lr*self.wd*self.W[decayers]*theta_D#*(np.exp(-.5*(1-ntime)**1.5))
+                self.W[decayers]-=self.lr*self.wd*self.W[decayers]*theta_D*np.exp(-0.75*(1-ntime))
                 et = timeit.default_timer()-st
                 print ('\riter %i : %i / %i : |G| = %i : radius :%.4f : LR: %.4f  p(g): %.4f Rrad: %.2f : wdFract: %.4f'%(i+1,xix, X.shape[0], self.W.shape[0], r, self.lr,  np.exp(-8.*ntime**2), (self.n_neighbors*1./self.W.shape[0]), fract )),' time = %.2f'%(et),
                 ''' Growing When Necessary '''

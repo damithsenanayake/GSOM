@@ -40,7 +40,7 @@ class GSOM(object):
         self.errors = np.zeros(self.grid.shape[0])
         self.lr=self.lrst
         trad_its = 0
-        self.wd = 0.02#1./(np.log10(X.shape[0])*np.sqrt(X.shape[1]))
+        self.wd = 0.08#1./(np.log10(X.shape[0])*np.sqrt(X.shape[1]))
 
         for i in range(its):
 
@@ -77,7 +77,7 @@ class GSOM(object):
                 hdist = np.linalg.norm(self.W[decayers]-x, axis=1)
                 if hdist.shape[0]:
                     hdist/=hdist.max()
-                theta_D = np.array([np.exp(-20.5*(1-hdist)**6)]).T
+                theta_D = np.array([1-np.exp(-20.5*(hdist)**6)]).T
                 self.errors[bmu]+= np.linalg.norm(self.W[bmu]-x)
                 self.W[neighbors]+= (x-self.W[neighbors])*theta_d*self.lr
 
