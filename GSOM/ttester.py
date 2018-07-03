@@ -12,9 +12,13 @@ z = 0.9**x
 x/= x.max()
 print x
 # y = np.sqrt(1-x**2)#-(x)**2+1
-y = np.exp(-10.5*(x-0.5)**2)
-z = 1-np.exp(-20.5*x**10)
+y = np.exp(-2.8*(x))
+# z = 1-x
 # z = np.exp(-10.5*(x/float(np.amax(x)))**2)
+plt.plot(x, 1-x)
+
+plt.plot(x, (1-x+(x**6/8)))
+
 plt.plot(x,y)
 plt.plot(x, z)
 plt.show()
