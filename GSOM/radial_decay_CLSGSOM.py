@@ -30,7 +30,7 @@ class GSOM(object):
         if self.pca_ncomp:
             X = PCA(min(X.shape[0], X.shape[1], self.pca_ncomp)).fit_transform(X)
 
-        its = 35
+        its = 25
         st = timeit.default_timer()
         self.start_time = st
         self.GT = -X.shape[1]* np.log(self.sf)* (X.max()-X.min())
@@ -39,7 +39,7 @@ class GSOM(object):
         self.errors = np.zeros(self.grid.shape[0])
         self.lr=self.lrst
         trad_its = 0
-        self.wd = 0.04#1./(np.log10(X.shape[0])*np.sqrt(X.shape[1])*np.sqrt(its))
+        self.wd = 0.08#1./(np.log10(X.shape[0])*np.sqrt(X.shape[1])*np.sqrt(its))
         im_count = 0
 
         for i in range(its):
@@ -51,7 +51,9 @@ class GSOM(object):
             self.hits = np.zeros(self.grid.shape[0])
             self.rad = self.radst #* np.exp(-.5*(i/float(its))**2)
             self.lr = self.lr #* np.exp(-.5 *ntime**2)
-
+            # '''Distribute Errors to propagate growth over the non hit areas'''
+            # while self.errors.max() >= self.GT:
+            #     self.error_dist(self.errors.argmax())
             xix = 0
             fract = 1-ntime#np.exp(-2.8*ntime)#(1-ntime + (ntime**6/20))#(1-ntime)#+(ntime)**2/8)#0.9**i#np.exp( - 3.5 * (ntime))
 
@@ -59,7 +61,6 @@ class GSOM(object):
             r = self.rad
 
             for x in X:
-                dix = int(np.floor(self.grid.shape[0] * max(fract, self.n_neighbors * 1. / self.W.shape[0])))
                 xix += 1
                 ''' Training For Instances'''
                 try:
@@ -67,8 +68,11 @@ class GSOM(object):
                 except:
                     pass
                 self.hits[bmu]+=1
+                # dix = int(np.floor(self.grid.shape[0] * max(fract, self.n_neighbors * 1. / self.W.shape[0])))
+
                 ldist = np.linalg.norm(self.grid - self.grid[bmu], axis=1)
-                decayers = np.argsort(ldist)[self.n_neighbors:dix]
+                decayers = np.where(ldist/ldist.max()<fract)[0]#[self.n_neighbors:dix]
+
                 neighbors = np.where(ldist < r)
                 theta_d = np.array([np.exp(-0.5 * (ldist[neighbors]/r)**2)]).T
                 hdist = np.linalg.norm(self.W[decayers]-x, axis=1)
