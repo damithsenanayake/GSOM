@@ -30,7 +30,7 @@ class GSOM(object):
         if self.pca_ncomp:
             X = PCA(min(X.shape[0], X.shape[1], self.pca_ncomp)).fit_transform(X)
 
-        its = 25
+        its = 50
         st = timeit.default_timer()
         self.start_time = st
         self.GT = -X.shape[1]* np.log(self.sf)* (X.max()-X.min())
@@ -39,7 +39,7 @@ class GSOM(object):
         self.errors = np.zeros(self.grid.shape[0])
         self.lr=self.lrst
         trad_its = 0
-        self.wd = 0.08#1./(np.log10(X.shape[0])*np.sqrt(X.shape[1])*np.sqrt(its))
+        self.wd = 0.06#1./(np.log10(X.shape[0])*np.sqrt(X.shape[1])*np.sqrt(its))
         im_count = 0
 
         for i in range(its):
@@ -55,8 +55,9 @@ class GSOM(object):
             # while self.errors.max() >= self.GT:
             #     self.error_dist(self.errors.argmax())
             xix = 0
-            fract = 1-ntime#np.exp(-2.8*ntime)#(1-ntime + (ntime**6/20))#(1-ntime)#+(ntime)**2/8)#0.9**i#np.exp( - 3.5 * (ntime))
-
+            fract = np.exp(-2.*ntime)#(1-ntime + (ntime**6/20))#(1-ntime)#+(ntime)**2/8)#0.9**i#np.exp( - 3.5 * (ntime))
+            if i == its-1:
+                fract = 0
 
             r = self.rad
 
@@ -88,13 +89,7 @@ class GSOM(object):
                 #     np.savetxt('map_growth/' + str(im_count) + '.csv', self.grid, delimiter=',')
                 #     im_count+=1
 
-                ''' Separating Weight Decay'''
-                if np.linalg.norm(self.W[decayers], axis=1).sum():
-                    wd = np.linalg.norm(self.W[bmu])/np.linalg.norm(self.W[decayers], axis=1).sum()
-                else:
-                    wd = 0
-
-                self.W[decayers]-=self.lr*(self.wd)*self.W[decayers]*theta_D#*np.exp(-0.5*(ntime)**2)
+                self.W[decayers]-=self.lr*(self.wd)*self.W[decayers]*theta_D*np.exp(-.5*(ntime)**2)
                 et = timeit.default_timer()-st
                 print ('\riter %i : %i / %i : |G| = %i : radius :%.4f : LR: %.4f  p(g): %.4f Rrad: %.2f : wdFract: %.4f'%(i+1,xix, X.shape[0], self.W.shape[0], r, self.lr,  np.exp(-8.*ntime**2), (self.n_neighbors*1./self.W.shape[0]), fract )),' time = %.2f'%(et),
                 ''' Growing When Necessary '''
