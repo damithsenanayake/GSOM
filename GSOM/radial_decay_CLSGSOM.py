@@ -39,7 +39,7 @@ class GSOM(object):
         self.errors = np.zeros(self.grid.shape[0])
         self.lr=self.lrst
         trad_its = 0
-        self.wd = 0.06#1./(np.log10(X.shape[0])*np.sqrt(X.shape[1])*np.sqrt(its))
+        self.wd = 0.08#1./(np.log10(X.shape[0])*np.sqrt(X.shape[1])*np.sqrt(its))
         im_count = 0
 
         for i in range(its):
@@ -50,10 +50,7 @@ class GSOM(object):
 
             self.hits = np.zeros(self.grid.shape[0])
             self.rad = self.radst #* np.exp(-.5*(i/float(its))**2)
-            self.lr = self.lr #* np.exp(-.5 *ntime**2)
-            # '''Distribute Errors to propagate growth over the non hit areas'''
-            # while self.errors.max() >= self.GT:
-            #     self.error_dist(self.errors.argmax())
+            self.lr = self.lrst*np.exp(-0.75*ntime)
             xix = 0
             fract = np.exp(-2.*ntime)#(1-ntime + (ntime**6/20))#(1-ntime)#+(ntime)**2/8)#0.9**i#np.exp( - 3.5 * (ntime))
             if i == its-1:
@@ -69,11 +66,9 @@ class GSOM(object):
                 except:
                     pass
                 self.hits[bmu]+=1
-                # dix = int(np.floor(self.grid.shape[0] * max(fract, self.n_neighbors * 1. / self.W.shape[0])))
 
                 ldist = np.linalg.norm(self.grid - self.grid[bmu], axis=1)
-                decayers = np.where(ldist/ldist.max()<fract)[0]#[self.n_neighbors:dix]
-
+                decayers = np.where(ldist/ldist.max()<fract)[0]
                 neighbors = np.where(ldist < r)
                 theta_d = np.array([np.exp(-0.5 * (ldist[neighbors]/r)**2)]).T
                 hdist = np.linalg.norm(self.W[decayers]-x, axis=1)
