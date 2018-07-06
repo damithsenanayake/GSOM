@@ -34,7 +34,7 @@ class GSOM(object):
         st = timeit.default_timer()
         self.start_time = st
         self.GT = -X.shape[1]* np.log(self.sf)* (X.max()-X.min())
-        self.grid = np.array([[i,j] for i in range(2) for j in range(2)])
+        self.grid = np.array([[i,j] for i in range(int(np.ceil(np.sqrt(X.shape[0])))) for j in range(np.ceil(np.sqrt(X.shape[0])))])
         self.W = np.zeros(shape=(self.grid.shape[0], X.shape[1]))
         self.errors = np.zeros(self.grid.shape[0])
         self.lr=self.lrst
