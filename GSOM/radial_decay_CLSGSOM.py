@@ -39,7 +39,7 @@ class GSOM(object):
         self.errors = np.zeros(self.grid.shape[0])
         self.lr=self.lrst
         trad_its = 0
-        self.wd = 0.03#1./(np.log10(X.shape[0])*np.sqrt(X.shape[1])*np.sqrt(its))
+        self.wd = 0.04#1./(np.log10(X.shape[0])*np.sqrt(X.shape[1])*np.sqrt(its))
         im_count = 0
 
         for i in range(its):
@@ -83,7 +83,7 @@ class GSOM(object):
                 #     np.savetxt('map_growth/' + str(im_count) + '.csv', self.grid, delimiter=',')
                 #     im_count+=1
 
-                self.W[decayers]-=self.lr*(self.wd)*self.W[decayers]*theta_D#*np.exp(-.5*(1-ntime))
+                self.W[decayers]-=self.lr*(self.wd)*self.W[decayers]*theta_D*np.exp(-.5*(1-ntime))
                 et = timeit.default_timer()-st
                 print ('\riter %i : %i / %i : |G| = %i : radius :%.4f : LR: %.4f  QE: %.4f Rrad: %.2f : wdFract: %.4f'%(i+1,xix, X.shape[0], self.W.shape[0], r, self.lr,  self.errors.sum(), (self.n_neighbors*1./self.W.shape[0]), fract )),' time = %.2f'%(et),
                 ''' Growing When Necessary '''
