@@ -15,10 +15,10 @@ print x
 y = np.exp(-2.8*(x))
 # z = 1-x
 # z = np.exp(-10.5*(x/float(np.amax(x)))**2)
-plt.plot(x, 1-x)
-
-plt.plot(x, (1-x+(x**6/8)))
+# plt.plot(x, 1-x)
+#
+# plt.plot(x, (1-x+(x**6/8)))
 
 plt.plot(x,y)
-plt.plot(x, z)
+# plt.plot(x, z)
 plt.show()

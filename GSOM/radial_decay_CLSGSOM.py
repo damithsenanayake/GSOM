@@ -39,7 +39,7 @@ class GSOM(object):
         self.errors = np.zeros(self.grid.shape[0])
         self.lr=self.lrst
         trad_its = 0
-        self.wd = 0.08#1./(np.log10(X.shape[0])*np.sqrt(X.shape[1])*np.sqrt(its))
+        self.wd = 0.03#1./(np.log10(X.shape[0])*np.sqrt(X.shape[1])*np.sqrt(its))
         im_count = 0
 
         for i in range(its):
@@ -50,11 +50,10 @@ class GSOM(object):
 
             self.hits = np.zeros(self.grid.shape[0])
             self.rad = self.radst #* np.exp(-.5*(i/float(its))**2)
-            self.lr = self.lrst*np.exp(-0.75*ntime)
+            self.lr = self.lrst#*np.exp(-0.75*ntime)
             xix = 0
             fract = np.exp(-2.*ntime)#(1-ntime + (ntime**6/20))#(1-ntime)#+(ntime)**2/8)#0.9**i#np.exp( - 3.5 * (ntime))
-            if i == its-1:
-                fract = 0
+
 
             r = self.rad
 
@@ -84,9 +83,9 @@ class GSOM(object):
                 #     np.savetxt('map_growth/' + str(im_count) + '.csv', self.grid, delimiter=',')
                 #     im_count+=1
 
-                self.W[decayers]-=self.lr*(self.wd)*self.W[decayers]*theta_D*np.exp(-.5*(ntime)**2)
+                self.W[decayers]-=self.lr*(self.wd)*self.W[decayers]*theta_D#*np.exp(-.5*(1-ntime))
                 et = timeit.default_timer()-st
-                print ('\riter %i : %i / %i : |G| = %i : radius :%.4f : LR: %.4f  p(g): %.4f Rrad: %.2f : wdFract: %.4f'%(i+1,xix, X.shape[0], self.W.shape[0], r, self.lr,  np.exp(-8.*ntime**2), (self.n_neighbors*1./self.W.shape[0]), fract )),' time = %.2f'%(et),
+                print ('\riter %i : %i / %i : |G| = %i : radius :%.4f : LR: %.4f  QE: %.4f Rrad: %.2f : wdFract: %.4f'%(i+1,xix, X.shape[0], self.W.shape[0], r, self.lr,  self.errors.sum(), (self.n_neighbors*1./self.W.shape[0]), fract )),' time = %.2f'%(et),
                 ''' Growing When Necessary '''
                 if self.errors[bmu] >= self.GT:# and i<1.7*its:
                     self.error_dist(bmu)
