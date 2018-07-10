@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 from sklearn.datasets import make_blobs
 from sklearn.decomposition import PCA
-from
+from big_init_CLSGSOM import GSOM
 centers = np.array([[2, 0, 0], [-1, np.sqrt(3), 0], [-1, -np.sqrt(3),0], [0,0, np.sqrt(8)]])
 
 randnoise = np.random
@@ -40,7 +40,7 @@ ax.scatter(X.T[0], X.T[1], X.T[2], c=c)
 plt.show(block=False)
 print np.linalg.norm(X - X[1], axis = 1)
 
-Y = PCA().fit_transform(X)
+Y = GSOM(lrst=0.1, n_neighbors=10, sf=0.9, fd=0.8).fit_transform(X)#PCA().fit_transform(X)
 fig = plt.figure()
 # ax = fig.add_subplot(212)
 plt.scatter(Y.T[0], Y.T[1], c= c, alpha=0.4)
