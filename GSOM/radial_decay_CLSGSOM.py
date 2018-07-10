@@ -30,7 +30,7 @@ class GSOM(object):
         if self.pca_ncomp:
             X = PCA(min(X.shape[0], X.shape[1], self.pca_ncomp)).fit_transform(X)
 
-        its = 40
+        its = 20
         st = timeit.default_timer()
         self.start_time = st
         self.GT = -X.shape[1]* np.log(self.sf)* (X.max()-X.min())
@@ -67,7 +67,7 @@ class GSOM(object):
                 self.hits[bmu]+=1
 
                 ldist = np.linalg.norm(self.grid - self.grid[bmu], axis=1)
-                decayers = np.where(ldist/ldist.max()<fract)[0]
+                decayers = np.where((ldist>r) & (ldist<2*r))[0]
                 neighbors = np.where(ldist < r)
                 theta_d = np.array([np.exp(-0.5 * (ldist[neighbors]/r)**2)]).T
                 hdist = np.linalg.norm(self.W[decayers]-x, axis=1)
