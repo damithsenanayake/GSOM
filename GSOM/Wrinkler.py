@@ -19,6 +19,7 @@ class GSOM(object):
         self.hits = None
         self.W = None
         self.grid = None
+        self.neighbor_setting = 'knn'
 
     def fit_transform(self, X):
         self.train_batch(X)
@@ -29,10 +30,7 @@ class GSOM(object):
         ''' Conduct a PCA transformation of data if specified for better execution times. '''
         if self.pca_ncomp:
             X = PCA(min(X.shape[0], X.shape[1], self.pca_ncomp)).fit_transform(X)
-
-        X -= X.mean(axis=0)
-
-        its = 10
+        its = 30
         st = timeit.default_timer()
         self.start_time = st
         self.GT = -X.shape[1]* np.log(self.sf)* (X.max()-X.min())
@@ -41,35 +39,38 @@ class GSOM(object):
         self.errors = np.zeros(self.grid.shape[0])
         self.lr=self.lrst
         trad_its = 0
-        self.wd = 0.02#1./(np.log10(X.shape[0])*np.sqrt(X.shape[1])*np.sqrt(its))
+        self.wd = 0.04#1./(np.log10(X.shape[0])*np.sqrt(X.shape[1])*np.sqrt(its))
         im_count = 0
 
         for i in range(its):
-
             ''' Normalized Time Variable for the learning rules.'''
 
             ntime = i * 1. / max(its - 1, 1)
-
+            # if i==20:
+            #     break
             self.hits = np.zeros(self.grid.shape[0])
-            self.rad = self.radst*np.exp(-0.5*ntime)
-            self.lr = self.lrst*np.exp(-0.5*ntime)#(1-ntime)
+            self.rad = self.radst*np.exp(-0.5*ntime**2)
+            self.lr = self.lrst*np.exp(-0.5*ntime**2)#(1-ntime)
             xix = 0
-            fract =0.1#(1-ntime + (ntime**6/20))#(1-ntime)#+(ntime)**2/8)#0.9**i#np.exp( - 3.5 * (ntime))
+            fract =np.exp(-2.5*ntime)#(1-ntime + (ntime**6/20))#(1-ntime)#+(ntime)**2/8)#0.9**i#np.exp( - 3.5 * (ntime))
 
-            cent_g = np.random.randn(X.shape[1])#*np.linalg.norm(X, axis=0)
+
             r = self.rad
 
             for x in X:
                 xix += 1
                 ''' Training For Instances'''
-                bmu = np.argmin(np.linalg.norm(x-self.W, axis=1))
                 try:
-                    self.hits[bmu]+=1
-                except IndexError:
+                    bmu = pairwise_distances_argmin(np.array([x]), self.W, axis=1)[0]
+                except:
                     pass
-                dix = int(self.W.shape[0] * fract )
+                self.hits[bmu]+=1
+
                 ldist = np.linalg.norm(self.grid - self.grid[bmu], axis=1)
-                decayers = np.argsort(ldist)[self.n_neighbors:dix]
+                if self.neighbor_setting == 'knn':
+                    decayers = np.argsort(ldist)[:int(fract*self.grid.shape[0])]
+                else:
+                    decayers = np.where(ldist/ldist.max()<fract)[0]
                 neighbors = np.where(ldist < r)
                 theta_d = np.array([np.exp(-0.5 * (ldist[neighbors]/r)**2)]).T
                 hdist = np.linalg.norm(self.W[decayers]-x, axis=1)
@@ -77,16 +78,15 @@ class GSOM(object):
                     hdist -= hdist.min()
                     if hdist.max():
                         hdist/=hdist.max()
-                theta_D = np.array([np.exp(-.5*(1-901131ds
-                                    hdist)**2)]).T
+                theta_D = np.array([np.exp(-4.5*(1-hdist)**6)]).T
                 self.errors[bmu]+= np.linalg.norm(self.W[bmu]-x)
                 self.W[neighbors]+= (x-self.W[neighbors])*theta_d*self.lr
 
                 # if xix%50 ==0:
                 #     np.savetxt('map_growth/' + str(im_count) + '.csv', self.grid, delimiter=',')
                 #     im_count+=1
-                self.W[decayers]-=self.lr*(self.wd)*(self.W[bmu]-self.W[decayers])*theta_D#*np.exp(-.5*(1-ntime)**2)
-                # self.wrinkle()
+
+                self.W[decayers]-=self.lr*(self.wd)*(self.W[decayers]-self.W[decayers].mean(axis=0))*theta_D#*np.exp(-.5*(1-ntime)**2)
                 et = timeit.default_timer()-st
                 print ('\riter %i : %i / %i : |G| = %i : radius :%.4f : LR: %.4f  QE: %.4f Rrad: %.2f : wdFract: %.4f'%(i+1,xix, X.shape[0], self.W.shape[0], r, self.lr,  self.errors.sum(), (self.n_neighbors*1./self.W.shape[0]), fract )),' time = %.2f'%(et),
                 ''' Growing When Necessary '''
@@ -101,18 +101,6 @@ class GSOM(object):
         ''' Prune nodes in the non-continguous regions of the map to shave of training time '''
         self.prune_map(np.where(self.hits==0)[0])
         self.smoothen(X)
-
-    def wrinkle(self):
-
-        for i in range(self.W.shape[0]):
-            neis = np.argsort(np.linalg.norm(self.grid[i]-self.grid, axis=1))[1:5]
-
-            dir_vec = np.mean((self.W[neis]-self.W[i]) * np.array([(self.hits[neis].max()-self.hits[neis])]).T, axis=0)
-
-            self.W[i] += (dir_vec )*0.0001
-
-
-
 
     def prune_mid_training(self):
         ''' Moving Average Filter to identify contiguous regions in the map '''
