@@ -24,7 +24,7 @@ fi = pd.read_csv('~/data/mnist_train.csv', header=None)
 samples = 6000
 
 dat =(np.array(fi)[:samples, 1:])#/255.0
-dat = PCA(20).fit_transform(dat)
+dat = PCA(15).fit_transform(dat)
 print dat.shape
 # dat -= dat.min()
 # dat /= dat.max()

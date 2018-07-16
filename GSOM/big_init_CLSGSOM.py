@@ -30,17 +30,18 @@ class GSOM(object):
         ''' Conduct a PCA transformation of data if specified for better execution times. '''
         # if self.pca_ncomp:
         #     X = PCA(min(X.shape[0], X.shape[1], self.pca_ncomp)).fit_transform(X)
-        its = 20
+        its = 10
         st = timeit.default_timer()
         self.start_time = st
         diam = np.linalg.norm(X-X.mean(axis=0), axis=1).max()*2
-        self.GT = -X.shape[1]* np.log(self.sf)*diam#* range# (X.max()-X.min())
+        self.GT = -np.sqrt(X.shape[1])* np.log(self.sf)*diam#* range# (X.max()-X.min())
         self.grid = np.array([[i,j] for i in range(2) for j in range(2)])
         self.W = np.zeros(shape=(self.grid.shape[0], X.shape[1]))
         self.errors = np.zeros(self.grid.shape[0])
         self.lr=self.lrst
         trad_its = 0
-        self.wd = 0.04#1./(np.log10(X.shape[0])*np.sqrt(X.shape[1])*np.sqrt(its))
+        self.hits = np.zeros(self.grid.shape[0])
+        self.wd = 0.02#1./(np.log10(X.shape[0])*np.sqrt(X.shape[1])*np.sqrt(its))
         im_count = 0
 
         for i in range(its):
@@ -49,9 +50,13 @@ class GSOM(object):
             ntime = i * 1. / max(its - 1, 1)
             # if i==20:
             #     break
+
+            if self.hits.sum():
+                self.prune_mid_training()
+
             self.hits = np.zeros(self.grid.shape[0])
             self.rad = self.radst*np.exp(-0.5*ntime)
-            self.lr = self.lrst*np.exp(-0.5*ntime)#(1-ntime)
+            self.lr = self.lrst#*np.exp(-0.5*ntime)#(1-ntime)
             xix = 0
             fract =1.*np.exp(-2.*ntime)#**0.5#(1-ntime + (ntime**6/20))#(1-ntime)#+(ntime)**2/8)#0.9**i#np.exp( - 3.5 * (ntime))
 
@@ -70,8 +75,9 @@ class GSOM(object):
                 ldist = np.linalg.norm(self.grid - self.grid[bmu], axis=1)
                 neighbors = np.where(ldist < r)[0]
                 dix = fract * self.W.shape[0]
-                decayers = np.argsort((ldist))[:dix]
-                decayers = np.setdiff1d(decayers, neighbors)
+                # decayers = np.argsort((ldist))[:dix]
+                decayers = np.where(ldist<fract*ldist.max())[0]
+                # decayers = np.setdiff1d(decayers, neighbors)
 
                 theta_d = np.array([np.exp(-0.5 * (ldist[neighbors]/r)**2)]).T
 
@@ -87,8 +93,8 @@ class GSOM(object):
                     hdist -= hdist.min()
                     if hdist.max():
                         hdist/=hdist.max()
-                theta_D = np.array([np.exp(-4.5*(1-hdist)**6)]).T
-                wd_coef = self.lr*(self.wd)*theta_D*np.exp(-5.5*(1-ntime)**2)#(ntime)#*np.exp(-4.5*(1-ntime)**2)
+                theta_D = np.array([np.exp(-2.5*(1-hdist)**2)]).T
+                wd_coef = self.lr*(self.wd)*theta_D#*np.exp(-2.5*(1-ntime)**2)#(ntime)#*np.exp(-4.5*(1-ntime)**2)
                 self.W[decayers]-=(self.W[decayers]-self.W[decayers].mean(axis=0))*wd_coef
 
 
@@ -98,13 +104,12 @@ class GSOM(object):
                 if self.errors[bmu] >= self.GT:
                     self.error_dist(bmu)
 
-            self.prune_mid_training()
 
-        ''' Moving Average Filter to identify contiguous regions in the map '''
-        self.mean_filter()
-
-        ''' Prune nodes in the non-continguous regions of the map to shave of training time '''
-        self.prune_map(np.where(self.hits==0)[0])
+        # ''' Moving Average Filter to identify contiguous regions in the map '''
+        # self.mean_filter()
+        #
+        # ''' Prune nodes in the non-continguous regions of the map to shave of training time '''
+        # self.prune_map(np.where(self.hits==0)[0])
         self.smoothen(X)
 
     def prune_mid_training(self):
