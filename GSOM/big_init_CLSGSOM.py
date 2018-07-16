@@ -30,7 +30,7 @@ class GSOM(object):
         ''' Conduct a PCA transformation of data if specified for better execution times. '''
         # if self.pca_ncomp:
         #     X = PCA(min(X.shape[0], X.shape[1], self.pca_ncomp)).fit_transform(X)
-        its = 15
+        its = 10
         st = timeit.default_timer()
         self.start_time = st
         diam = np.linalg.norm(X-X.mean(axis=0), axis=1).max()*2
@@ -88,7 +88,7 @@ class GSOM(object):
                     if hdist.max():
                         hdist/=hdist.max()
 
-                theta_D = np.array([np.exp(-4.5*(1-hdist)**2)]).T
+                theta_D = np.array([np.exp(-2.5*(1-hdist)**2)]).T
                 wd_coef = self.lr*(self.wd)*theta_D
                 # wd_coef *= (its-i<=ncuriters)
                 self.W[decayers]-=(self.W[decayers]-self.W[decayers].mean(axis=0))*wd_coef
