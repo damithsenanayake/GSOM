@@ -30,7 +30,7 @@ class GSOM(object):
         ''' Conduct a PCA transformation of data if specified for better execution times. '''
         # if self.pca_ncomp:
         #     X = PCA(min(X.shape[0], X.shape[1], self.pca_ncomp)).fit_transform(X)
-        its = 25
+        its = 20
         st = timeit.default_timer()
         self.start_time = st
         diam = np.linalg.norm(X-X.mean(axis=0), axis=1).max()*2
@@ -40,7 +40,7 @@ class GSOM(object):
         self.errors = np.zeros(self.grid.shape[0])
         self.lr=self.lrst
         trad_its = 0
-        self.wd = 0.02#1./(np.log10(X.shape[0])*np.sqrt(X.shape[1])*np.sqrt(its))
+        self.wd = 0.04#1./(np.log10(X.shape[0])*np.sqrt(X.shape[1])*np.sqrt(its))
         im_count = 0
 
         for i in range(its):
@@ -50,8 +50,8 @@ class GSOM(object):
             # if i==20:
             #     break
             self.hits = np.zeros(self.grid.shape[0])
-            self.rad = self.radst#*np.exp(-0.5*ntime**2)
-            self.lr = self.lrst#*np.exp(-0.5*ntime)#(1-ntime)
+            self.rad = self.radst*np.exp(-0.5*ntime)
+            self.lr = self.lrst*np.exp(-0.5*ntime)#(1-ntime)
             xix = 0
             fract =1.*np.exp(-2.*ntime)#**0.5#(1-ntime + (ntime**6/20))#(1-ntime)#+(ntime)**2/8)#0.9**i#np.exp( - 3.5 * (ntime))
 
@@ -71,7 +71,7 @@ class GSOM(object):
                 neighbors = np.where(ldist < r)[0]
                 dix = fract * self.W.shape[0]
                 decayers = np.argsort((ldist))[:dix]
-                # decayers = np.setdiff1d(decayers, neighbors)
+                decayers = np.setdiff1d(decayers, neighbors)
 
                 theta_d = np.array([np.exp(-0.5 * (ldist[neighbors]/r)**2)]).T
 
@@ -82,13 +82,13 @@ class GSOM(object):
                 ''' Curvature Enforcement '''
 
 
-                hdist = np.linalg.norm(self.W[decayers]-x, axis=1)
+                hdist = np.linalg.norm(self.W[decayers]-self.W[bmu], axis=1)
                 if hdist.shape[0] and not(hdist.max()==0):
                     hdist -= hdist.min()
                     if hdist.max():
                         hdist/=hdist.max()
-                theta_D = np.array([np.exp(-4.5*(1-hdist)**8)]).T
-                wd_coef = self.lr*(self.wd)*theta_D#(ntime)#*np.exp(-4.5*(1-ntime)**2)
+                theta_D = np.array([np.exp(-4.5*(1-hdist)**6)]).T
+                wd_coef = self.lr*(self.wd)*theta_D*np.exp(-5.5*(1-ntime)**2)#(ntime)#*np.exp(-4.5*(1-ntime)**2)
                 self.W[decayers]-=(self.W[decayers]-self.W[decayers].mean(axis=0))*wd_coef
 
 
