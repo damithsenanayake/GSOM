@@ -30,7 +30,7 @@ class GSOM(object):
         ''' Conduct a PCA transformation of data if specified for better execution times. '''
         # if self.pca_ncomp:
         #     X = PCA(min(X.shape[0], X.shape[1], self.pca_ncomp)).fit_transform(X)
-        its = 10
+        its = 60
         st = timeit.default_timer()
         self.start_time = st
         self.GT = -np.sqrt(X.shape[1])* np.log(self.sf)*(X.max()-X.min())
@@ -45,6 +45,12 @@ class GSOM(object):
         min_lr = 0.05#1. / its
 
         lambda_lr = -np.log(min_lr / self.lrst)
+
+        data_rad = np.linalg.norm(X - X.mean(axis=0), axis=1).max()
+
+        x_mean = X.mean(axis=0)
+
+
 
         for i in range(its):
             ''' Normalized Time Variable for the learning rules.'''
@@ -61,9 +67,9 @@ class GSOM(object):
             self.rad = self.radst#*np.exp(-rad_lambda*ntime)
 
 
-            self.lr = self.lrst#*np.exp(-lambda_lr*ntime)#(1-ntime)
+            self.lr = self.lrst*np.exp(-lambda_lr*ntime)#(1-ntime)
             xix = 0
-            fract = 0.1#np.exp(-3.*ntime)#**0.5#(1-ntime + (ntime**6/20))#(1-ntime)#+(ntime)**2/8)#0.9**i#np.exp( - 3.5 * (ntime))
+            fract = np.exp(-3*ntime)#**0.5#(1-ntime + (ntime**6/20))#(1-ntime)#+(ntime)**2/8)#0.9**i#np.exp( - 3.5 * (ntime))
 
 
             r = self.rad
@@ -81,20 +87,21 @@ class GSOM(object):
                 neighbors = np.where(ldist < r)[0]
                 dix = int(fract * self.W.shape[0])
                 decayers = np.argsort((ldist))[:dix]
-                # decayers = np.where(ldist<r*2)[0]
+                # decayers = np.where(ldist<ldist.max()*fract*2)[0]
                 # decayers = np.setdiff1d(neighbors, decayers)
-                theta_d = np.array([np.exp(-0.5 * (ldist[neighbors]/r)**2)]).T
+                theta_d = np.array([np.exp(-.5 * (ldist[neighbors]/r)**2)]).T
                 self.W[neighbors]+= (x-self.W[neighbors])*theta_d*self.lr
 
                 ''' Curvature Enforcement '''
-                hdist = np.linalg.norm(self.W[decayers]-self.W[bmu], axis=1)
+                hdist = np.linalg.norm(self.W[decayers]-self.W[bmu], axis=1)#
                 if hdist.shape[0] and not(hdist.max()==0):
                     hdist -= hdist.min()
                     if hdist.max():
                         hdist/=hdist.max()
 
-                theta_D = np.array([np.exp(-2.5*(1-hdist)**2)]).T
-                wd_coef = self.lr*(self.wd)*theta_D *(1+np.exp(-4.5*(1-ntime)))
+
+                theta_D =  np.array([np.exp(-6.5*(1-hdist)**2)]).T
+                wd_coef = self.lr*(self.wd)*theta_D#*np.exp(0.7*(1-ntime))
                 # wd_coef *= (its-i<=ncuriters)
                 self.W[decayers]-=(self.W[decayers]-self.W[decayers].mean(axis=0))*wd_coef
 
