@@ -30,7 +30,7 @@ class GSOM(object):
         ''' Conduct a PCA transformation of data if specified for better execution times. '''
         # if self.pca_ncomp:
         #     X = PCA(min(X.shape[0], X.shape[1], self.pca_ncomp)).fit_transform(X)
-        its = 60
+        its = 25
         st = timeit.default_timer()
         self.start_time = st
         self.GT = -np.sqrt(X.shape[1])* np.log(self.sf)*(X.max()-X.min())
@@ -56,20 +56,20 @@ class GSOM(object):
             ''' Normalized Time Variable for the learning rules.'''
 
             ntime = i * 1. / max(its - 1, 1)
-            # if i==20:
+            # if i==15:
             #     break
 
             if self.hits.sum():
                 self.prune_mid_training()
 
             self.hits = np.zeros(self.grid.shape[0])
-            rad_lambda = - np.log(1.1/self.radst)
-            self.rad = self.radst#*np.exp(-rad_lambda*ntime)
+            rad_lambda = - np.log(0.5)
+            self.rad = self.radst*np.exp(-rad_lambda*ntime)
 
 
             self.lr = self.lrst*np.exp(-lambda_lr*ntime)#(1-ntime)
             xix = 0
-            fract = np.exp(-3*ntime)#**0.5#(1-ntime + (ntime**6/20))#(1-ntime)#+(ntime)**2/8)#0.9**i#np.exp( - 3.5 * (ntime))
+            fract =np.exp(-3*ntime)#**0.5#(1-ntime + (ntime**6/20))#(1-ntime)#+(ntime)**2/8)#0.9**i#np.exp( - 3.5 * (ntime))
 
 
             r = self.rad
@@ -87,7 +87,7 @@ class GSOM(object):
                 neighbors = np.where(ldist < r)[0]
                 dix = int(fract * self.W.shape[0])
                 decayers = np.argsort((ldist))[:dix]
-                # decayers = np.where(ldist<ldist.max()*fract*2)[0]
+                # decayers = np.where(ldist<r*3.7)[0]
                 # decayers = np.setdiff1d(neighbors, decayers)
                 theta_d = np.array([np.exp(-.5 * (ldist[neighbors]/r)**2)]).T
                 self.W[neighbors]+= (x-self.W[neighbors])*theta_d*self.lr
@@ -101,7 +101,7 @@ class GSOM(object):
 
 
                 theta_D =  np.array([np.exp(-6.5*(1-hdist)**2)]).T
-                wd_coef = self.lr*(self.wd)*theta_D#*np.exp(0.7*(1-ntime))
+                wd_coef = self.lr*(self.wd)*theta_D*np.exp(-0.7*(1-ntime))
                 # wd_coef *= (its-i<=ncuriters)
                 self.W[decayers]-=(self.W[decayers]-self.W[decayers].mean(axis=0))*wd_coef
 
