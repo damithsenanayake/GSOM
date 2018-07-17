@@ -30,7 +30,7 @@ class GSOM(object):
         ''' Conduct a PCA transformation of data if specified for better execution times. '''
         # if self.pca_ncomp:
         #     X = PCA(min(X.shape[0], X.shape[1], self.pca_ncomp)).fit_transform(X)
-        its = 10
+        its = 20
         st = timeit.default_timer()
         self.start_time = st
         self.GT = -np.sqrt(X.shape[1])* np.log(self.sf)*(X.max()-X.min())
@@ -39,12 +39,9 @@ class GSOM(object):
         self.lr=self.lrst
         trad_its = 0
         self.hits = np.zeros(self.grid.shape[0])
-        self.wd = 0.04#1./(np.log10(X.shape[0])*np.sqrt(X.shape[1])*np.sqrt(its))
+        self.wd = 0.08#1./(np.log10(X.shape[0])*np.sqrt(X.shape[1])*np.sqrt(its))
         im_count = 0
         self.errors = np.zeros(self.grid.shape[0])
-        min_lr = 0.05#1. / its
-
-        lambda_lr = -np.log(min_lr / self.lrst)
 
         for i in range(its):
             ''' Normalized Time Variable for the learning rules.'''
@@ -57,13 +54,10 @@ class GSOM(object):
                 self.prune_mid_training()
 
             self.hits = np.zeros(self.grid.shape[0])
-            rad_lambda = - np.log(1.1/self.radst)
-            self.rad = self.radst#*np.exp(-rad_lambda*ntime)
-
-
-            self.lr = self.lrst#*np.exp(-lambda_lr*ntime)#(1-ntime)
+            self.rad = self.radst*np.exp(-0.5*ntime)
+            self.lr = self.lrst*np.exp(-.5*ntime)#(1-ntime)
             xix = 0
-            fract = 0.1#np.exp(-3.*ntime)#**0.5#(1-ntime + (ntime**6/20))#(1-ntime)#+(ntime)**2/8)#0.9**i#np.exp( - 3.5 * (ntime))
+            fract = np.exp(-2.*ntime)#**0.5#(1-ntime + (ntime**6/20))#(1-ntime)#+(ntime)**2/8)#0.9**i#np.exp( - 3.5 * (ntime))
 
 
             r = self.rad
@@ -72,7 +66,7 @@ class GSOM(object):
                 xix += 1
                 ''' Training For Instances'''
                 try:
-                    bmu = pairwise_distances_argmin(np.array([x]), self.W, axis=1)[0]
+                    bmu = self.find_bmu(x)#pairwise_distances_argmin(np.array([x]), self.W, axis=1)[0]
                 except:
                     pass
                 self.hits[bmu]+=1
@@ -81,7 +75,7 @@ class GSOM(object):
                 neighbors = np.where(ldist < r)[0]
                 dix = int(fract * self.W.shape[0])
                 decayers = np.argsort((ldist))[:dix]
-                # decayers = np.where(ldist<r*2)[0]
+                # decayers = np.where(ldist<ldist.max()*fract)[0]
                 # decayers = np.setdiff1d(neighbors, decayers)
                 theta_d = np.array([np.exp(-0.5 * (ldist[neighbors]/r)**2)]).T
                 self.W[neighbors]+= (x-self.W[neighbors])*theta_d*self.lr
@@ -94,7 +88,7 @@ class GSOM(object):
                         hdist/=hdist.max()
 
                 theta_D = np.array([np.exp(-2.5*(1-hdist)**2)]).T
-                wd_coef = self.lr*(self.wd)*theta_D *(1+np.exp(-4.5*(1-ntime)))
+                wd_coef = self.lr*(self.wd)*theta_D* (ntime > 0.5)
                 # wd_coef *= (its-i<=ncuriters)
                 self.W[decayers]-=(self.W[decayers]-self.W[decayers].mean(axis=0))*wd_coef
 
@@ -129,6 +123,18 @@ class GSOM(object):
         self.errors = np.delete(self.errors, ixs)
         self.grid = np.delete(self.grid, ixs,  axis=0)
         self.hits = np.delete(self.hits, ixs)
+
+    def find_bmu(self, x):
+
+        mink = 0
+        error = 0
+        for i in range(self.grid.shape[0]):
+            neighbors = np.argsort(np.linalg.norm(self.grid[i]-self.grid, axis=1))[:5]
+            qe = np.linalg.norm(x-self.W[neighbors], axis=1).sum()
+            if error < qe:
+                error = qe
+                mink = i
+        return mink
 
 
     def smoothen(self, X):
