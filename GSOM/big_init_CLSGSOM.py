@@ -30,22 +30,24 @@ class GSOM(object):
         ''' Conduct a PCA transformation of data if specified for better execution times. '''
         # if self.pca_ncomp:
         #     X = PCA(min(X.shape[0], X.shape[1], self.pca_ncomp)).fit_transform(X)
-        its = 25
+        its = 15
         st = timeit.default_timer()
         self.start_time = st
-        self.GT = -np.sqrt(X.shape[1])* np.log(self.sf)*(X.max()-X.min())
+        self.GT = -(X.shape[1])* np.log(self.sf)*(X.max()-X.min())
         self.grid = np.array([[i,j] for i in range(2) for j in range(2)])
         self.W = np.zeros(shape=(self.grid.shape[0], X.shape[1]))
         self.lr=self.lrst
         trad_its = 0
         self.hits = np.zeros(self.grid.shape[0])
-        self.wd = 0.08#1./(np.log10(X.shape[0])*np.sqrt(X.shape[1])*np.sqrt(its))
+        self.wd = 0.04#1./(np.log10(X.shape[0])*np.sqrt(X.shape[1])*np.sqrt(its))
         im_count = 0
         self.errors = np.zeros(self.grid.shape[0])
-        min_lr = 0.01#1. / its
+        min_lr = 0.05#1. / its
 
         lambda_lr = -np.log(min_lr / self.lrst)
+        min_fract = 0.1
 
+        lambda_fr = -np.log(min_fract)
         data_rad = np.linalg.norm(X - X.mean(axis=0), axis=1).max()
 
         x_mean = X.mean(axis=0)
@@ -69,8 +71,9 @@ class GSOM(object):
 
             self.lr = self.lrst*np.exp(-lambda_lr*ntime)#(1-ntime)
             xix = 0
-            fract =np.exp(-3.2*ntime)#**0.5#(1-ntime + (ntime**6/20))#(1-ntime)#+(ntime)**2/8)#0.9**i#np.exp( - 3.5 * (ntime))
+            fract =np.exp(-lambda_fr*ntime)#**0.5#(1-ntime + (ntime**6/20))#(1-ntime)#+(ntime)**2/8)#0.9**i#np.exp( - 3.5 * (ntime))
 
+            cent_fract = 0.5
 
             r = self.rad
 
@@ -86,7 +89,9 @@ class GSOM(object):
                 ldist = np.linalg.norm(self.grid - self.grid[bmu], axis=1)
                 neighbors = np.where(ldist < r)[0]
                 dix = int(fract * self.W.shape[0])
+                cix = int(cent_fract * self.W.shape[0])
                 decayers = np.argsort((ldist))[:dix]
+                hemis = np.argsort(ldist)[:max(cix,2)]
                 # decayers = np.where(ldist<r*3.7)[0]
                 # decayers = np.setdiff1d(neighbors, decayers)
                 theta_d = np.array([np.exp(-.5 * (ldist[neighbors]/r)**2)]).T
@@ -101,9 +106,9 @@ class GSOM(object):
 
 
                 theta_D =  np.array([np.exp(-6.5*(1-hdist)**2)]).T
-                wd_coef = self.lr*(self.wd)*theta_D*np.exp(-1.7*(1-ntime))
+                wd_coef = self.lr*(self.wd)*theta_D#*np.exp(-.7*(1-ntime))
                 # wd_coef *= (its-i<=ncuriters)
-                self.W[decayers]-=(self.W[decayers]-self.W[decayers].mean(axis=0))*wd_coef
+                self.W[decayers]-=(self.W[decayers]-self.W[hemis].mean(axis=0))*wd_coef
 
                 self.errors[bmu]+= np.linalg.norm(self.W[bmu]-x)
 
