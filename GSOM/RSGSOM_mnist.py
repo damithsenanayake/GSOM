@@ -25,7 +25,7 @@ samples = 6000
 
 dat =(np.array(fi)[:samples, 1:])#/255.0
 dat = PCA(15).fit_transform(dat)
-# dat += 100000
+dat += 100000
 print dat.shape
 # dat -= dat.min()
 # dat /= dat.max()
