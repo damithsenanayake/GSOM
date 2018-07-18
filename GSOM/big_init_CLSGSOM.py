@@ -30,7 +30,7 @@ class GSOM(object):
         ''' Conduct a PCA transformation of data if specified for better execution times. '''
         # if self.pca_ncomp:
         #     X = PCA(min(X.shape[0], X.shape[1], self.pca_ncomp)).fit_transform(X)
-        its = 50
+        its = 20
         st = timeit.default_timer()
         self.start_time = st
         self.GT = -(X.shape[1])* np.log(self.sf)*(X.max()-X.min())
@@ -66,7 +66,7 @@ class GSOM(object):
 
             self.hits = np.zeros(self.grid.shape[0])
             rad_lambda = - np.log(0.5)
-            self.rad = self.radst*np.exp(-rad_lambda*ntime)
+            self.rad = self.radst#*np.exp(-rad_lambda*ntime)
 
 
             self.lr = self.lrst*np.exp(-lambda_lr*ntime)#(1-ntime)
@@ -74,7 +74,7 @@ class GSOM(object):
             fract =np.exp(-lambda_fr*ntime)#**0.5#(1-ntime + (ntime**6/20))#(1-ntime)#+(ntime)**2/8)#0.9**i#np.exp( - 3.5 * (ntime))
 
             cent_fract_st = 0.3
-            cent_fract =(1- cent_fract_st)*(1-ntime) + cent_fract_st
+            cent_fract = 2*fract#(1- cent_fract_st)*(1-ntime) + cent_fract_st
             r = self.rad
 
             for x in X:
@@ -106,7 +106,7 @@ class GSOM(object):
 
 
                 theta_D =  np.array([np.exp(-6.5*(1-hdist)**2)]).T
-                wd_coef = self.lr*(self.wd)*theta_D*np.exp(-.7*(ntime))
+                wd_coef = self.lr*(self.wd)*theta_D#*np.exp(-.25*(ntime))
                 # wd_coef *= (its-i<=ncuriters)
                 self.W[decayers]-=(self.W[decayers]-self.W[hemis].mean(axis=0))*wd_coef
 
