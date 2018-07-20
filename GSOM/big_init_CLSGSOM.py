@@ -39,7 +39,7 @@ class GSOM(object):
         self.lr=self.lrst
         trad_its = 0
         self.hits = np.zeros(self.grid.shape[0])
-        self.wd = 0.08#1./(np.log10(X.shape[0])*np.sqrt(X.shape[1])*np.sqrt(its))
+        self.wd = 0.04#1./(np.log10(X.shape[0])*np.sqrt(X.shape[1])*np.sqrt(its))
         im_count = 0
         self.errors = np.zeros(self.grid.shape[0])
         min_lr = 0.05#1. / its
@@ -73,10 +73,13 @@ class GSOM(object):
             xix = 0
             fract =np.exp(-lambda_fr*ntime)#**0.5#(1-ntime + (ntime**6/20))#(1-ntime)#+(ntime)**2/8)#0.9**i#np.exp( - 3.5 * (ntime))
 
-            cent_fract = 2*fract#(1- cent_fract_st)*(1-ntime) + cent_fract_st
+            cent_fract = 4*fract#(1- cent_fract_st)*(1-ntime) + cent_fract_st
             r = self.rad
 
             for x in X:
+                vis = 0
+                if xix == 5999 and i == its-1:
+                    vis = 1
                 xix += 1
                 ''' Training For Instances'''
                 try:
@@ -105,7 +108,7 @@ class GSOM(object):
 
 
                 theta_D =  np.array([np.exp(-6.5*(1-hdist)**2)]).T
-                wd_coef = self.lr*(self.wd)*theta_D*np.exp(-.5*(1-ntime))
+                wd_coef = self.lr*(self.wd)*theta_D#*np.exp(-.5*(1-ntime))
                 # wd_coef *= (its-i<=ncuriters)
                 self.W[decayers]-=(self.W[decayers]-self.W[hemis].mean(axis=0))*wd_coef
 
@@ -117,7 +120,15 @@ class GSOM(object):
                 ''' Growing When Necessary '''
                 if self.errors[bmu] >= self.GT:
                     self.error_dist(bmu)
-        self.prune_mid_training()
+                if vis:
+                    self.bmu = bmu
+                    self.decayers = decayers
+                    self.hemis  = hemis
+                    self.undelgrid = self.grid
+                    self.mid = np.argsort(np.linalg.norm(self.W[hemis].mean(axis=0)-self.W, axis=1))[0]
+                    self.abcent = np.argsort(np.linalg.norm(self.W.mean(axis=0)-self.W, axis=1))[0]
+                    self.theta_D = theta_D
+        # self.prune_mid_training()
 
         self.smoothen(X)
 

@@ -34,7 +34,7 @@ del fi
 gc.collect()
 # x, y = SelfOrganizingSwarm(iterations=10, alpha=1, beta=0.1, delta=0, theta=3.5).fit_transform(dat[:samples]).T
 st = timeit.default_timer()
-model = GSOM(lrst=.1,  sf=0.9, fd = .8, n_neighbors=40, PCA = 20)
+model = GSOM(lrst=.1,  sf=0.9, fd = .8, n_neighbors=20, PCA = 20)
 
 # x, y = MovingMap(iterations=100, beta=1.5).fit_transform(dat[:samples]).T
 Y= model.fit_transform(dat)
@@ -72,7 +72,40 @@ plt.show(block=False)
 
 
 fig =plt.figure()
-plt.scatter(model.grid.T[0], model.grid.T[1] , edgecolors='none', c = plt.cm.gist_rainbow(model.hits/float(model.hits.max())), alpha = 0.5, s = 15)
+
+#plt.cm.gist_rainbow(model.hits/float(model.hits.max()))
+plt.subplot(211)
+plt.scatter(model.grid.T[0], model.grid.T[1] , edgecolors='none', c = 'black', alpha = 0.1, s = 8, marker='+')
+
+x, y = model.undelgrid[model.hemis].T
+
+plt.scatter(x, y, edgecolors='none', c = 'blue', alpha=0.5, s = 20)
+
+x, y = model.undelgrid[model.mid]
+plt.scatter(x, y, edgecolors='none', c = 'green', alpha = 1., s = 20)
+
+x, y = model.undelgrid[model.decayers].T
+plt.scatter(x, y, edgecolors= 'none', c = 'red', alpha = 0.5, s = 10)
+
+x, y = model.undelgrid[model.bmu]
+
+plt.scatter(x, y, edgecolors='none', c='black', alpha=0.8, s = 10)
+
+x, y = model.undelgrid[model.abcent]
+
+plt.scatter(x, y, edgecolors='none', c='orange', alpha=0.8, s = 20, marker= 'x')
+
+plt.subplot(212)
+
+plt.scatter(model.grid.T[0], model.grid.T[1] , edgecolors='none', c = 'black', alpha = 0.1, s = 8, marker='+')
+x, y = model.undelgrid[model.decayers].T
+
+colors = np.zeros((x.shape[0],4))
+
+colors[:, 3] = model.theta_D.T
+
+plt.scatter(x, y, edgecolors= 'none', c = colors, s = 40)
+
 plt.show()
 
 # fig =plt.figure()
