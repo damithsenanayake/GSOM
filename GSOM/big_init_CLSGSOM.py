@@ -30,7 +30,7 @@ class GSOM(object):
         ''' Conduct a PCA transformation of data if specified for better execution times. '''
         # if self.pca_ncomp:
         #     X = PCA(min(X.shape[0], X.shape[1], self.pca_ncomp)).fit_transform(X)
-        its = 20
+        its = 40
         st = timeit.default_timer()
         self.start_time = st
         self.GT = -(X.shape[1])* np.log(self.sf)*(X.max()-X.min())
@@ -39,20 +39,20 @@ class GSOM(object):
         self.lr=self.lrst
         trad_its = 0
         self.hits = np.zeros(self.grid.shape[0])
-        self.wd = 0.12#1./(np.log10(X.shape[0])*np.sqrt(X.shape[1])*np.sqrt(its))
+        self.wd = 0.1#1./(np.log10(X.shape[0])*np.sqrt(X.shape[1])*np.sqrt(its))
         im_count = 0
         self.errors = np.zeros(self.grid.shape[0])
         min_lr = 0.05#1. / its
 
         lambda_lr = -np.log(min_lr / self.lrst)
-        min_fract = 0.1
+        min_fract = 0.08
         fract_st = 1.
 
         lambda_fr = -np.log(min_fract/fract_st)
         data_rad = np.linalg.norm(X - X.mean(axis=0), axis=1).max()
 
         x_mean = X.mean(axis=0)
-
+        min_neis = 20.
 
 
         for i in range(its):
@@ -66,8 +66,8 @@ class GSOM(object):
                 self.prune_mid_training()
 
             self.hits = np.zeros(self.grid.shape[0])
-            rad_lambda = - np.log(0.6)
-            self.rad = self.radst*np.exp(-rad_lambda*ntime)
+            rad_lambda = - np.log(min_neis/self.n_neighbors)
+            self.rad = np.sqrt(0.5*self.n_neighbors * np.exp(-rad_lambda * ntime ))#self.radst*np.exp(-rad_lambda*ntime)
 
 
             self.lr = self.lrst*np.exp(-lambda_lr*ntime)#(1-ntime)
@@ -109,7 +109,7 @@ class GSOM(object):
 
 
                 theta_D =  np.array([np.exp(-6.5*(1-hdist)**2)]).T
-                wd_coef = self.lr*(self.wd)*theta_D*np.exp(-.5*(1-ntime))
+                wd_coef = self.lr*(self.wd)*theta_D*np.exp(-1.75*(ntime))
                 # wd_coef *= (its-i<=ncuriters)
                 self.W[decayers]-=(self.W[decayers]-self.W[hemis].mean(axis=0))*wd_coef
 
