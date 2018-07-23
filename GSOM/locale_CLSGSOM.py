@@ -39,8 +39,8 @@ class GSOM(object):
         self.lr=self.lrst
         trad_its = 0
         self.hits = np.zeros(self.grid.shape[0])
-        self.wdst = 0.16
-        self.wden = 0.16#1./(np.log10(X.shape[0])*np.sqrt(X.shape[1])*np.sqrt(its))
+        self.wdst = 0.06
+        self.wden = 0.06#1./(np.log10(X.shape[0])*np.sqrt(X.shape[1])*np.sqrt(its))
         im_count = 0
         self.errors = np.zeros(self.grid.shape[0])
         min_lr = 0.05#1. / its
@@ -57,7 +57,7 @@ class GSOM(object):
 
         lambda_wd = -np.log(self.wden/self.wdst)
 
-
+        lambda_cf = np.log(0.2/0.7)
 
         for i in range(its):
             ''' Normalized Time Variable for the learning rules.'''
@@ -78,7 +78,7 @@ class GSOM(object):
             xix = 0
             fract =np.exp(-lambda_fr*ntime)#**0.5#(1-ntime + (ntime**6/20))#(1-ntime)#+(ntime)**2/8)#0.9**i#np.exp( - 3.5 * (ntime))
 
-            cent_fract = 0.7#4*fract#(1- cent_fract_st)*(1-ntime) + cent_fract_st
+            cent_fract = fract**0.5#0.5# * np.exp(lambda_cf * ntime)#4*fract#(1- cent_fract_st)*(1-ntime) + cent_fract_st
             r = self.rad
 
             for x in X:
@@ -117,14 +117,24 @@ class GSOM(object):
                 # wd_coef *= (its-i<=ncuriters)
                 self.W[decayers]-=(self.W[decayers]-self.W[hemis].mean(axis=0))*wd_coef
 
+                decayers_distances = np.linalg.norm(self.W[decayers] - self.W[hemis].mean(axis=0), axis=1)
+
+                dist_ratio = 1- np.linalg.norm(self.W[hemis].mean(axis=0) - self.W[bmu])/ decayers_distances.max()
+                wd_ratio = np.exp( -4.5 * dist_ratio **6 )
+
+                wd_coef *= wd_ratio
+
                 self.errors[bmu]+= np.linalg.norm(self.W[bmu]-x)
 
                 et = timeit.default_timer()-st
                 if xix%500==0:
                     print ('\riter %i : %i / %i : |G| = %i : radius :%.4f : LR: %.4f  QE: %.4f Rrad: %.2f : wdFract: %.4f : wd_coef : %.4f'%(i+1,xix, X.shape[0], self.W.shape[0], r, self.lr,  self.errors.sum(), (self.n_neighbors*1./self.W.shape[0]), decayers.shape[0]*1./self.W.shape[0], np.mean(wd_coef) )),' time = %.2f'%(et),
                 ''' Growing When Necessary '''
-                if self.errors[bmu] >= self.GT:
-                    self.error_dist(bmu)
+                # if self.errors[bmu] >= self.GT:
+                #     self.error_dist(bmu)
+                while self.errors.max()>= self.GT:
+                    self.error_dist(self.errors.argmax())
+
                 if vis:
                     self.bmu = bmu
                     self.decayers = decayers
