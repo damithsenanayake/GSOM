@@ -37,7 +37,6 @@ class GSOM(object):
         self.grid = np.array([[i,j] for i in range(2) for j in range(2)])
         self.W = np.zeros(shape=(self.grid.shape[0], X.shape[1]))
         self.lr=self.lrst
-        trad_its = 0
         self.hits = np.zeros(self.grid.shape[0])
         self.wdst = 0.06
         self.wden = 0.06#1./(np.log10(X.shape[0])*np.sqrt(X.shape[1])*np.sqrt(its))
@@ -50,14 +49,10 @@ class GSOM(object):
         fract_st = 1.
 
         lambda_fr = -np.log(min_fract/fract_st)
-        data_rad = np.linalg.norm(X - X.mean(axis=0), axis=1).max()
 
-        x_mean = X.mean(axis=0)
         min_neis = 20.
 
         lambda_wd = -np.log(self.wden/self.wdst)
-
-        lambda_cf = np.log(0.2/0.7)
 
         for i in range(its):
             ''' Normalized Time Variable for the learning rules.'''
@@ -99,8 +94,6 @@ class GSOM(object):
                 cix = int(cent_fract * self.W.shape[0])
                 decayers = np.argsort((ldist))[:dix]
                 hemis = np.argsort(ldist)[:max(cix,2)]
-                # decayers = np.where(ldist<r*3.7)[0]
-                # decayers = np.setdiff1d(neighbors, decayers)
                 theta_d = np.array([np.exp(-.5 * (ldist[neighbors]/r)**2)]).T
                 self.W[neighbors]+= (x-self.W[neighbors])*theta_d*self.lr
 
@@ -130,8 +123,7 @@ class GSOM(object):
                 if xix%500==0:
                     print ('\riter %i : %i / %i : |G| = %i : radius :%.4f : LR: %.4f  QE: %.4f Rrad: %.2f : wdFract: %.4f : wd_coef : %.4f'%(i+1,xix, X.shape[0], self.W.shape[0], r, self.lr,  self.errors.sum(), (self.n_neighbors*1./self.W.shape[0]), decayers.shape[0]*1./self.W.shape[0], np.mean(wd_coef) )),' time = %.2f'%(et),
                 ''' Growing When Necessary '''
-                # if self.errors[bmu] >= self.GT:
-                #     self.error_dist(bmu)
+
                 while self.errors.max()>= self.GT:
                     self.error_dist(self.errors.argmax())
 
