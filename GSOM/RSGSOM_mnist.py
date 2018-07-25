@@ -3,7 +3,7 @@ import pandas as pd
 import numpy as np
 import gc
 from MovingMap import  MovingMap
-from locale_CLSGSOM import GSOM
+from TGSOM import GSOM
 from sklearn.preprocessing import normalize
 from sklearn.manifold import MDS, TSNE, LocallyLinearEmbedding
 from sklearn.cluster import KMeans, DBSCAN

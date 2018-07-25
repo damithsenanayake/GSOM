@@ -3,7 +3,7 @@ import numpy as np
 from sklearn.metrics.pairwise import pairwise_distances_argmin, pairwise_distances
 import timeit
 from sklearn.decomposition import PCA
-
+from sklearn.cluster import  KMeans
 
 class GSOM(object):
 
@@ -34,7 +34,7 @@ class GSOM(object):
         st = timeit.default_timer()
         self.start_time = st
         self.GT = -(X.shape[1])* np.log(self.sf)*(X.max()-X.min())
-        self.grid = np.array([[i,j] for i in range(2) for j in range(2)])
+        self.grid = np.array([[i,j] for i in range(2) for j in range(int(2))])
         self.W = np.zeros(shape=(self.grid.shape[0], X.shape[1]))
         self.lr=self.lrst
         self.hits = np.zeros(self.grid.shape[0])
@@ -45,7 +45,7 @@ class GSOM(object):
         min_lr = 0.05#1. / its
 
         lambda_lr = -np.log(min_lr / self.lrst)
-        min_fract = 0.07
+        min_fract = 0.1
         fract_st = 1.
 
         lambda_fr = -np.log(min_fract/fract_st)
@@ -56,14 +56,19 @@ class GSOM(object):
 
         for i in range(its):
             ''' Normalized Time Variable for the learning rules.'''
+            kmeans = KMeans(i+1)
 
+            kmeans.fit(X)
+
+            kcenters = kmeans.cluster_centers_
+            klabels = kmeans.labels_
             ntime = i * 1. / max(its - 1, 1)
-            # if i==15:
+            # if i==5:
             #     break
 
             if self.hits.sum():
                 self.prune_mid_training()
-            self.wd = self.wdst*np.exp(-lambda_wd * (ntime))
+            self.wd = self.wdst*np.exp(-lambda_wd * (1-ntime))
             self.hits = np.zeros(self.grid.shape[0])
             rad_lambda = - np.log(min_neis/self.n_neighbors)
             self.rad = np.sqrt(0.5*self.n_neighbors * np.exp(-rad_lambda * ntime ))#self.radst*np.exp(-rad_lambda*ntime)
@@ -73,14 +78,13 @@ class GSOM(object):
             xix = 0
             fract =np.exp(-lambda_fr*ntime)#**0.5#(1-ntime + (ntime**6/20))#(1-ntime)#+(ntime)**2/8)#0.9**i#np.exp( - 3.5 * (ntime))
 
-            cent_fract = fract**0.5#0.5# * np.exp(lambda_cf * ntime)#4*fract#(1- cent_fract_st)*(1-ntime) + cent_fract_st
+            cent_fract = fract#**0.5#0.5# * np.exp(lambda_cf * ntime)#4*fract#(1- cent_fract_st)*(1-ntime) + cent_fract_st
             r = self.rad
 
             for x in X:
                 vis = 0
                 if xix == 5999 and i == its-1:
                     vis = 1
-                xix += 1
                 ''' Training For Instances'''
                 try:
                     bmu = pairwise_distances_argmin(np.array([x]), self.W, axis=1)[0]
@@ -105,17 +109,20 @@ class GSOM(object):
                         hdist/=hdist.max()
 
 
-                theta_D =  np.array([np.exp(-10.5*(1-hdist)**2)]).T
+                theta_D = 1# np.array([np.exp(-10.5*(1-hdist)**2)]).T
                 wd_coef = self.lr*(self.wd)*theta_D#*np.exp(-1.75*(ntime))
                 # wd_coef *= (its-i<=ncuriters)
-                self.W[decayers]-=(self.W[decayers]-self.W[hemis].mean(axis=0))*wd_coef
+                g_center = self.W[self.hits[neighbors].argmin()]#kcenters[klabels[xix]]
 
-                decayers_distances = np.linalg.norm(self.W[decayers] - self.W[hemis].mean(axis=0), axis=1)
+                self.W[decayers]-=(self.W[decayers]-g_center)*wd_coef
 
-                dist_ratio = 1- np.linalg.norm(self.W[hemis].mean(axis=0) - self.W[bmu])/ decayers_distances.max()
-                wd_ratio = np.exp( -4.5 * dist_ratio **6 )
 
-                wd_coef *= wd_ratio
+                # decayers_distances = np.linalg.norm(self.W[decayers] - g_center, axis=1)
+
+                # dist_ratio = 1- np.linalg.norm(self.W[hemis].mean(axis=0) - self.W[bmu])/ decayers_distances.max()
+                # wd_ratio = np.exp( -4.5 * dist_ratio **6 )
+                #
+                # wd_coef *= wd_ratio
 
                 self.errors[bmu]+= np.linalg.norm(self.W[bmu]-x)
 
@@ -136,7 +143,8 @@ class GSOM(object):
                     self.abcent = np.argsort(np.linalg.norm(self.W.mean(axis=0)-self.W, axis=1))[0]
                     self.theta_D = theta_D
         # self.prune_mid_training()
-
+                xix += 1
+            self.errors *= 0.5
         self.smoothen(X)
 
     def prune_mid_training(self):
