@@ -3,7 +3,7 @@ import pandas as pd
 import numpy as np
 import gc
 from MovingMap import  MovingMap
-from TGSOM import GSOM
+from RAWSOM import SOM
 from sklearn.preprocessing import normalize
 from sklearn.manifold import MDS, TSNE, LocallyLinearEmbedding
 from sklearn.cluster import KMeans, DBSCAN
@@ -18,7 +18,7 @@ with warnings.catch_warnings():
     warnings.filterwarnings("ignore", category=DeprecationWarning)
     import md5, sha
 
-print GSOM.__module__
+print SOM.__module__
 fi = pd.read_csv('~/data/mnist_train.csv', header=None)
 # test = pd.read_csv('../mnist_test.csv', header=None)
 samples = 6000
@@ -38,7 +38,7 @@ print dat.shape
 gc.collect()
 # x, y = SelfOrganizingSwarm(iterations=10, alpha=1, beta=0.1, delta=0, theta=3.5).fit_transform(dat[:samples]).T
 st = timeit.default_timer()
-model = GSOM(lrst=.1,  sf=0.9, fd = .9, n_neighbors=15, PCA = 20)
+model = SOM(lr=.01, n_neighbors=100, iters=20)
 
 # x, y = MovingMap(iterations=100, beta=1.5).fit_transform(dat[:samples]).T
 Y= model.fit_transform(dat)
@@ -72,14 +72,11 @@ plt.subplot(212)
 #
 plt.scatter(x, y, edgecolors='none',c=plt.cm.jet(kl/10.), alpha = 0.5, s = 15)
 #
-plt.show(block=False)
+# plt.show(block=False)
 #
 #
-fig =plt.figure()
+# fig =plt.figure()
 #
-
-
-
 # #plt.cm.gist_rainbow(model.hits/float(model.hits.max()))
 # plt.subplot(211)
 # plt.scatter(model.grid.T[0], model.grid.T[1] , edgecolors='none', c = 'black', alpha = 0.1, s = 8, marker='+')
@@ -104,7 +101,7 @@ fig =plt.figure()
 #
 # plt.subplot(212)
 #
-plt.scatter(model.grid.T[0], model.grid.T[1] , edgecolors='none', c = model.errors, cmap= plt.cm.gist_rainbow, alpha = 0.6, s = 20)
+# plt.scatter(model.grid.T[0], model.grid.T[1] , edgecolors='none', c = 'black', alpha = 0.1, s = 8, marker='+')
 # x, y = model.undelgrid[model.decayers].T
 #
 # colors = np.zeros((x.shape[0],4))

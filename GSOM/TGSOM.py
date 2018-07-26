@@ -30,7 +30,7 @@ class GSOM(object):
         ''' Conduct a PCA transformation of data if specified for better execution times. '''
         # if self.pca_ncomp:
         #     X = PCA(min(X.shape[0], X.shape[1], self.pca_ncomp)).fit_transform(X)
-        its = 25
+        its = 20
         st = timeit.default_timer()
         self.start_time = st
         self.GT = -(X.shape[1])* np.log(self.sf)*(X.max()-X.min())
@@ -39,15 +39,15 @@ class GSOM(object):
         self.lr=self.lrst
         self.hits = np.zeros(self.grid.shape[0])
         self.errors = np.zeros(self.grid.shape[0])
-        min_lr = 0.05#1. / its
+        min_lr = 0.1#1. / its
 
         lambda_lr = -np.log(min_lr / self.lrst)
         fract_st = 1.
-        min_fract = 0.07
+        min_fract = 0.1
 
         lambda_fr = -np.log(min_fract/fract_st)
 
-        min_neis = 10.
+        min_neis = 15.
 
         # lambda_wd = -np.log(self.wden/self.wdst)
 
@@ -101,10 +101,10 @@ class GSOM(object):
                         hdist/=hdist.max()
 
 
-                theta_D = np.array([np.exp(-10.5*(1-hdist)**2)]).T
-                wd_coef = self.lr*(self.wd)*theta_D*np.exp(-0.75*(1-ntime))
+                theta_D = np.array([np.exp(-6.5*(1-hdist)**2)]).T
+                wd_coef = self.lr*(self.wd)*theta_D#*np.exp(-0.75*(ntime))
                 # wd_coef *= (its-i<=ncuriters)
-                g_center = self.W[self.hits[neighbors].argmin()]#kcenters[klabels[xix]]
+                g_center = self.W[self.errors[neighbors].argmin()]#self.W[decayers].mean(axis=0)#self.W[self.hits[neighbors].argmin()]#kcenters[klabels[xix]]
 
                 self.W[decayers]-=(self.W[decayers]-g_center)*wd_coef
 
@@ -123,8 +123,10 @@ class GSOM(object):
                     print ('\riter %i : %i / %i : |G| = %i : radius :%.4f : LR: %.4f  QE: %.4f Rrad: %.2f : wdFract: %.4f : wd_coef : %.4f'%(i+1,xix, X.shape[0], self.W.shape[0], r, self.lr,  self.errors.sum(), (self.n_neighbors*1./self.W.shape[0]), decayers.shape[0]*1./self.W.shape[0], np.mean(wd_coef) )),' time = %.2f'%(et),
                 ''' Growing When Necessary '''
 
-                while self.errors.max()>= self.GT:
-                    self.error_dist(self.errors.argmax())
+                # while self.errors.max()>= self.GT:
+                #     self.error_dist(self.errors.argmax())
+                if self.errors[bmu] > self.GT:
+                    self.error_dist(bmu)
 
                 if vis:
                     self.bmu = bmu
@@ -136,7 +138,6 @@ class GSOM(object):
                     self.theta_D = theta_D
         # self.prune_mid_training()
                 xix += 1
-            self.errors *= 0.5
         self.smoothen(X)
 
     def prune_mid_training(self):
