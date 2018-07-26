@@ -30,26 +30,29 @@ class GSOM(object):
         ''' Conduct a PCA transformation of data if specified for better execution times. '''
         # if self.pca_ncomp:
         #     X = PCA(min(X.shape[0], X.shape[1], self.pca_ncomp)).fit_transform(X)
-        its = 20
+        its = 30
         st = timeit.default_timer()
         self.start_time = st
         self.GT = -(X.shape[1])* np.log(self.sf)*(X.max()-X.min())
         self.grid = np.array([[i,j] for i in range(2) for j in range(int(2))])
         self.W = np.zeros(shape=(self.grid.shape[0], X.shape[1]))
         self.lr=self.lrst
-        self.hits = np.zeros(self.grid.shape[0])
+        self.hits = np.zeros(self.grid.shape[0]).astype(float)
         self.errors = np.zeros(self.grid.shape[0])
-        min_lr = 0.1#1. / its
+        min_lr = 0.05#1. / its
 
         lambda_lr = -np.log(min_lr / self.lrst)
         fract_st = 1.
         min_fract = 0.1
 
+        self.wdst = 0.08
+        self.wden = 0.04
+
         lambda_fr = -np.log(min_fract/fract_st)
 
-        min_neis = 15.
+        min_neis = 10.
 
-        # lambda_wd = -np.log(self.wden/self.wdst)
+        lambda_wd = -np.log(self.wden/self.wdst)
 
         for i in range(its):
             ''' Normalized Time Variable for the learning rules.'''
@@ -60,7 +63,7 @@ class GSOM(object):
 
             if self.hits.sum():
                 self.prune_mid_training()
-            self.wd = 0.04#self.wdst*np.exp(-lambda_wd * (1-ntime))
+            self.wd = self.wdst*np.exp(-lambda_wd * (1-ntime))
             self.hits = np.zeros(self.grid.shape[0])
             rad_lambda = - np.log(min_neis/self.n_neighbors)
             self.rad = np.sqrt(0.5*self.n_neighbors * np.exp(-rad_lambda * ntime ))#self.radst*np.exp(-rad_lambda*ntime)
@@ -72,7 +75,8 @@ class GSOM(object):
 
             cent_fract = fract#**0.5#0.5# * np.exp(lambda_cf * ntime)#4*fract#(1- cent_fract_st)*(1-ntime) + cent_fract_st
             r = self.rad
-
+            while self.errors.max() >= self.GT:
+                self.error_dist(self.errors.argmax())
             for x in X:
                 vis = 0
                 if xix == 5999 and i == its-1:
@@ -101,7 +105,7 @@ class GSOM(object):
                         hdist/=hdist.max()
 
 
-                theta_D = np.array([np.exp(-6.5*(1-hdist)**2)]).T
+                theta_D = np.array([np.exp(-6.5*(1-hdist)**1)]).T
                 wd_coef = self.lr*(self.wd)*theta_D#*np.exp(-0.75*(ntime))
                 # wd_coef *= (its-i<=ncuriters)
                 g_center = self.W[self.errors[neighbors].argmin()]#self.W[decayers].mean(axis=0)#self.W[self.hits[neighbors].argmin()]#kcenters[klabels[xix]]
@@ -123,8 +127,7 @@ class GSOM(object):
                     print ('\riter %i : %i / %i : |G| = %i : radius :%.4f : LR: %.4f  QE: %.4f Rrad: %.2f : wdFract: %.4f : wd_coef : %.4f'%(i+1,xix, X.shape[0], self.W.shape[0], r, self.lr,  self.errors.sum(), (self.n_neighbors*1./self.W.shape[0]), decayers.shape[0]*1./self.W.shape[0], np.mean(wd_coef) )),' time = %.2f'%(et),
                 ''' Growing When Necessary '''
 
-                # while self.errors.max()>= self.GT:
-                #     self.error_dist(self.errors.argmax())
+
                 if self.errors[bmu] > self.GT:
                     self.error_dist(bmu)
 
@@ -195,9 +198,9 @@ class GSOM(object):
                     w = self.W[closest2_new[0]] * 2 - self.W[closest2_new[1]]
 
                 self.W = np.append(self.W, np.array([w]), axis=0)
-                self.errors = np.append(self.errors, 0)
+                self.errors = np.append(self.errors, 0.)
                 self.grid = np.append(self.grid, np.array([nei]), axis=0)
-                self.hits = np.append(self.hits, 0)
+                self.hits = np.append(self.hits, 0.)
         self.errors[g_node] = 0#self.GT / 2
 
 
