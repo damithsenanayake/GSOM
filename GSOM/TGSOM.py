@@ -30,7 +30,7 @@ class GSOM(object):
         ''' Conduct a PCA transformation of data if specified for better execution times. '''
         # if self.pca_ncomp:
         #     X = PCA(min(X.shape[0], X.shape[1], self.pca_ncomp)).fit_transform(X)
-        its = 30
+        its = 20
         st = timeit.default_timer()
         self.start_time = st
         self.GT = -(X.shape[1])* np.log(self.sf)*(X.max()-X.min())
@@ -39,18 +39,18 @@ class GSOM(object):
         self.lr=self.lrst
         self.hits = np.zeros(self.grid.shape[0]).astype(float)
         self.errors = np.zeros(self.grid.shape[0])
-        min_lr = 0.05#1. / its
+        min_lr = 0.1#1. / its
 
         lambda_lr = -np.log(min_lr / self.lrst)
         fract_st = 1.
         min_fract = 0.1
 
         self.wdst = 0.08
-        self.wden = 0.08
+        self.wden = 0.02
 
         lambda_fr = -np.log(min_fract/fract_st)
 
-        min_neis = 15.
+        min_neis = 5.
 
         lambda_wd = -np.log(self.wden/self.wdst)
 
@@ -94,7 +94,7 @@ class GSOM(object):
                 cix = int(cent_fract * self.W.shape[0])
                 decayers = np.argsort((ldist))[:dix]
                 hemis = np.argsort(ldist)[:max(cix,2)]
-                theta_d = np.array([np.exp(-.5 * (ldist[neighbors]/r)**2)]).T
+                theta_d = 1#np.array([np.exp(-.25 * (ldist[neighbors]/r)**2)]).T
                 self.W[neighbors]+= (x-self.W[neighbors])*theta_d*self.lr
 
                 ''' Curvature Enforcement '''
@@ -109,7 +109,7 @@ class GSOM(object):
                 theta_D = np.array([np.exp(-6.5*(1-hdist)**2)]).T
                 wd_coef = self.lr*(self.wd)*theta_D#*np.exp(-0.75*(ntime))
                 # wd_coef *= (its-i<=ncuriters)
-                g_center = self.W[self.errors[neighbors].argmin()]#self.W[decayers].mean(axis=0)#self.W[self.hits[neighbors].argmin()]#kcenters[klabels[xix]]
+                g_center = self.W[decayers].mean(axis=0)#self.W[self.hits[neighbors].argmin()]#kcenters[klabels[xix]]
 
                 self.W[decayers]-=(self.W[decayers]-g_center)*wd_coef
 
