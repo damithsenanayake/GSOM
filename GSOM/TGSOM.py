@@ -46,11 +46,11 @@ class GSOM(object):
         min_fract = 0.1
 
         self.wdst = 0.08
-        self.wden = 0.04
+        self.wden = 0.08
 
         lambda_fr = -np.log(min_fract/fract_st)
 
-        min_neis = 10.
+        min_neis = 15.
 
         lambda_wd = -np.log(self.wden/self.wdst)
 
@@ -101,11 +101,12 @@ class GSOM(object):
                 hdist = np.linalg.norm(self.W[decayers]-self.W[bmu], axis=1)#
                 if hdist.shape[0] and not(hdist.max()==0):
                     hdist -= hdist.min()
+
                     if hdist.max():
                         hdist/=hdist.max()
 
 
-                theta_D = np.array([np.exp(-6.5*(1-hdist)**1)]).T
+                theta_D = np.array([np.exp(-6.5*(1-hdist)**2)]).T
                 wd_coef = self.lr*(self.wd)*theta_D#*np.exp(-0.75*(ntime))
                 # wd_coef *= (its-i<=ncuriters)
                 g_center = self.W[self.errors[neighbors].argmin()]#self.W[decayers].mean(axis=0)#self.W[self.hits[neighbors].argmin()]#kcenters[klabels[xix]]
