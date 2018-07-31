@@ -7,7 +7,7 @@ from sklearn.cluster import  KMeans
 
 class GSOM(object):
 
-    def __init__(self, n_neighbors=600, lrst=0.1, sf=0.9, fd=0.15, wd=0.02, beta=0, PCA = 0):
+    def __init__(self, n_neighbors=600, lrst=0.1, sf=0.9, fd=0.15, radius=10,  wd=0.02, beta=0, PCA = 0):
         self.lrst = lrst
         self.sf = sf
         self.fd = fd
@@ -20,6 +20,7 @@ class GSOM(object):
         self.W = None
         self.grid = None
         self.neighbor_setting = 'radial'
+        self.rst = radius
 
     def fit_transform(self, X):
         self.train_batch(X)
@@ -30,7 +31,7 @@ class GSOM(object):
         ''' Conduct a PCA transformation of data if specified for better execution times. '''
         # if self.pca_ncomp:
         #     X = PCA(min(X.shape[0], X.shape[1], self.pca_ncomp)).fit_transform(X)
-        its = 20
+        its = 25
         st = timeit.default_timer()
         self.start_time = st
         self.GT = -(X.shape[1])* np.log(self.sf)*(X.max()-X.min())
@@ -39,18 +40,23 @@ class GSOM(object):
         self.lr=self.lrst
         self.hits = np.zeros(self.grid.shape[0]).astype(float)
         self.errors = np.zeros(self.grid.shape[0])
-        min_lr = 0.1#1. / its
+
+        rad_min = 3
+
+        lambrad = np.log(rad_min * 1./ self.rst)
+
+
+        min_lr = 0.01#1. / its
 
         lambda_lr = -np.log(min_lr / self.lrst)
         fract_st = 1.
         min_fract = 0.1
 
-        self.wdst = 0.08
-        self.wden = 0.02
+        self.wdst = 0.01
+        self.wden = 0.01
 
         lambda_fr = -np.log(min_fract/fract_st)
 
-        min_neis = 5.
 
         lambda_wd = -np.log(self.wden/self.wdst)
 
@@ -61,22 +67,17 @@ class GSOM(object):
             # if i==5:
             #     break
 
-            if self.hits.sum():
-                self.prune_mid_training()
-            self.wd = self.wdst*np.exp(-lambda_wd * (1-ntime))
+
             self.hits = np.zeros(self.grid.shape[0])
-            rad_lambda = - np.log(min_neis/self.n_neighbors)
-            self.rad = np.sqrt(0.5*self.n_neighbors * np.exp(-rad_lambda * ntime ))#self.radst*np.exp(-rad_lambda*ntime)
-
-
+            r = self.rst*np.exp(lambrad * ntime)
+            self.wd = 1./(2*r **2)#self.wdst*np.exp(-lambda_wd * (1-ntime))
             self.lr = self.lrst*np.exp(-lambda_lr*ntime)#(1-ntime)
             xix = 0
             fract =fract_st*np.exp(-lambda_fr*ntime)#**0.5#(1-ntime + (ntime**6/20))#(1-ntime)#+(ntime)**2/8)#0.9**i#np.exp( - 3.5 * (ntime))
 
             cent_fract = fract#**0.5#0.5# * np.exp(lambda_cf * ntime)#4*fract#(1- cent_fract_st)*(1-ntime) + cent_fract_st
-            r = self.rad
-            while self.errors.max() >= self.GT:
-                self.error_dist(self.errors.argmax())
+            # while self.errors.max() >= self.GT:
+            #     self.error_dist(self.errors.argmax())
             for x in X:
                 vis = 0
                 if xix == 5999 and i == its-1:
@@ -89,12 +90,10 @@ class GSOM(object):
                 self.hits[bmu]+=1
 
                 ldist = np.linalg.norm(self.grid - self.grid[bmu], axis=1)
-                neighbors = np.where(ldist < r)[0]
+                neighbors = np.where(ldist<r)[0]#np.argsort(ldist)[:max(np.ceil((nix)), 5)]#np.where(ldist < r)[0]
                 dix = int(fract * self.W.shape[0])
-                cix = int(cent_fract * self.W.shape[0])
                 decayers = np.argsort((ldist))[:dix]
-                hemis = np.argsort(ldist)[:max(cix,2)]
-                theta_d = 1#np.array([np.exp(-.25 * (ldist[neighbors]/r)**2)]).T
+                theta_d = np.array([np.exp(-.5 * (ldist[neighbors]/r)**2)]).T
                 self.W[neighbors]+= (x-self.W[neighbors])*theta_d*self.lr
 
                 ''' Curvature Enforcement '''
@@ -106,42 +105,35 @@ class GSOM(object):
                         hdist/=hdist.max()
 
 
-                theta_D = np.array([np.exp(-6.5*(1-hdist)**2)]).T
+                theta_D = 1#np.array([np.exp(-4.5*(1-hdist)**2)]).T
                 wd_coef = self.lr*(self.wd)*theta_D#*np.exp(-0.75*(ntime))
                 # wd_coef *= (its-i<=ncuriters)
-                g_center = self.W[decayers].mean(axis=0)#self.W[self.hits[neighbors].argmin()]#kcenters[klabels[xix]]
+                g_center = self.W[self.hits[decayers].argmin()]#kcenters[klabels[xix]]
 
                 self.W[decayers]-=(self.W[decayers]-g_center)*wd_coef
-
-
-                # decayers_distances = np.linalg.norm(self.W[decayers] - g_center, axis=1)
-
-                # dist_ratio = 1- np.linalg.norm(self.W[hemis].mean(axis=0) - self.W[bmu])/ decayers_distances.max()
-                # wd_ratio = np.exp( -4.5 * dist_ratio **6 )
-                #
-                # wd_coef *= wd_ratio
 
                 self.errors[bmu]+= np.linalg.norm(self.W[bmu]-x)
 
                 et = timeit.default_timer()-st
                 if xix%500==0:
-                    print ('\riter %i : %i / %i : |G| = %i : radius :%.4f : LR: %.4f  QE: %.4f Rrad: %.2f : wdFract: %.4f : wd_coef : %.4f'%(i+1,xix, X.shape[0], self.W.shape[0], r, self.lr,  self.errors.sum(), (self.n_neighbors*1./self.W.shape[0]), decayers.shape[0]*1./self.W.shape[0], np.mean(wd_coef) )),' time = %.2f'%(et),
+                    print ('\riter %i : %i / %i : |G| = %i : n_neis :%.4f : LR: %.4f  QE: %.4f Rrad: %.2f : wdFract: %.4f : wd_coef : %.4f'%(i+1,xix, X.shape[0], self.W.shape[0], neighbors.shape[0], self.lr,  self.errors.sum(), (neighbors.shape[0]), decayers.shape[0]*1./self.W.shape[0], np.mean(wd_coef) )),' time = %.2f'%(et),
                 ''' Growing When Necessary '''
 
 
                 if self.errors[bmu] > self.GT:
                     self.error_dist(bmu)
 
-                if vis:
-                    self.bmu = bmu
-                    self.decayers = decayers
-                    self.hemis  = hemis
-                    self.undelgrid = self.grid
-                    self.mid = np.argsort(np.linalg.norm(self.W[hemis].mean(axis=0)-self.W, axis=1))[0]
-                    self.abcent = np.argsort(np.linalg.norm(self.W.mean(axis=0)-self.W, axis=1))[0]
-                    self.theta_D = theta_D
+                # if vis:
+                #     self.bmu = bmu
+                #     self.decayers = decayers
+                #     self.hemis  = hemis
+                #     self.undelgrid = self.grid
+                #     self.mid = np.argsort(np.linalg.norm(self.W[hemis].mean(axis=0)-self.W, axis=1))[0]
+                #     self.abcent = np.argsort(np.linalg.norm(self.W.mean(axis=0)-self.W, axis=1))[0]
+                #     self.theta_D = theta_D
         # self.prune_mid_training()
                 xix += 1
+            self.prune_mid_training()
         self.smoothen(X)
 
     def prune_mid_training(self):
@@ -151,12 +143,13 @@ class GSOM(object):
         ''' Prune nodes in the non-continguous regions of the map to shave of training time '''
         self.prune_map(np.where(self.hits == 0)[0])
 
-    def mean_filter(self):
-        self.new_hits = np.zeros(self.hits.shape)
-        for i in range(self.hits.shape[0]):
-            neighbors = np.argsort(np.linalg.norm(self.grid[i]-self.grid, axis=1))[:5]
-            self.new_hits[i]= self.hits[neighbors].mean()
-        self.hits =self.new_hits
+    def mean_filter(self, degree=1):
+        for i in range(degree):
+            self.new_hits = np.zeros(self.hits.shape)
+            for i in range(self.hits.shape[0]):
+                neighbors = np.argsort(np.linalg.norm(self.grid[i]-self.grid, axis=1))[:5]
+                self.new_hits[i]= self.hits[neighbors].mean()
+            self.hits =self.new_hits
 
     def prune_map(self, ixs):
         self.W = np.delete(self.W, ixs, axis=0)
