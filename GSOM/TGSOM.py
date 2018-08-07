@@ -31,7 +31,7 @@ class GSOM(object):
         ''' Conduct a PCA transformation of data if specified for better execution times. '''
         # if self.pca_ncomp:
         #     X = PCA(min(X.shape[0], X.shape[1], self.pca_ncomp)).fit_transform(X)
-        its = 20
+        its = 100
         st = timeit.default_timer()
         self.start_time = st
         self.GT = -(X.shape[1])* np.log(self.sf)*(X.max()-X.min())
@@ -41,14 +41,14 @@ class GSOM(object):
         self.hits = np.zeros(self.grid.shape[0]).astype(float)
         self.errors = np.zeros(self.grid.shape[0])
 
-        rad_min = 2
+        rad_min = 1
 
         lambrad = np.log(rad_min * 1./ self.rst)
-        min_lr = 0.1#1. / its
+        min_lr = 0.01#1. / its
 
         lambda_lr = -np.log(min_lr / self.lrst)
         fract_st = 1.
-        min_fract = .1
+        min_fract = .01
 
 
         lambda_fr = -np.log(min_fract/fract_st)
@@ -62,7 +62,7 @@ class GSOM(object):
 
             self.hits = np.zeros(self.grid.shape[0])
             r = self.rst*np.exp(lambrad * ntime)
-            self.wd = 0.02#1./(2*r **2)#self.wdst*np.exp(-lambda_wd * (1-ntime))
+            self.wd = 0.03#1./(2*r **2)#self.wdst*np.exp(-lambda_wd * (1-ntime))
             self.lr = self.lrst*np.exp(-lambda_lr*ntime)#(1-ntime)
             xix = 0
             fract =fract_st*np.exp(-lambda_fr*ntime)
@@ -83,12 +83,12 @@ class GSOM(object):
 
                 ''' Curvature Enforcement '''
                 g_center = self.W[decayers].mean(axis=0)#self.W[self.get_mid(decayers)]#kcenters[klabels[xix]]
-                wd_coef = self.lr*self.wd#*np.exp(-1.7*(1-ntime))
+                wd_coef = self.lr*self.wd*np.exp(-1.5*(1-ntime)**2)
 
-                # hdist = np.linalg.norm(self.W[decayers]-self.W[bmu], axis=1)
-                # hdist /= hdist.max()
+                hdist = np.linalg.norm(self.W[decayers]-self.W[bmu], axis=1)
+                hdist /= hdist.max()
 
-                D = 1#np.array([np.exp(-4.5*(1-hdist)**2)]).T
+                D = 1-np.array([np.exp(-4.5*(hdist)**3)]).T
 
                 self.W[decayers]-=(self.W[decayers]-g_center)*wd_coef*D
 
