@@ -30,7 +30,7 @@ class GSOM(object):
         ''' Conduct a PCA transformation of data if specified for better execution times. '''
         # if self.pca_ncomp:
         #     X = PCA(min(X.shape[0], X.shape[1], self.pca_ncomp)).fit_transform(X)
-        its = 20
+        its = 40
         st = timeit.default_timer()
         self.start_time = st
         self.GT = -(X.shape[1])* np.log(self.sf)*(X.max()-X.min())
@@ -43,7 +43,7 @@ class GSOM(object):
         rad_min = self.rad_min
 
         lambrad = np.log(rad_min * 1./ self.rst)
-        min_lr = 0.01#1. / its
+        min_lr = 0.05#1. / its
 
         lambda_lr = -np.log(min_lr / self.lrst)
         fract_st = 1.
@@ -88,7 +88,7 @@ class GSOM(object):
 
                     ldist = np.linalg.norm(self.grid - self.grid[bmu], axis=1)
                     neighbors = np.where(ldist<r)[0]#np.argsort(ldist)[:max(np.ceil((nix)), 5)]#np.where(ldist < r)[0]
-                    dix = int(fract * self.W.shape[0])
+                    dix = max(1,int(fract * self.W.shape[0]))
                     decayers = np.argsort((ldist))[:dix]
 
                     ld = ldist[neighbors]/rad_min
@@ -102,7 +102,8 @@ class GSOM(object):
                     wd_coef = self.lr*self.wd#*np.exp(-.75*(1-ntime)**2)
 
                     hdist = np.linalg.norm(self.W[decayers]-self.W[bmu], axis=1)
-                    hdist /= hdist.max()
+                    if hdist.max():
+                        hdist /= hdist.max()
 
                     D = 1-np.array([np.exp(-4.5*(hdist)**2)]).T
 
