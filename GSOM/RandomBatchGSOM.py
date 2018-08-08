@@ -7,20 +7,19 @@ from sklearn.cluster import  KMeans
 
 class GSOM(object):
 
-    def __init__(self, n_neighbors=600, lrst=0.1, sf=0.9, fd=0.15, radius=10,  wd=0.02, beta=0, PCA = 0):
+    def __init__(self, min_rad=2.45, lrst=0.1, sf=0.9, fd=0.15, radius=10,  wd=0.02, beta=0, PCA = 0):
         self.lrst = lrst
         self.sf = sf
         self.fd = fd
         self.wdst = wd
         self.beta = beta
-        self.radst = np.sqrt(n_neighbors/2)
-        self.n_neighbors = n_neighbors
         self.pca_ncomp = PCA
         self.hits = None
         self.W = None
         self.grid = None
         self.neighbor_setting = 'radial'
         self.rst = radius
+        self.rad_min = min_rad
 
     def fit_transform(self, X):
         self.train_batch(X)
@@ -41,7 +40,7 @@ class GSOM(object):
         self.hits = np.zeros(self.grid.shape[0]).astype(float)
         self.errors = np.zeros(self.grid.shape[0])
 
-        rad_min = 2.5
+        rad_min = self.rad_min
 
         lambrad = np.log(rad_min * 1./ self.rst)
         min_lr = 0.01#1. / its
@@ -63,7 +62,7 @@ class GSOM(object):
             self.hits = np.zeros(self.grid.shape[0])
             r = self.rst*np.exp(lambrad * ntime)
             self.wd = 0.05#1./(2*r **2)#self.wdst*np.exp(-lambda_wd * (1-ntime))
-            self.lr = self.lrst*np.exp(-lambda_lr*ntime)#(1-ntime)
+            self.lr = self.lrst*(1-i*1./its)#*np.exp(-lambda_lr*ntime)#(1-ntime)
             xix = 0
             fract =fract_st*np.exp(-lambda_fr*ntime)
 
@@ -92,8 +91,8 @@ class GSOM(object):
                     dix = int(fract * self.W.shape[0])
                     decayers = np.argsort((ldist))[:dix]
 
-                    ld = ldist[neighbors]/r
-                    thetfunc = (1 + ld**2)**-1#np.exp(-.5 * (ldist[neighbors]/r)**2)
+                    ld = ldist[neighbors]/rad_min
+                    thetfunc = (1 + ld**2)**-1.#np.exp(-.5 * (ldist[neighbors]/r)**2)
 
                     theta_d = np.array([thetfunc]).T
                     self.W[neighbors]+= (x-self.W[neighbors])*theta_d*self.lr
@@ -105,7 +104,7 @@ class GSOM(object):
                     hdist = np.linalg.norm(self.W[decayers]-self.W[bmu], axis=1)
                     hdist /= hdist.max()
 
-                    D = 1-np.array([np.exp(-4.5*(hdist)**3)]).T
+                    D = 1-np.array([np.exp(-4.5*(hdist)**2)]).T
 
                     self.W[decayers]-=(self.W[decayers]-g_center)*wd_coef*D
 
