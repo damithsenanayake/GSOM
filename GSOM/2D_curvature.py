@@ -4,6 +4,8 @@ from RandomBatchGSOM import GSOM
 from sklearn.manifold import TSNE
 centers = np.array([[1, 0], [0, 1], [0, -1], [-1, 0], [0, 0]])
 
+rand = np.random.RandomState(seed=10)
+
 c_size = 300
 n = c_size*5
 X = np.zeros((n, 2))
@@ -11,7 +13,7 @@ cs = np.zeros(n)
 i = 0
 for c in centers:
 
-    x = np.random.randn(c_size, 2)
+    x = rand.randn(c_size, 2)
     x -= x.min()
     x /= x.max()
     x -=0.5
@@ -21,7 +23,7 @@ for c in centers:
 
 fig = plt.figure()
 
-Y = GSOM(lrst=.1, radius=4, min_rad=2, sf=0.7).fit_transform(X)
+Y = GSOM(lrst=.1, radius=4, min_rad=2, sf_max=0.8, sf_min = 0.8).fit_transform(X)
 plt.subplot(311)
 plt.scatter(Y.T[0], Y.T[1], c= cs, cmap=plt.cm.gist_rainbow, alpha = 0.8)
 plt.subplot(312)

@@ -7,9 +7,8 @@ from sklearn.cluster import  KMeans
 
 class GSOM(object):
 
-    def __init__(self, min_rad=2.45, lrst=0.1, sf=0.9, fd=0.15, radius=10,  wd=0.02, beta=0, PCA = 0):
+    def __init__(self, min_rad=2.45, lrst=0.1, sf_min=0.3, sf_max=0.9, fd=0.15, radius=10,  wd=0.02, beta=0, PCA = 0):
         self.lrst = lrst
-        self.sf = sf
         self.fd = fd
         self.wdst = wd
         self.beta = beta
@@ -20,6 +19,8 @@ class GSOM(object):
         self.neighbor_setting = 'radial'
         self.rst = radius
         self.rad_min = min_rad
+        self.sf_min = sf_min
+        self.sf_max = sf_max
 
     def fit_transform(self, X):
         self.train_batch(X)
@@ -33,7 +34,6 @@ class GSOM(object):
         its = 40
         st = timeit.default_timer()
         self.start_time = st
-        self.GT = -(X.shape[1])* np.log(self.sf)*(X.max()-X.min())
         self.grid = np.array([[i,j] for i in range(2) for j in range(int(2))])
         self.W = np.zeros(shape=(self.grid.shape[0], X.shape[1]))
         self.lr=self.lrst
@@ -43,7 +43,7 @@ class GSOM(object):
         rad_min = self.rad_min
 
         lambrad = np.log(rad_min * 1./ self.rst)
-        min_lr = 0.05#1. / its
+        min_lr = 0.01#1. / its
 
         lambda_lr = -np.log(min_lr / self.lrst)
         fract_st = 1.
@@ -53,15 +53,17 @@ class GSOM(object):
         lambda_fr = -np.log(min_fract/fract_st)
         for i in range(its):
             ''' Normalized Time Variable for the learning rules.'''
-
             ntime = i * 1. / max(its - 1, 1)
+            sf = (self.sf_max-self.sf_min)*ntime + self.sf_min
+
             # if i==20:
             #     break
+            self.GT = -(X.shape[1]) * np.log(sf) * (X.max() - X.min())
 
 
             self.hits = np.zeros(self.grid.shape[0])
             r = self.rst*np.exp(lambrad * ntime)
-            self.wd = 0.05#1./(2*r **2)#self.wdst*np.exp(-lambda_wd * (1-ntime))
+            self.wd = 0.02#1./(2*r **2)#self.wdst*np.exp(-lambda_wd * (1-ntime))
             self.lr = self.lrst*np.exp(-lambda_lr*ntime)#(1-ntime)
             xix = 0
             fract =fract_st*np.exp(-lambda_fr*ntime)
@@ -71,7 +73,8 @@ class GSOM(object):
 
             X_p = X[np.random.permutation(X.shape[0])]
 
-
+            # while self.errors.max()>self.GT:
+            #     self.error_dist(self.errors.argmax())
             for b in range(int(n_batches)):
 
                 X_b = X_p[b*batch_size : (b+1)*batch_size]
@@ -87,40 +90,46 @@ class GSOM(object):
                     self.hits[bmu]+=1
 
                     ldist = np.linalg.norm(self.grid - self.grid[bmu], axis=1)
-                    neighbors = np.where(ldist<r)[0]#np.argsort(ldist)[:max(np.ceil((nix)), 5)]#np.where(ldist < r)[0]
+                    neighbors = np.where(ldist<=r)[0]#np.argsort(ldist)[:max(np.ceil((nix)), 5)]#np.where(ldist < r)[0]
                     dix = max(1,int(fract * self.W.shape[0]))
                     decayers = np.argsort((ldist))[:dix]
 
-                    ld = ldist[neighbors]/rad_min
-                    thetfunc = (1 + ld**2)**-1.#np.exp(-.5 * (ldist[neighbors]/r)**2)
-
-                    theta_d = np.array([thetfunc]).T
-                    self.W[neighbors]+= (x-self.W[neighbors])*theta_d*self.lr
-
                     ''' Curvature Enforcement '''
-                    g_center = self.W[decayers].mean(axis=0)#self.W[self.get_mid(decayers)]#kcenters[klabels[xix]]
-                    wd_coef = self.lr*self.wd#*np.exp(-.75*(1-ntime)**2)
+                    g_center = self.W[bmu]#self.W[decayers].mean(axis=0)#self.W[self.get_mid(decayers)]#kcenters[klabels[xix]]
+                    wd_coef = self.lr*self.wd#*np.exp(np.log(0.5)*(1-ntime))
+                    ''' ** coefficient to consider sinking to neighborhood! ** '''
+
+                    sink = 1#np.product(np.linalg.norm(g_center-self.W, axis=1).argmin() - neighbors)
 
                     hdist = np.linalg.norm(self.W[decayers]-self.W[bmu], axis=1)
                     if hdist.max():
                         hdist /= hdist.max()
 
-                    D = 1-np.array([np.exp(-4.5*(hdist)**2)]).T
+                    D =  np.array([hdist**2]).T#np.array([np.exp(-4.5*(1-hdist)**4)]).T
+                    if sink:
+                        self.W[decayers]-=(self.W[decayers]-g_center)*wd_coef*D
 
-                    self.W[decayers]-=(self.W[decayers]-g_center)*wd_coef*D
+                    ld = ldist[neighbors]/r
+                    thetfunc = np.exp(-.5 * (ld)**2)#
+
+                    theta_d = np.array([thetfunc]).T
+                    self.W[neighbors]+= (x-self.W[neighbors])*theta_d*self.lr
 
                     self.errors[bmu]+= np.linalg.norm(self.W[bmu]-x)
 
                     et = timeit.default_timer()-st
                     if xix%500==0:
-                        print ('\riter %i : %i / %i : batch : %i :|G| = %i : n_neis :%.4f : LR: %.4f  QE: %.4f Rrad: %.2f : wdFract: %.4f : wd_coef : %.4f'%(i+1,xix, X.shape[0], b, self.W.shape[0], neighbors.shape[0], self.lr,  self.errors.sum(), (neighbors.shape[0]), decayers.shape[0]*1./self.W.shape[0], np.mean(wd_coef) )),' time = %.2f'%(et),
+                        print ('\riter %i : %i / %i : batch : %i :|G| = %i : n_neis :%i : LR: %.4f  QE: %.4f sink?: %s : wdFract: %.4f : wd_coef : %.4f'%(i+1,xix, X.shape[0], b, self.W.shape[0], neighbors.shape[0], self.lr,  self.errors.sum(), str(sink>0), decayers.shape[0]*1./self.W.shape[0], np.mean(wd_coef) )),' time = %.2f'%(et),
                     ''' Growing When Necessary '''
-                    if self.errors[bmu] > self.GT:
-                        self.error_dist(bmu)
+                    # if self.errors[bmu] > self.GT:
+                    #     self.error_dist(bmu)
 
+                    while self.errors.max()>self.GT:
+                        self.error_dist(self.errors.argmax())
                     xix+=1
 
             self.prune_mid_training()
+
             # self.surface_tension()
             self.errors *= 0#self.hits/self.hits.max()
         self.smoothen(X)
@@ -185,7 +194,7 @@ class GSOM(object):
         for nei in imm_neis:
             if self.point_exists(self.grid, nei):
                 n_point = self.find_point(self.grid, nei)
-                self.errors[n_point] += self.errors[n_point] * self.fd
+                self.errors[n_point] += self.errors[g_node] * self.fd
             else:
                 gdists_new = np.linalg.norm(nei - self.grid, axis=1)
                 gdists_old = np.linalg.norm(self.grid - self.grid[g_node], axis=1)
