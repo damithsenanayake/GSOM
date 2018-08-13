@@ -31,22 +31,25 @@ class GSOM(object):
             ''' Conduct a PCA transformation of data if specified for better execution times. '''
             # if self.pca_ncomp:
             #     X = PCA(min(X.shape[0], X.shape[1], self.pca_ncomp)).fit_transform(X)
-            its = 20
+            its = 40
             st = timeit.default_timer()
             self.start_time = st
             self.grid = np.array([[i,j] for i in range(2) for j in range(int(2))])
-            self.W = np.random.RandomState(seed=5).random_sample(size=(self.grid.shape[0], X.shape[1]))#np.random.random(size=(self.grid.shape[0], X.shape[1]))
+            self.W = np.zeros((self.grid.shape[0], X.shape[1]))#np.random.RandomState(seed=5).random_sample(size=(self.grid.shape[0], X.shape[1]))#np.random.random(size=(self.grid.shape[0], X.shape[1]))
+            self.W[:, :2] = self.grid
+            self.W[:, :2] *= X[:, :2].max(axis=0) - X[:, :2].min(axis=0)
+            self.W[:, :2] -= X[:, :2].mean(axis=0)
             self.hits = np.zeros(self.grid.shape[0]).astype(float)
             self.errors = np.zeros(self.grid.shape[0])
 
             rad_min = self.rad_min
 
             lambrad = np.log(rad_min * 1./ self.rst)
-            min_lr = 0.01#1. / its
+            min_lr = self.lrst*0.1#1. / its
 
             lambda_lr = -np.log(min_lr / self.lrst)
             fract_st = 1.
-            min_fract = 3./X.shape[0]*np.pi*rad_min**2#0.01#
+            min_fract = 4./X.shape[0]*np.pi*rad_min**2#0.01#
 
 
             lambda_fr = -np.log(min_fract/fract_st)
@@ -57,8 +60,8 @@ class GSOM(object):
                 self.GT = -(X.shape[1]) * np.log(sf) * (X.max() - X.min())
                 self.hits = np.zeros(self.grid.shape[0])
                 r = self.rst*np.exp(lambrad * ntime)
-                self.wd = 0.08
-                self.lr = self.lrst*np.exp(-lambda_lr*ntime)
+                self.wd = 0.04# * (0.5+0.5*(1-ntime))
+                self.lr = self.lrst + (min_lr - self.lrst) * ntime**2 #*np.exp(-lambda_lr*ntime)
                 xix = 0
                 fract = fract_st*np.exp(-lambda_fr*ntime)
                 batch_size = 1
@@ -74,15 +77,11 @@ class GSOM(object):
                     dix = max(1,int(fract * self.W.shape[0]))
                     decayers = np.argsort((ldist))[:dix]
 
-                    ''' Curvature Enforcement '''
-                    g_center = self.W[bmu]#self.W[decayers].mean(axis=0)#self.W[self.get_mid(decayers)]#kcenters[klabels[xix]]
-                    wd_coef = self.lr*self.wd#*np.exp(np.log(0.5)*(1-ntime))
                     ''' ** coefficient to consider sinking to neighborhood! ** '''
                     ld = ldist[neighbors]/r
                     thetfunc = np.exp(-.5 * (ld)**2)#
 
                     theta_d = np.array([thetfunc]).T
-
 
                     self.W[neighbors]+= (x-self.W[neighbors])*theta_d*self.lr
 
@@ -100,7 +99,7 @@ class GSOM(object):
 
                     sink = 1#np.product(np.linalg.norm(g_center-self.W, axis=1).argmin() - neighbors)
 
-                    hdist = np.linalg.norm(self.grid[decayers]-self.grid[bmu], axis=1)
+                    hdist = np.linalg.norm(self.W[decayers]-self.W[bmu], axis=1)
                     if hdist.max():
                         hdist /= hdist.max()
 
@@ -147,7 +146,7 @@ class GSOM(object):
 
     def prune_mid_training(self):
         ''' Moving Average Filter to identify contiguous regions in the map '''
-        self.mean_filter(1)
+        # self.mean_filter(1)
 
         ''' Prune nodes in the non-continguous regions of the map to shave of training time '''
         self.prune_map(np.where(self.hits == 0)[0])
