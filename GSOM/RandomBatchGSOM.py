@@ -31,7 +31,7 @@ class GSOM(object):
             ''' Conduct a PCA transformation of data if specified for better execution times. '''
             # if self.pca_ncomp:
             #     X = PCA(min(X.shape[0], X.shape[1], self.pca_ncomp)).fit_transform(X)
-            its = 40
+            its = 30
             st = timeit.default_timer()
             self.start_time = st
             self.grid = np.array([[i,j] for i in range(2) for j in range(int(2))])
@@ -49,7 +49,7 @@ class GSOM(object):
 
             lambda_lr = -np.log(min_lr / self.lrst)
             fract_st = 1.
-            min_fract = 4./X.shape[0]*np.pi*rad_min**2#0.01#
+            min_fract = 2./X.shape[0]*np.pi*rad_min**2#0.01#
 
 
             lambda_fr = -np.log(min_fract/fract_st)
@@ -60,7 +60,7 @@ class GSOM(object):
                 self.GT = -(X.shape[1]) * np.log(sf) * (X.max() - X.min())
                 self.hits = np.zeros(self.grid.shape[0])
                 r = self.rst*np.exp(lambrad * ntime)
-                self.wd = 0.04# * (0.5+0.5*(1-ntime))
+                self.wd = 0.08 #* np.exp(-0.75*ntime)# * (0.5+0.5*(1-ntime))
                 self.lr = self.lrst + (min_lr - self.lrst) * ntime**2 #*np.exp(-lambda_lr*ntime)
                 xix = 0
                 fract = fract_st*np.exp(-lambda_fr*ntime)
@@ -80,7 +80,6 @@ class GSOM(object):
                     ''' ** coefficient to consider sinking to neighborhood! ** '''
                     ld = ldist[neighbors]/r
                     thetfunc = np.exp(-.5 * (ld)**2)#
-
                     theta_d = np.array([thetfunc]).T
 
                     self.W[neighbors]+= (x-self.W[neighbors])*theta_d*self.lr
@@ -146,7 +145,7 @@ class GSOM(object):
 
     def prune_mid_training(self):
         ''' Moving Average Filter to identify contiguous regions in the map '''
-        # self.mean_filter(1)
+        self.mean_filter(1)
 
         ''' Prune nodes in the non-continguous regions of the map to shave of training time '''
         self.prune_map(np.where(self.hits == 0)[0])
