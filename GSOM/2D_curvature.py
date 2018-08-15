@@ -1,6 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from RandomBatchGSOM import GSOM
+from SCALINGSOM import GSOM
 from sklearn.manifold import TSNE
 centers = np.array([[1, 0], [0, 1], [0, -1], [-1, 0], [0, 0]])
 

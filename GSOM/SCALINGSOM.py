@@ -31,7 +31,7 @@ class GSOM(object):
             ''' Conduct a PCA transformation of data if specified for better execution times. '''
             # if self.pca_ncomp:
             #     X = PCA(min(X.shape[0], X.shape[1], self.pca_ncomp)).fit_transform(X)
-            its = 40
+            its = 10
             st = timeit.default_timer()
             self.start_time = st
             self.grid = np.array([[i,j] for i in range(2) for j in range(int(2))])
@@ -49,7 +49,7 @@ class GSOM(object):
 
             lambda_lr = -np.log(min_lr / self.lrst)
             fract_st = 1.
-            min_fract = 2./X.shape[0]*np.pi*rad_min**2#0.01#
+            min_fract = 0.1#2./X.shape[0]*np.pi*rad_min**2#0.01#
 
 
             lambda_fr = -np.log(min_fract/fract_st)
@@ -102,9 +102,14 @@ class GSOM(object):
                     if hdist.max():
                         hdist /= hdist.max()
 
-                    D =  np.array([hdist**2]).T#np.array([np.exp(-4.5*(1-hdist)**4)]).T
+                    D =  np.array([(1+6*hdist**2)**-2]).T#np.exp(-4.5*(hdist)**2)
+                    dec =  np.array([ldist[decayers]/ldist[decayers].max()]).T
+                    d = (1+6*dec**2)**-1#np.exp(-4.5*(dec)**2)#
+
+                    pull = (D - d) # negative for pull node toward bmu in map
+
                     if sink:
-                        self.W[decayers]-=(self.W[decayers]-g_center)*wd_coef*D
+                        self.W[decayers]-=(g_center-self.W[decayers])*wd_coef*pull
                     et = timeit.default_timer()-st
 
                     if xix % 500 == 0:
