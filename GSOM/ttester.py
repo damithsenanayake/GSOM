@@ -16,7 +16,7 @@ a = 1
 # y = (1 + (x))**-a
 y = (1+(6*x**2))**-a# 1-np.exp(-4.*((x)**3))
 # z = 1-y
-z = np.exp(-4.5*x**2)
+z = np.exp(-6*x**2)
 # z = np.exp(-10.5*(x/float(np.amax(x)))**2)
 # plt.plot(x, 1-x)
 #

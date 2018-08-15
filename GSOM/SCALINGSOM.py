@@ -102,7 +102,7 @@ class GSOM(object):
                     if hdist.max():
                         hdist /= hdist.max()
 
-                    D =  np.array([(1+6*hdist**2)**-2]).T#np.exp(-4.5*(hdist)**2)
+                    D =  np.array([np.exp(-6.*(hdist)**2)]).T#
                     dec =  np.array([ldist[decayers]/ldist[decayers].max()]).T
                     d = (1+6*dec**2)**-1#np.exp(-4.5*(dec)**2)#
 
