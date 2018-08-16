@@ -3,6 +3,7 @@ import pandas as pd
 import numpy as np
 import gc
 from MovingMap import  MovingMap
+from sklearn.datasets import load_digits
 from SCALINGSOM import GSOM
 from sklearn.preprocessing import normalize
 from sklearn.manifold import MDS, TSNE, LocallyLinearEmbedding
@@ -19,26 +20,29 @@ with warnings.catch_warnings():
     import md5, sha
 
 print GSOM.__module__
-fi = pd.read_csv('~/data/mnist_train.csv', header=None)
-# test = pd.read_csv('../mnist_test.csv', header=None)
-samples = 6000
+# fi = pd.read_csv('~/data/mnist_train.csv', header=None)
+# # test = pd.read_csv('../mnist_test.csv', header=None)
+# samples = 6000
 
-dat =(np.array(fi)[:samples, 1:])#/255.0
-dat = PCA(30).fit_transform(dat)
-dat += 100000
-# dat -= dat.min()
-# dat /= dat.max()
-labels = np.array(fi)[:samples, 0]
+# dat =(np.array(fi)[:samples, 1:])#/255.0
+# dat = PCA(30).fit_transform(dat)
+# dat += 100000
+# # dat -= dat.min()
+# # dat /= dat.max()
+# labels = np.array(fi)[:samples, 0]
 
 # dat = dat[(labels ==5) | (labels == 3)]
 # labels = labels[(labels == 5)|( labels == 3)]
-del fi
-print dat.shape
+# del fi
+# print dat.shape
 
+pack= load_digits()
+dat = pack.data
+labels = pack.target
 gc.collect()
 # x, y = SelfOrganizingSwarm(iterations=10, alpha=1, beta=0.1, delta=0, theta=3.5).fit_transform(dat[:samples]).T
 st = timeit.default_timer()
-model = GSOM(lrst=1.,  sf_min=0.7, sf_max=0.7, fd = .2, radius=4, min_rad =4)
+model = GSOM(lrst=.1,  sf_min=0.9, sf_max=0.9, fd = .2, radius=10, min_rad =2)
 
 # x, y = MovingMap(iterations=100, beta=1.5).fit_transform(dat[:samples]).T
 Y= model.fit_transform(dat)
@@ -60,13 +64,13 @@ x, y = Y.T
 clusterer = KMeans(10)#DBSCAN(eps=0.025)
 kl = clusterer.fit(Y).labels_
 # print " lr=1,  beta=0.3, sf=0.9, fd = 0.9, wd=0.025"
-print 'instances : ', samples
+# print 'instances : ', samples
 print 'ars :', adjusted_rand_score(labels, kl)
 print 'ami :', adjusted_mutual_info_score(labels, kl)
 fig = plt.figure(figsize=(5, 10))
 plt.subplot(211)
 
-np.savetxt('mnist_'+str(samples)+'.csv', np.concatenate((Y, np.array([labels]).T),axis=1))
+# np.savetxt('mnist_'+str(samples)+'.csv', np.concatenate((Y, np.array([labels]).T),axis=1))
 plt.scatter(x, y, edgecolors='none',c=plt.cm.jet(labels/10.), alpha = 0.5, s = 15)
 plt.subplot(212)
 #
