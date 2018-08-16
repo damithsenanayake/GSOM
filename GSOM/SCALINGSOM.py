@@ -31,7 +31,7 @@ class GSOM(object):
             ''' Conduct a PCA transformation of data if specified for better execution times. '''
             # if self.pca_ncomp:
             #     X = PCA(min(X.shape[0], X.shape[1], self.pca_ncomp)).fit_transform(X)
-            its = 10
+            its = 50
             st = timeit.default_timer()
             self.start_time = st
             self.grid = np.array([[i,j] for i in range(2) for j in range(int(2))])
@@ -60,7 +60,7 @@ class GSOM(object):
                 self.GT = -np.sqrt(X.shape[1]) * np.log(sf) * (X.max() - X.min())
                 self.hits = np.zeros(self.grid.shape[0])
                 r = self.rst*np.exp(lambrad * ntime)
-                self.wd = .09# * np.exp(-04.75*ntime)# * (0.5+0.5*(1-ntime))
+                self.wd = .04# * np.exp(-04.75*ntime)# * (0.5+0.5*(1-ntime))
                 self.lr = self.lrst*(1-ntime)#*np.exp(-lambda_lr*ntime)#self.lrst + (min_lr - self.lrst) * ntime**2 #
                 xix = 0
                 fract = fract_st*np.exp(-lambda_fr*ntime)
