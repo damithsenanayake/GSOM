@@ -31,7 +31,7 @@ class GSOM(object):
             ''' Conduct a PCA transformation of data if specified for better execution times. '''
             # if self.pca_ncomp:
             #     X = PCA(min(X.shape[0], X.shape[1], self.pca_ncomp)).fit_transform(X)
-            its = 15
+            its = 10
             st = timeit.default_timer()
             self.start_time = st
             self.grid = np.array([[i,j] for i in range(2) for j in range(int(2))])
@@ -49,7 +49,7 @@ class GSOM(object):
 
             lambda_lr = -np.log(min_lr / self.lrst)
             fract_st = 1.
-            min_fract = 0.1#2./X.shape[0]*np.pi*rad_min**2#0.01#
+            min_fract = .1#8./X.shape[0]*np.pi*rad_min**2#0.01#
 
 
             lambda_fr = -np.log(min_fract/fract_st)
@@ -60,7 +60,7 @@ class GSOM(object):
                 self.GT = -np.sqrt(X.shape[1]) * np.log(sf) * (X.max() - X.min())
                 self.hits = np.zeros(self.grid.shape[0])
                 r = self.rst*np.exp(lambrad * ntime)
-                self.wd = 0.16 #* np.exp(-0.75*ntime)# * (0.5+0.5*(1-ntime))
+                self.wd = .09# * np.exp(-04.75*ntime)# * (0.5+0.5*(1-ntime))
                 self.lr = self.lrst*(1-ntime)#*np.exp(-lambda_lr*ntime)#self.lrst + (min_lr - self.lrst) * ntime**2 #
                 xix = 0
                 fract = fract_st*np.exp(-lambda_fr*ntime)
@@ -74,7 +74,7 @@ class GSOM(object):
 
                     ldist = np.linalg.norm(self.grid - self.grid[bmu], axis=1)
                     neighbors = np.where(ldist<=r)[0]#np.argsort(ldist)[:max(np.ceil((nix)), 5)]#np.where(ldist < r)[0]
-                    dix = max(1,int(fract * self.W.shape[0]))
+                    dix = max(neighbors.shape[0]*9,int(fract * self.W.shape[0]))
                     decayers = np.argsort((ldist))[:dix]
 
                     ''' ** coefficient to consider sinking to neighborhood! ** '''
@@ -99,18 +99,16 @@ class GSOM(object):
                     sink = 1#np.product(np.linalg.norm(g_center-self.W, axis=1).argmin() - neighbors)
 
                     hdist = np.linalg.norm(self.W[decayers]-self.W[bmu], axis=1)
-                    # if hdist.max():
-                    #     hdist /= hdist.max()
-                    hndist = np.linalg.norm(self.W[neighbors]-self.W[bmu], axis=1)
+                    first_non_zero = hdist[np.where(hdist>0)[0]].min()
                     hdist /= hdist.max()
-                    D =  np.array([np.exp(-(hdist)**1)]).T##(1+hdist*2)**-1
-                    dec =  np.array([ldist[decayers]/ldist[decayers][-1]]).T
-                    d = np.exp(-0.5*dec**1)#(1+dec**2)**-1#np.exp(-4.5*(dec)**2)#
+                    D =  np.array([np.exp(-(hdist)**2)]).T##(1+hdist*2)**-1
+                    dec =  np.array([ldist[decayers]/ldist[decayers].max()]).T
+                    d = (1+dec**2)**-1#np.exp(-4.5*(dec)**2)#np.exp(-0.5*dec**1)#
 
-                    pull = (D - d)# negative for pull node toward bmu in map
-
+                    pull = (d-D)# negative for pull node toward bmu in map
+                    pull/=pull.max()
                     if sink:
-                        self.W[decayers]-=(g_center-self.W[decayers])*wd_coef*pull
+                        self.W[decayers]+=(g_center-self.W[decayers])*wd_coef*pull
                     et = timeit.default_timer()-st
 
                     if xix % 500 == 0:

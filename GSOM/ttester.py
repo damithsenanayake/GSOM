@@ -9,14 +9,14 @@ def sigmoid(x):
 x = np.array(range(100)).astype(float)
 # y =np.exp(-20.5*((x)/float(np.amax(x)))**(6))#(1.+(x/100.)**2)**-6#sigmoid(x**2/100.**2)#
 # z = 0.9**x
-x/= x.max()
+x/= x.max()*0.1
 print x
 # y = np.sqrt(1-x**2)#-(x)**2+1
 a = 1
 # y = (1 + (x))**-a
-y = np.exp(-2*x**3)#(1+(0.1*x**2))**-a# 1-np.exp(-4.*((x)**3))
+y = np.exp(-x**1)#(1+(0.1*x**2))**-a# 1-np.exp(-4.*((x)**3))
 # z = 1-y
-z = np.exp(-1*x**3)#(1+x**2)**-1#
+z = (1+x**1)**-1#np.exp(-1*x**3)#
 # z = np.exp(-10.5*(x/float(np.amax(x)))**2)
 # plt.plot(x, 1-x)
 #
@@ -24,5 +24,5 @@ z = np.exp(-1*x**3)#(1+x**2)**-1#
 
 plt.plot(x,y)
 plt.plot(x, z)
-plt.plot(x, y-z)
+plt.plot(x, z-y)
 plt.show()
