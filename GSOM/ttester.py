@@ -22,7 +22,9 @@ z = (1+x**2)**-1#np.exp(-1*x**3)#
 #
 # plt.plot(x, (1-x+(x**6/8)))
 
+v = np.exp(-4*(1-x))
 plt.plot(x,y)
 plt.plot(x, z)
-plt.plot(x, z-y)
+plt.plot(x, (z-y)/(z-y).max())
+plt.plot(x, v)
 plt.show()

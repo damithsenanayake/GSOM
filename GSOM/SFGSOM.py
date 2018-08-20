@@ -31,7 +31,7 @@ class GSOM(object):
             ''' Conduct a PCA transformation of data if specified for better execution times. '''
             # if self.pca_ncomp:
             #     X = PCA(min(X.shape[0], X.shape[1], self.pca_ncomp)).fit_transform(X)
-            its = 60
+            its = 20
             st = timeit.default_timer()
             self.start_time = st
             self.grid = np.array([[i,j] for i in range(2) for j in range(int(2))])
@@ -60,8 +60,8 @@ class GSOM(object):
                 self.GT = -np.sqrt(X.shape[1]) * np.log(sf) * (X.max() - X.min())
                 self.hits = np.zeros(self.grid.shape[0])
                 r = self.rst*np.exp(lambrad * ntime)
-                self.wd = .2# * np.exp(-04.75*ntime)# * (0.5+0.5*(1-ntime))
-                self.lr = self.lrst*np.exp(-lambda_lr*ntime)#self.lrst + (min_lr - self.lrst) * ntime**2 #
+                self.wd = .08# * np.exp(-04.75*ntime)# * (0.5+0.5*(1-ntime))
+                self.lr = self.lrst*(1-ntime)#*np.exp(-lambda_lr*ntime)#self.lrst + (min_lr - self.lrst) * ntime**2 #
                 xix = 0
                 fract = fract_st*np.exp(-lambda_fr*ntime)
                 batch_size = 1
@@ -84,19 +84,15 @@ class GSOM(object):
                     thetfunc = np.exp(-.5 * (ld)**2)#(1+ld**2)**-1#
                     theta_d = np.array([thetfunc]).T
                     delta_neis = (x-self.W[neighbors])*theta_d*self.lr
-                    self.W[neighbors]+= (x-self.W[neighbors])*theta_d*self.lr
-
-
                     ''' Curvature Enforcement '''
                     wd_coef = self.lr*self.wd#*(fract<0.75)
                     ''' ** coefficient to consider sinking to neighborhood! ** '''
                     hdist = np.linalg.norm(self.W[decayers]-x, axis=1)
                     hdist /= hdist.max()
-                    ldist = np.linalg.norm(self.grid - self.grid[bmu], axis=1)
-                    D =  np.array([np.exp(-(hdist**2))]).T##(1+hdist*2)**-1
-                    dec =  np.array([ldist[decayers]/ldist[decayers].max()]).T
-                    d = (1+dec**2)**-1#np.exp(-4.5*(dec)**2)#np.exp(-0.5*dec**1)#
-                    pull = (d-D)# negative for pull node toward bmu in map
+                    D =  np.array([np.exp(-4*(1-hdist))]).T##(1+hdist*2)**-1
+                    # dec =  np.array([ldist[decayers]/ldist[decayers].max()]).T
+                    # d = np.exp(-4*(1-dec))#(1+dec**2)**-1#np.exp(-4.5*(dec)**2)#np.exp(-0.5*dec**1)#
+                    pull = D#(d-D)# negative for pull node toward bmu in map
                     # pull/=pull.max()
                     wd_coef *= pull
                     delta_dec=(x-self.W[decayers])*wd_coef
