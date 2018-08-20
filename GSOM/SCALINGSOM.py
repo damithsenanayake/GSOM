@@ -60,7 +60,7 @@ class GSOM(object):
                 self.GT = -np.sqrt(X.shape[1]) * np.log(sf) * (X.max() - X.min())
                 self.hits = np.zeros(self.grid.shape[0])
                 r = self.rst*np.exp(lambrad * ntime)
-                self.wd = .08# * np.exp(-04.75*ntime)# * (0.5+0.5*(1-ntime))
+                self.wd = .04# * np.exp(-04.75*ntime)# * (0.5+0.5*(1-ntime))
                 self.lr = self.lrst*(1-ntime)#*np.exp(-lambda_lr*ntime)#self.lrst + (min_lr - self.lrst) * ntime**2 #
                 xix = 0
                 fract = fract_st*np.exp(-lambda_fr*ntime)
@@ -84,8 +84,8 @@ class GSOM(object):
 
                     self.W[neighbors]+= (x-self.W[neighbors])*theta_d*self.lr
 
-                    self.errors[bmu]+= np.linalg.norm(self.W[bmu]-x)
-
+                    # self.errors[bmu]+= np.linalg.norm(self.W[bmu]-x)
+                    self.errors[neighbors] += np.linalg.norm(self.W[neighbors] - x, axis=1) * theta_d.T[0]
                     ''' Growing When Necessary '''
                     if self.errors[bmu] > self.GT:
                         self.error_dist(bmu)
@@ -93,7 +93,7 @@ class GSOM(object):
 
                     ''' Curvature Enforcement '''
                     g_center = x#self.W[bmu]
-                    wd_coef = self.lr*self.wd
+                    wd_coef = self.lr*self.wd#*(fract<0.75)
                     ''' ** coefficient to consider sinking to neighborhood! ** '''
 
                     sink = 1#np.product(np.linalg.norm(g_center-self.W, axis=1).argmin() - neighbors)
@@ -107,8 +107,9 @@ class GSOM(object):
 
                     pull = (d-D)# negative for pull node toward bmu in map
                     pull/=pull.max()
+                    wd_coef *= pull
                     if sink:
-                        self.W[decayers]+=(g_center-self.W[decayers])*wd_coef*pull
+                        self.W[decayers]+=(g_center-self.W[decayers])*wd_coef
                     et = timeit.default_timer()-st
 
                     if xix % 500 == 0:
