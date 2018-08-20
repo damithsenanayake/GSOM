@@ -28,7 +28,7 @@ plt.subplot(311)
 plt.scatter(Y.T[0], Y.T[1], c= cs, cmap=plt.cm.gist_rainbow, alpha = 0.8)
 plt.subplot(312)
 
-# Y = TSNE().fit_transform(X)
+Y = TSNE().fit_transform(X)
 
 plt.scatter(Y.T[0], Y.T[1], c= cs, cmap=plt.cm.gist_rainbow, alpha = 0.8)
 plt.subplot(313)

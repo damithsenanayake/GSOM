@@ -92,7 +92,7 @@ class GSOM(object):
         self.spawns = 0
         rad = self.radius
         wd_orig = self.wd
-        its = 8
+        its = 10
         self.its = its
         self.it_rate = 0
         while i< its:#self.lr > 0.5*lr:

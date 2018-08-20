@@ -41,7 +41,7 @@ st = timeit.default_timer()
 model = GSOM(lrst=1.,  sf_min=0.7, sf_max=0.7, fd = .2, radius=4, min_rad =2)
 
 # x, y = MovingMap(iterations=100, beta=1.5).fit_transform(dat[:samples]).T
-Y= model.fit_transform(dat)
+# Y= model.fit_transform(dat)
 # Y = PCA(2).fit_transform(dat)
 
 et = timeit.default_timer() - st
@@ -51,7 +51,7 @@ secs = et-3600*hrs - 60* mins
 print 'Total time : ', hrs, ':', mins, ':', secs
 # Y = TSNE().fit_transform(dat,perplexity=40)
 # Y = PCA(2).fit_transform(dat)
-# Y = TSNE(perplexity=40).fit_transform(dat)
+Y = TSNE(perplexity=40).fit_transform(dat)
 # Y-= Y.min(axis=0)
 # Y/= Y.max(axis=0)
 x, y = Y.T
@@ -72,10 +72,10 @@ plt.subplot(212)
 #
 plt.scatter(x, y, edgecolors='none',c=plt.cm.jet(kl/10.), alpha = 0.5, s = 15)
 #
-plt.show(block=False)
+# plt.show(block=False)
 #
 #
-fig =plt.figure()
+# fig =plt.figure()
 #
 
 
@@ -104,7 +104,7 @@ fig =plt.figure()
 #
 # plt.subplot(212)
 #
-plt.scatter(model.grid.T[0], model.grid.T[1] , edgecolors='none', c = model.errors, cmap= plt.cm.gist_rainbow, alpha = 0.6, s = 20)
+# plt.scatter(model.grid.T[0], model.grid.T[1] , edgecolors='none', c = model.errors, cmap= plt.cm.gist_rainbow, alpha = 0.6, s = 20)
 # x, y = model.undelgrid[model.decayers].T
 #
 # colors = np.zeros((x.shape[0],4))
