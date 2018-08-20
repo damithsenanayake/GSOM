@@ -4,7 +4,7 @@ import numpy as np
 import gc
 from MovingMap import  MovingMap
 from sklearn.datasets import load_digits
-from SCALINGSOM import GSOM
+from SFGSOM import GSOM
 from sklearn.preprocessing import normalize
 from sklearn.manifold import MDS, TSNE, LocallyLinearEmbedding
 from sklearn.cluster import KMeans, DBSCAN
