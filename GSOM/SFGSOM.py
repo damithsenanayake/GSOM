@@ -60,7 +60,7 @@ class GSOM(object):
                 self.GT = -np.sqrt(X.shape[1]) * np.log(sf) * (X.max() - X.min())
                 self.hits = np.zeros(self.grid.shape[0])
                 r = self.rst*np.exp(lambrad * ntime)
-                self.wd = .08# * np.exp(-04.75*ntime)# * (0.5+0.5*(1-ntime))
+                self.wd = .02# * np.exp(-04.75*ntime)# * (0.5+0.5*(1-ntime))
                 self.lr = self.lrst*(1-ntime)#*np.exp(-lambda_lr*ntime)#self.lrst + (min_lr - self.lrst) * ntime**2 #
                 xix = 0
                 fract = fract_st*np.exp(-lambda_fr*ntime)
@@ -89,7 +89,7 @@ class GSOM(object):
                     ''' ** coefficient to consider sinking to neighborhood! ** '''
                     hdist = np.linalg.norm(self.W[decayers]-x, axis=1)
                     hdist /= hdist.max()
-                    D =  np.array([np.exp(-4*(1-hdist))]).T##(1+hdist*2)**-1
+                    D =  np.array([hdist + hdist**2]).T/2##(1+hdist*2)**-1np.exp(-6*(1-hdist))
                     # dec =  np.array([ldist[decayers]/ldist[decayers].max()]).T
                     # d = np.exp(-4*(1-dec))#(1+dec**2)**-1#np.exp(-4.5*(dec)**2)#np.exp(-0.5*dec**1)#
                     pull = D#(d-D)# negative for pull node toward bmu in map
