@@ -14,17 +14,18 @@ print x
 # y = np.sqrt(1-x**2)#-(x)**2+1
 a = 1
 # y = (1 + (x))**-a
-y = np.exp(-x**2)#(1+(0.1*x**2))**-a# 1-np.exp(-4.*((x)**3))
+y = np.exp(-0.5*x**2)#(1+(0.1*x**2))**-a# 1-np.exp(-4.*((x)**3))
 # z = 1-y
-z = (1+x**2)**-1#np.exp(-1*x**3)#
+z = (1+0.5*x**2)**-1#np.exp(-1*x**3)#
 # z = np.exp(-10.5*(x/float(np.amax(x)))**2)
 # plt.plot(x, 1-x)
 #
 # plt.plot(x, (1-x+(x**6/8)))
 
-v = (x+x**2)/2.
+# v = (x+x**6)/2.
+
 plt.plot(x,y)
 plt.plot(x, z)
 plt.plot(x, (z-y)/(z-y).max())
-plt.plot(x, v)
+# plt.plot(x, v)
 plt.show()

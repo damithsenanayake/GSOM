@@ -31,7 +31,7 @@ class GSOM(object):
             ''' Conduct a PCA transformation of data if specified for better execution times. '''
             # if self.pca_ncomp:
             #     X = PCA(min(X.shape[0], X.shape[1], self.pca_ncomp)).fit_transform(X)
-            its = 20
+            its = 50
             st = timeit.default_timer()
             self.start_time = st
             self.grid = np.array([[i,j] for i in range(2) for j in range(int(2))])
@@ -49,7 +49,7 @@ class GSOM(object):
 
             lambda_lr = -np.log(min_lr / self.lrst)
             fract_st = 1.
-            min_fract = .1#8./X.shape[0]*np.pi*rad_min**2#0.01#
+            min_fract = .01#8./X.shape[0]*np.pi*rad_min**2#0.01#
 
 
             lambda_fr = -np.log(min_fract/fract_st)
@@ -57,11 +57,11 @@ class GSOM(object):
                 ''' Normalized Time Variable for the learning rules.'''
                 ntime = i * 1. / max(its, 1)
                 sf = (self.sf_max-self.sf_min)*ntime + self.sf_min
-                self.GT = -np.sqrt(X.shape[1]) * np.log(sf) * (X.max() - X.min())
+                self.GT = -(X.shape[1]) * np.log(sf) * (X.max() - X.min())
                 self.hits = np.zeros(self.grid.shape[0])
                 r = self.rst*np.exp(lambrad * ntime)
-                self.wd = .02# * np.exp(-04.75*ntime)# * (0.5+0.5*(1-ntime))
-                self.lr = self.lrst*(1-ntime)#*np.exp(-lambda_lr*ntime)#self.lrst + (min_lr - self.lrst) * ntime**2 #
+                self.wd = .04# * np.exp(-04.75*ntime)# * (0.5+0.5*(1-ntime))
+                self.lr = self.lrst*np.exp(-lambda_lr*ntime)#(1-ntime)#*(1-ntime)#self.lrst + (min_lr - self.lrst) * ntime**2 #
                 xix = 0
                 fract = fract_st*np.exp(-lambda_fr*ntime)
                 batch_size = 1
@@ -70,7 +70,7 @@ class GSOM(object):
                     ''' Training For Instances'''
                     bmu = pairwise_distances_argmin(np.array([x]), self.W, axis=1)[0]
                     self.errors[bmu] += np.linalg.norm(self.W[bmu] - x)
-                    self.hits[bmu]+=1
+                    # self.hits[bmu]+=1
 
                     ldist = np.linalg.norm(self.grid - self.grid[bmu], axis=1)
                     nix = max(int(np.pi * r **2), 5)
@@ -85,14 +85,18 @@ class GSOM(object):
                     theta_d = np.array([thetfunc]).T
                     delta_neis = (x-self.W[neighbors])*theta_d*self.lr
                     ''' Curvature Enforcement '''
-                    wd_coef = self.lr*self.wd#*(fract<0.75)
+                    wd_coef = self.lr*self.wd*max((1-neighbors.shape[0]*1./decayers.shape[0]), 0)#*(fract<0.75)
                     ''' ** coefficient to consider sinking to neighborhood! ** '''
                     hdist = np.linalg.norm(self.W[decayers]-x, axis=1)
                     hdist /= hdist.max()
-                    D =  np.array([hdist + hdist**2]).T/2##(1+hdist*2)**-1np.exp(-6*(1-hdist))
+                    # D =  np.array([hdist + hdist**2]).T/2##(1+hdist*2)**-1np.exp(-6*(1-hdist))
                     # dec =  np.array([ldist[decayers]/ldist[decayers].max()]).T
                     # d = np.exp(-4*(1-dec))#(1+dec**2)**-1#np.exp(-4.5*(dec)**2)#np.exp(-0.5*dec**1)#
-                    pull = D#(d-D)# negative for pull node toward bmu in map
+                    D = np.exp(-hdist**2)
+                    D -= (1+hdist**2)**-1
+                    D *= -1
+                    D /= D.max()
+                    pull = np.array([D]).T#(d-D)# negative for pull node toward bmu in map
                     # pull/=pull.max()
                     wd_coef *= pull
                     delta_dec=(x-self.W[decayers])*wd_coef
@@ -108,13 +112,14 @@ class GSOM(object):
                         '\riter %i : %i / %i : batch : %i :|G| = %i : n_neis :%i : LR: %.4f  QE: %.4f sink?: %s : wdFract: %.4f : wd_coef : %.4f' % (
                         i + 1, xix, X.shape[0], 1, self.W.shape[0], neighbors.shape[0], self.lr, self.errors.sum(),
                         str(dix), decayers.shape[0] * 1. / self.W.shape[0], np.mean(wd_coef))), ' time = %.2f' % (et),
-                    self.errors[neighbors] += np.linalg.norm(self.W[neighbors] - x, axis=1) * theta_d.T[0]
+                    # self.errors[neighbors] += np.linalg.norm(self.W[neighbors] - x, axis=1) * theta_d.T[0]
+                    self.errors[bmu] += np.linalg.norm(self.W[bmu] - x)**2
                     ''' Growing When Necessary '''
                     if self.errors[bmu] > self.GT:
                         self.error_dist(bmu)
                     xix+=1
 
-                self.prune_mid_training()
+                self.prune_mid_training(X)
 
                 # self.surface_tension()
                 self.errors *= 0#self.hits/self.hits.max()
@@ -137,7 +142,12 @@ class GSOM(object):
             newW[i] = self.W[i] + (self.W[neis]-self.W[i]).sum(axis=0)
         self.W = newW
 
-    def prune_mid_training(self):
+    def prune_mid_training(self, X):
+        self.hits*=0
+        bmus = pairwise_distances_argmin(X, self.W)
+
+        for b in bmus:
+            self.hits[b]+=1
         ''' Moving Average Filter to identify contiguous regions in the map '''
         self.mean_filter(1)
 
