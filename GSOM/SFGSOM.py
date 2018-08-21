@@ -31,7 +31,7 @@ class GSOM(object):
             ''' Conduct a PCA transformation of data if specified for better execution times. '''
             # if self.pca_ncomp:
             #     X = PCA(min(X.shape[0], X.shape[1], self.pca_ncomp)).fit_transform(X)
-            its = 30
+            its = 60
             st = timeit.default_timer()
             self.start_time = st
             self.grid = np.array([[i,j] for i in range(2) for j in range(int(2))])
@@ -60,7 +60,7 @@ class GSOM(object):
                 self.GT = -np.sqrt(X.shape[1]) * np.log(sf) * (X.max() - X.min())
                 self.hits = np.zeros(self.grid.shape[0])
                 r = self.rst*np.exp(lambrad * ntime)
-                self.wd = .04# * np.exp(-04.75*ntime)# * (0.5+0.5*(1-ntime))
+                self.wd = .06# * np.exp(-04.75*ntime)# * (0.5+0.5*(1-ntime))
                 self.lr = self.lrst*np.exp(-lambda_lr*ntime)#(1-ntime)#*(1-ntime)#self.lrst + (min_lr - self.lrst) * ntime**2 #
                 xix = 0
                 fract = fract_st*np.exp(-lambda_fr*ntime)
@@ -73,7 +73,6 @@ class GSOM(object):
                     # self.hits[bmu]+=1
 
                     ldist = np.linalg.norm(self.grid - self.grid[bmu], axis=1)
-                    nix = max(int(np.pi * r **2), 5)
                     nix = np.where(ldist<=r)[0].shape[0]
                     dix = int(fract * self.W.shape[0])
                     decayers = np.argsort((ldist))[:dix]
@@ -85,7 +84,7 @@ class GSOM(object):
                     theta_d = np.array([thetfunc]).T
                     delta_neis = (x-self.W[neighbors])*theta_d*self.lr
                     ''' Curvature Enforcement '''
-                    wd_coef = self.lr*self.wd*max((1-neighbors.shape[0]*1./decayers.shape[0]), 0)#*(fract<0.75)
+                    wd_coef = self.lr*self.wd*np.exp(-10*(neighbors.shape[0]*1./decayers.shape[0])**3)#*(fract<0.75)
                     ''' ** coefficient to consider sinking to neighborhood! ** '''
                     hdist = np.linalg.norm(self.W[decayers]-x, axis=1)
                     hdist /= hdist.max()
@@ -95,8 +94,7 @@ class GSOM(object):
                     D /= D.max()
                     pull = np.array([D]).T#(d-D)# negative for pull node toward bmu in map
                     # pull/=pull.max()
-                    wd_coef *= pull
-                    delta_dec=(x-self.W[decayers])*wd_coef
+                    delta_dec=(x-self.W[decayers])*wd_coef*pull
 
                     delta_dec[:neighbors.shape[0]]+=delta_neis
 

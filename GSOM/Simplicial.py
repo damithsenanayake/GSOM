@@ -4,7 +4,6 @@ from mpl_toolkits.mplot3d import Axes3D
 from sklearn.datasets import make_blobs,make_swiss_roll, make_s_curve
 from sklearn.decomposition import PCA
 from SFGSOM import GSOM
-from umap import UMAP
 from sklearn.manifold import TSNE
 # centers = np.array([[2, 0, 0], [-1, np.sqrt(3), 0], [-1, -np.sqrt(3),0], [0,0, np.sqrt(8)], [0,0, np.sqrt(8)/3]])
 centers = np.array([[1,0,0],[-1, 0, 0],[0, 1, 0],[0, -1, 0], [0, 0, 0], [1, 1, 1], [-1, -1, -1], [1, 1, -1], [-1, -1, 1]])
