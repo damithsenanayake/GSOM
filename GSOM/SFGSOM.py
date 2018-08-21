@@ -31,7 +31,7 @@ class GSOM(object):
             ''' Conduct a PCA transformation of data if specified for better execution times. '''
             # if self.pca_ncomp:
             #     X = PCA(min(X.shape[0], X.shape[1], self.pca_ncomp)).fit_transform(X)
-            its = 50
+            its = 30
             st = timeit.default_timer()
             self.start_time = st
             self.grid = np.array([[i,j] for i in range(2) for j in range(int(2))])
@@ -49,7 +49,7 @@ class GSOM(object):
 
             lambda_lr = -np.log(min_lr / self.lrst)
             fract_st = 1.
-            min_fract = .01#8./X.shape[0]*np.pi*rad_min**2#0.01#
+            min_fract = 1./X.shape[0]*np.pi*rad_min**2#0.01#
 
 
             lambda_fr = -np.log(min_fract/fract_st)
@@ -57,7 +57,7 @@ class GSOM(object):
                 ''' Normalized Time Variable for the learning rules.'''
                 ntime = i * 1. / max(its, 1)
                 sf = (self.sf_max-self.sf_min)*ntime + self.sf_min
-                self.GT = -(X.shape[1]) * np.log(sf) * (X.max() - X.min())
+                self.GT = -np.sqrt(X.shape[1]) * np.log(sf) * (X.max() - X.min())
                 self.hits = np.zeros(self.grid.shape[0])
                 r = self.rst*np.exp(lambrad * ntime)
                 self.wd = .04# * np.exp(-04.75*ntime)# * (0.5+0.5*(1-ntime))
@@ -74,8 +74,8 @@ class GSOM(object):
 
                     ldist = np.linalg.norm(self.grid - self.grid[bmu], axis=1)
                     nix = max(int(np.pi * r **2), 5)
-
-                    dix = max(nix,int(fract * self.W.shape[0]))
+                    nix = np.where(ldist<=r)[0].shape[0]
+                    dix = int(fract * self.W.shape[0])
                     decayers = np.argsort((ldist))[:dix]
                     neighbors = decayers[:nix]
 
@@ -89,11 +89,8 @@ class GSOM(object):
                     ''' ** coefficient to consider sinking to neighborhood! ** '''
                     hdist = np.linalg.norm(self.W[decayers]-x, axis=1)
                     hdist /= hdist.max()
-                    # D =  np.array([hdist + hdist**2]).T/2##(1+hdist*2)**-1np.exp(-6*(1-hdist))
-                    # dec =  np.array([ldist[decayers]/ldist[decayers].max()]).T
-                    # d = np.exp(-4*(1-dec))#(1+dec**2)**-1#np.exp(-4.5*(dec)**2)#np.exp(-0.5*dec**1)#
-                    D = np.exp(-hdist**2)
-                    D -= (1+hdist**2)**-1
+                    D = np.exp(-hdist**3)
+                    D -= (1+hdist**3)**-1
                     D *= -1
                     D /= D.max()
                     pull = np.array([D]).T#(d-D)# negative for pull node toward bmu in map
@@ -113,7 +110,7 @@ class GSOM(object):
                         i + 1, xix, X.shape[0], 1, self.W.shape[0], neighbors.shape[0], self.lr, self.errors.sum(),
                         str(dix), decayers.shape[0] * 1. / self.W.shape[0], np.mean(wd_coef))), ' time = %.2f' % (et),
                     # self.errors[neighbors] += np.linalg.norm(self.W[neighbors] - x, axis=1) * theta_d.T[0]
-                    self.errors[bmu] += np.linalg.norm(self.W[bmu] - x)**2
+                    self.errors[bmu] += np.linalg.norm(self.W[bmu] - x)#**2
                     ''' Growing When Necessary '''
                     if self.errors[bmu] > self.GT:
                         self.error_dist(bmu)
