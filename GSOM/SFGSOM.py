@@ -31,7 +31,7 @@ class GSOM(object):
             ''' Conduct a PCA transformation of data if specified for better execution times. '''
             # if self.pca_ncomp:
             #     X = PCA(min(X.shape[0], X.shape[1], self.pca_ncomp)).fit_transform(X)
-            its = 30
+            its = 20
             st = timeit.default_timer()
             self.start_time = st
             self.grid = np.array([[i,j] for i in range(2) for j in range(int(2))])
@@ -49,7 +49,7 @@ class GSOM(object):
 
             lambda_lr = -np.log(min_lr / self.lrst)
             fract_st = 1.
-            min_fract = 1./X.shape[0]*np.pi*rad_min**2#0.01#
+            min_fract = 10./X.shape[0]*np.pi*rad_min**2#0.01#
 
 
             lambda_fr = -np.log(min_fract/fract_st)
@@ -60,7 +60,7 @@ class GSOM(object):
                 self.GT = -(X.shape[1]) * np.log(sf) * (X.max() - X.min())
                 self.hits = np.zeros(self.grid.shape[0])
                 r = self.rst*np.exp(lambrad * ntime)
-                self.wd = .06# * np.exp(-04.75*ntime)# * (0.5+0.5*(1-ntime))
+                self.wd = .08# * np.exp(-04.75*ntime)# * (0.5+0.5*(1-ntime))
                 self.lr = self.lrst*np.exp(-lambda_lr*ntime)#(1-ntime)#*(1-ntime)#self.lrst + (min_lr - self.lrst) * ntime**2 #
                 xix = 0
                 fract = fract_st*np.exp(-lambda_fr*ntime)
@@ -69,12 +69,9 @@ class GSOM(object):
                 for x in X_p:
                     ''' Training For Instances'''
                     bmu = pairwise_distances_argmin(np.array([x]), self.W, axis=1)[0]
-                    self.errors[bmu] += np.linalg.norm(self.W[bmu] - x)
-                    # self.hits[bmu]+=1
-
                     ldist = np.linalg.norm(self.grid - self.grid[bmu], axis=1)
                     nix = np.where(ldist<=r)[0].shape[0]
-                    dix = int(fract * self.W.shape[0])
+                    dix = max(nix,int(fract * self.W.shape[0]))
                     decayers = np.argsort((ldist))[:dix]
                     neighbors = decayers[:nix]
 
@@ -83,14 +80,14 @@ class GSOM(object):
                     thetfunc = np.exp(-.5 * (ld)**2)#(1+ld**2)**-1#
                     theta_d = np.array([thetfunc]).T
                     delta_neis = (x-self.W[neighbors])*theta_d*self.lr
-                    ''' Curvature Enforcement '''
-                    wd_coef = self.lr*self.wd*np.exp(-10*(neighbors.shape[0]*1./decayers.shape[0])**3)#*(fract<0.75)
-                    ''' ** coefficient to consider sinking to neighborhood! ** '''
+                    ''' Gap  Enforcement '''
+                    wd_coef = self.lr*self.wd#*np.exp(-10*(neighbors.shape[0]*1./decayers.shape[0])**3)#*(fract<0.75)
                     hdist = np.linalg.norm(self.W[decayers]-x, axis=1)
                     hdist /= hdist.max()
-                    D = np.exp(-hdist**3)
-                    D -= (1+hdist**3)**-1
-                    D *= -1
+                    D = np.exp(-hdist**6)
+                    # D -= (1+hdist**3)**-1
+                    # D *= -1
+                    D = 1-D
                     D /= D.max()
                     pull = np.array([D]).T#(d-D)# negative for pull node toward bmu in map
                     # pull/=pull.max()

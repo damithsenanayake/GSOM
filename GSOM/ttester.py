@@ -22,10 +22,10 @@ z = (1+0.5*x**3)**-1#np.exp(-1*x**3)#
 #
 # plt.plot(x, (1-x+(x**6/8)))
 
-# v = (x+x**6)/2.
-
+v = 1-np.exp(-x**6)
+v/=v.max()
 plt.plot(x,y)
 plt.plot(x, z)
 plt.plot(x, (z-y)/(z-y).max())
-# plt.plot(x, v)
+plt.plot(x, v)
 plt.show()
