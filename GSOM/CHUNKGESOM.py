@@ -31,7 +31,7 @@ class GSOM(object):
             ''' Conduct a PCA transformation of data if specified for better execution times. '''
             # if self.pca_ncomp:
             #     X = PCA(min(X.shape[0], X.shape[1], self.pca_ncomp)).fit_transform(X)
-            its = 20
+            its = 30
             st = timeit.default_timer()
             self.start_time = st
             self.grid = np.array([[i,j] for i in range(2) for j in range(int(2))])
@@ -65,7 +65,6 @@ class GSOM(object):
                 xix = 0
                 fract = fract_st*np.exp(-lambda_fr*ntime)
                 X_p = X#[np.random.permutation(X.shape[0])]
-                dec_factor = (X.shape[0] * 1./(self.rst**2*np.pi))*(1-ntime)
                 self.errors *= 0
                 for x in X_p:
                     ''' Training For Instances'''
@@ -86,14 +85,18 @@ class GSOM(object):
                     hdist = np.linalg.norm(self.W[decayers]-x, axis=1)
                     hdist /= hdist.max()
                     dist = ldist[decayers]/ldist[decayers].max()
-                    d = np.exp(-dist**6)
-                    D = np.exp(-hdist**6)
-                    D = np.sqrt(d*D)
-                    D = 1-D
+                    # D = np.exp(-dist**6)
+                    # D = np.exp(-hdist**6)
+                    # D = np.sqrt(d*D)
+                    D = 1-dist
+                    # D/= D.max()
                     pull = np.array([D]).T#(d-D)# negative for pull node toward bmu in map
-                    delta_dec=(x-self.W[decayers])*wd_coef*pull
+                    offsets = np.zeros(self.W[decayers].shape)
+                    offsets[1:] = self.W[decayers][:-1]
+                    delta_dec=(offsets-self.W[decayers])*wd_coef*pull
+                    delta_dec[0]=0
 
-                    delta_dec[:neighbors.shape[0]]+=delta_neis
+                    delta_dec[:neighbors.shape[0]]=delta_neis
 
                     self.W[decayers] += delta_dec
 
@@ -111,7 +114,7 @@ class GSOM(object):
                         self.error_dist(bmu)
                     xix+=1
 
-                # self.prune_mid_training(X)
+                self.prune_mid_training(X)
             self.smoothen(X)
         except KeyboardInterrupt:
             return
