@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 from sklearn.datasets import make_blobs,make_swiss_roll, make_s_curve
 from sklearn.decomposition import PCA
-from SFGSOM import GSOM
+from CHUNKGESOM import GSOM
 from sklearn.manifold import TSNE
 # centers = np.array([[2, 0, 0], [-1, np.sqrt(3), 0], [-1, -np.sqrt(3),0], [0,0, np.sqrt(8)], [0,0, np.sqrt(8)/3]])
 centers = np.array([[1,0,0],[-1, 0, 0],[0, 1, 0],[0, -1, 0], [0, 0, 0], [1, 1, 1], [-1, -1, -1], [1, 1, -1], [-1, -1, 1]])
@@ -45,7 +45,7 @@ ax.scatter(X.T[0], X.T[1], X.T[2], c=c, cmap=plt.cm.gist_rainbow)
 
 plt.show(block=False)
 print np.linalg.norm(X - X[1], axis = 1)
-model = GSOM(lrst=.1,  sf_min=0.2, sf_max=0.2, fd = .2, radius=2, min_rad =2)#UMAP()#
+model = GSOM(lrst=.1,  sf_min=0.9, sf_max=0.9, fd = .2, radius=4, min_rad =2)#UMAP()#
 
 Y = model.fit_transform(X)#PCA().fit_transform(X)
 fig = plt.figure()
