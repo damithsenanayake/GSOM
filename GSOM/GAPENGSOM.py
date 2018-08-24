@@ -28,9 +28,6 @@ class GSOM(object):
 
     def train_batch(self, X):
         try:
-            ''' Conduct a PCA transformation of data if specified for better execution times. '''
-            # if self.pca_ncomp:
-            #     X = PCA(min(X.shape[0], X.shape[1], self.pca_ncomp)).fit_transform(X)
             its = 20
             st = timeit.default_timer()
             self.start_time = st
@@ -45,52 +42,48 @@ class GSOM(object):
             rad_min = self.rad_min
 
             lambrad = np.log(rad_min * 1./ self.rst)
-            min_lr = self.lrst*1. / its
-
-            lambda_lr = -np.log(min_lr / self.lrst)
             fract_st = 1.
-            min_fract = 0.01#1./X.shape[0]*np.pi*rad_min**2#0.01#
+            min_fract = 0.1
+            lrmin = self.lrst*1./its
+            lambda_lr = np.log(lrmin/self.lrst)
 
 
             lambda_fr = -np.log(min_fract/fract_st)
             for i in range(its):
                 ''' Normalized Time Variable for the learning rules.'''
                 ntime = i * 1. / max(its, 1)
-                sf = (self.sf_max-self.sf_min)*(1-ntime) + self.sf_min
-                self.GT = -(X.shape[1]) * np.log(sf) * (X.max() - X.min())
+                sf = self.sf_max
+                self.GT = -np.sqrt(X.shape[1]) * np.log(sf) * (X.max() - X.min())
                 self.hits = np.zeros(self.grid.shape[0])
                 r = self.rst*np.exp(lambrad * ntime)# - ntime * (self.rst - rad_min) #(self.rst-rad_min)*(1-ntime) + rad_min#
-                self.wd = .08# * np.exp(-04.75*ntime)# * (0.5+0.5*(1-ntime))
-                self.lr = self.lrst*np.sqrt(1-ntime)#*np.exp(-lambda_lr*ntime)#self.lrst + (min_lr - self.lrst) * ntime**2 #(1-ntime)#
+                self.wd = 0.08
+                self.lr = self.lrst*np.exp(lambda_lr*ntime)#(1-ntime)**2#*np.exp(-lambda_lr*ntime)#self.lrst + (min_lr - self.lrst) * ntime**2 #(1-ntime)#
                 xix = 0
                 fract = fract_st*np.exp(-lambda_fr*ntime)
-                X_p = X#[np.random.permutation(X.shape[0])]
                 self.errors *= 0
-                for x in X_p:
+                for x in X:
                     ''' Training For Instances'''
                     bmu = pairwise_distances_argmin(np.array([x]), self.W, axis=1)[0]
                     ldist = np.linalg.norm(self.grid - self.grid[bmu], axis=1)
-                    nix = np.where(ldist<=r)[0].shape[0]
+                    nix = np.where(ldist<=r)[0].shape[0]#int(np.pi*r**2)#
                     dix = max(nix,int(fract * self.W.shape[0]))#int(nix*dec_factor)#
                     decayers = np.argsort((ldist))[:dix]
                     neighbors = decayers[:nix]
 
                     ''' ** coefficient to consider sinking to neighborhood! ** '''
-                    ld = ldist[neighbors]/r
-                    thetfunc = np.exp(-.5* (ld))#(1+ld**2)**-1#
+                    ld = ldist[neighbors]/ldist[neighbors].max()
+                    thetfunc = np.exp(-0.5* (ld)**1)#(1+ld**2)**-1#
                     theta_d = np.array([thetfunc]).T
                     delta_neis = (x-self.W[neighbors])*theta_d*self.lr
                     ''' Gap  Enforcement '''
-                    wd_coef = self.lr*self.wd *(ntime > 0.1)#*np.exp(-10*(neighbors.shape[0]*1./decayers.shape[0])**3)#*(fract<0.75)
+                    wd_coef = self.lr*self.wd
                     hdist = np.linalg.norm(self.W[decayers]-x, axis=1)
                     hdist /= hdist.max()
-                    D = 1-np.exp(-.5*(hdist)**4)
-
+                    D = 1-np.exp(-(hdist)**6)
+                    D/=D.max()
                     pull = np.array([D]).T
                     delta_dec=(x-self.W[decayers])*wd_coef*pull
-                    delta_dec[0]=0
-
-                    delta_dec[:neighbors.shape[0]]=+delta_neis
+                    delta_dec[:neighbors.shape[0]] += delta_neis
 
                     self.W[decayers] += delta_dec
 

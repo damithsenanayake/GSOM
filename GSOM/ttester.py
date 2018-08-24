@@ -14,9 +14,9 @@ print x
 # y = np.sqrt(1-x**2)#-(x)**2+1
 a = 1
 # y = (1 + (x))**-a
-y = np.exp(-x**2)#(1+(0.1*x**2))**-a# 1-np.exp(-4.*((x)**3))
+y = np.exp(-6*(1-x))#(1+(0.1*x**2))**-a# 1-np.exp(-4.*((x)**3))
 # z = 1-y
-z = (1+x**2)**-1#np.exp(-1*x**3)#
+z = np.exp(-0.5*x)#np.exp(-1*x**3)#
 # z = np.exp(-10.5*(x/float(np.amax(x)))**2)
 # plt.plot(x, 1-x)
 #
@@ -30,7 +30,7 @@ w = 1-np.exp(-4.5*x**8)
 w/=w.max()
 plt.plot(x,y)
 plt.plot(x, (z))
-# plt.plot(x, (z-y)/(z-y).max())
-plt.plot(x, v)
-plt.plot(x, w)
+# # plt.plot(x, (z-y)/(z-y).max())
+# plt.plot(x, v)
+# plt.plot(x, w)
 plt.show()
