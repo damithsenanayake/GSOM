@@ -44,7 +44,7 @@ class GSOM(object):
             lambrad = np.log(rad_min * 1./ self.rst)
             fract_st = 1.
             min_fract = 0.01
-            lrmin = self.lrst*1./its
+            lrmin = 0.1*self.lrst#*1./its
             lambda_lr = np.log(lrmin/self.lrst)
 
 
@@ -56,7 +56,7 @@ class GSOM(object):
                 self.GT = -np.sqrt(X.shape[1]) * np.log(sf) * (X.max() - X.min())
                 self.hits = np.zeros(self.grid.shape[0])
                 r = self.rst*np.exp(lambrad * ntime)# - ntime * (self.rst - rad_min) #(self.rst-rad_min)*(1-ntime) + rad_min#
-                self.wd = 0.08
+                self.wd = 0.02
                 self.lr = self.lrst*np.exp(lambda_lr*ntime)#(1-ntime)**2#*np.exp(-lambda_lr*ntime)#self.lrst + (min_lr - self.lrst) * ntime**2 #(1-ntime)#
                 xix = 0
                 fract = fract_st*np.exp(-lambda_fr*ntime)
@@ -71,8 +71,8 @@ class GSOM(object):
                     neighbors = decayers[:nix]
 
                     ''' ** coefficient to consider sinking to neighborhood! ** '''
-                    ld = ldist[neighbors]/ldist[neighbors].max()
-                    thetfunc = np.exp(-0.5* (ld)**1)#(1+ld**2)**-1#
+                    ld = ldist[neighbors]/r
+                    thetfunc = np.exp(-0.5* (ld)**2)#(1+ld**2)**-1#
                     theta_d = np.array([thetfunc]).T
                     delta_neis = (x-self.W[neighbors])*theta_d*self.lr
                     ''' Gap  Enforcement '''
@@ -83,7 +83,7 @@ class GSOM(object):
                     D/=D.max()
                     pull = np.array([D]).T
                     delta_dec=(x-self.W[decayers])*wd_coef*pull
-                    delta_dec[:neighbors.shape[0]] += delta_neis
+                    delta_dec[:neighbors.shape[0]] = delta_neis
 
                     self.W[decayers] += delta_dec
 
@@ -94,7 +94,6 @@ class GSOM(object):
                         '\riter %i : %i / %i : batch : %i :|G| = %i : n_neis :%i : LR: %.4f  QE: %.4f sink?: %s : wdFract: %.4f : wd_coef : %.4f' % (
                         i + 1, xix, X.shape[0], 1, self.W.shape[0], neighbors.shape[0], self.lr, self.errors.sum(),
                         str(dix), decayers.shape[0] * 1. / self.W.shape[0], np.mean(wd_coef))), ' time = %.2f' % (et),
-                    # self.errors[neighbors] += np.linalg.norm(self.W[neighbors] - x, axis=1) * theta_d.T[0]
                     self.errors[bmu] += np.linalg.norm(self.W[bmu] - x)#**2
                     ''' Growing When Necessary '''
                     if self.errors[bmu] > self.GT:

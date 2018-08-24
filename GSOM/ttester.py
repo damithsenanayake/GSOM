@@ -14,7 +14,7 @@ print x
 # y = np.sqrt(1-x**2)#-(x)**2+1
 a = 1
 # y = (1 + (x))**-a
-y = np.exp(-6*(1-x))#(1+(0.1*x**2))**-a# 1-np.exp(-4.*((x)**3))
+y = 1-np.exp(-(x**6))#(1+(0.1*x**2))**-a# 1-np.exp(-4.*((x)**3))
 # z = 1-y
 z = np.exp(-0.5*x)#np.exp(-1*x**3)#
 # z = np.exp(-10.5*(x/float(np.amax(x)))**2)
