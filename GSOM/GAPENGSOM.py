@@ -28,7 +28,7 @@ class GSOM(object):
 
     def train_batch(self, X):
         try:
-            its = 20
+            its = 40
             st = timeit.default_timer()
             self.start_time = st
             self.grid = np.array([[i,j] for i in range(2) for j in range(int(2))])
@@ -43,7 +43,7 @@ class GSOM(object):
 
             lambrad = np.log(rad_min * 1./ self.rst)
             fract_st = 1.
-            min_fract = 0.1
+            min_fract = 0.01
             lrmin = self.lrst*1./its
             lambda_lr = np.log(lrmin/self.lrst)
 
