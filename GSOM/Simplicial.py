@@ -8,7 +8,7 @@ from sklearn.manifold import TSNE
 # centers = np.array([[2, 0, 0], [-1, np.sqrt(3), 0], [-1, -np.sqrt(3),0], [0,0, np.sqrt(8)], [0,0, np.sqrt(8)/3]])
 centers = np.array([[1,0,0],[-1, 0, 0],[0, 1, 0],[0, -1, 0], [0, 0, 0], [1, 1, 1], [-1, -1, -1], [1, 1, -1], [-1, -1, 1]])
 randnoise = np.random
-
+print GSOM.__module__
 X=[]
 c = []
 i = 1
@@ -45,7 +45,7 @@ ax.scatter(X.T[0], X.T[1], X.T[2], c=c, cmap=plt.cm.gist_rainbow)
 
 plt.show(block=False)
 print np.linalg.norm(X - X[1], axis = 1)
-model = GSOM(lrst=.1,  sf_min=0.9, sf_max=0.9, fd = .2, radius=8, min_rad =2)#UMAP()#
+model = GSOM(lrst=1.,  sf_min=0.9, sf_max=0.9, fd = .2, radius=2, min_rad =2)#UMAP()#
 
 Y = model.fit_transform(X)#PCA().fit_transform(X)
 fig = plt.figure()

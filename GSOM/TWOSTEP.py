@@ -28,7 +28,7 @@ class GSOM(object):
 
     def train_batch(self, X):
         try:
-            its = 10
+            its = 20
             st = timeit.default_timer()
             self.start_time = st
             self.grid = np.array([[i,j] for i in range(2) for j in range(int(2))])
@@ -43,8 +43,8 @@ class GSOM(object):
 
             lambrad = np.log(rad_min * 1./ self.rst)
             fract_st = 1.
-            min_fract = 0.1
-            lrmin = 0.01#*self.lrst#*1./its
+            min_fract = 0.01
+            lrmin = 0.1*self.lrst#*1./its
             lambda_lr = np.log(lrmin/self.lrst)
 
 
@@ -56,8 +56,8 @@ class GSOM(object):
                 self.GT = -np.sqrt(X.shape[1]) * np.log(sf) * (X.max() - X.min())
                 self.hits = np.zeros(self.grid.shape[0])
                 r = self.rst*np.exp(lambrad * ntime)# - ntime * (self.rst - rad_min) #(self.rst-rad_min)*(1-ntime) + rad_min#
-                self.wd = 0.02
-                self.lr = self.lrst*(1-ntime)**2#***2#*np.exp(-lambda_lr*ntime)#self.lrst + (min_lr - self.lrst) * ntime**2 #(1-ntime)#
+                self.wd = 0.08
+                self.lr = self.lrst*(1-ntime)#*np.exp(lambda_lr*ntime)#**2#*np.exp(-lambda_lr*ntime)#self.lrst + (min_lr - self.lrst) * ntime**2 #(1-ntime)#
                 xix = 0
                 fract = fract_st*np.exp(-lambda_fr*ntime)
                 self.errors *= 0
@@ -66,17 +66,39 @@ class GSOM(object):
                     bmu = pairwise_distances_argmin(np.array([x]), self.W, axis=1)[0]
                     ldist = np.linalg.norm(self.grid - self.grid[bmu], axis=1)
                     nix = np.where(ldist<=r)[0].shape[0]#int(np.pi*r**2)#
-                    dix = max(nix,int(fract * self.W.shape[0]))#int(nix*dec_factor)#
-                    decayers = np.argsort((ldist))[:dix]
-                    neighbors = decayers[:nix]
 
-                    ''' ** coefficient to consider sinking to neighborhood! ** '''
-                    ld = ldist[neighbors]/r
-                    thetfunc = np.exp(-0.5* (ld)**2)#(1+ld**2)**-1#
+                    neighbors = ldist.argsort()[:nix]
+                    ld = ldist[neighbors] / r
+                    thetfunc = np.exp(-0.5 * (ld) ** 2)
                     theta_d = np.array([thetfunc]).T
-                    delta_neis = (x-self.W[neighbors])*theta_d*self.lr
+
+                    self.W[neighbors] += (x-self.W[neighbors]) * theta_d * self.lr
+                    self.errors[bmu] += np.linalg.norm(self.W[bmu] - x)  # **2
+                    ''' Growing When Necessary '''
+                    if self.errors[bmu] > self.GT:
+                        self.error_dist(bmu)
+                    et = timeit.default_timer() - st
+
+                    if xix % 500 == 0:
+                        print (
+                            '\rtrain %i : %i / %i : batch : %i :|G| = %i : n_neis :%i : LR: %.4f  QE: %.4f sink?: %s : wdFract: %.4f : wd_coef : %.4f' % (
+                                i + 1, xix, X.shape[0], 1, self.W.shape[0], neighbors.shape[0], self.lr,
+                                self.errors.sum(),
+                                str(0), 0 * 1. / self.W.shape[0],
+                                np.mean(0))), ' time = %.2f' % (et),
+
+                    xix += 1
+                xix = 0
+                for x in X:
+                    bmu = pairwise_distances_argmin(np.array([x]), self.W, axis=1)[0]
+                    ldist = np.linalg.norm(self.grid - self.grid[bmu], axis=1)
+                    ''' ** coefficient to consider sinking to neighborhood! ** '''
+                    dix = max(nix, int(fract * self.W.shape[0]))  # int(nix*dec_factor)#
+                    decayers = np.argsort((ldist))[:dix]
+
+                    # delta_neis = (x-self.W[neighbors])*theta_d*self.lr
                     ''' Gap  Enforcement '''
-                    wd_coef = self.lr*self.wd#*(fract<0.5)
+                    wd_coef = self.lr*self.wd*(fract<0.8)
                     hdist = np.linalg.norm(self.W[decayers]-x, axis=1)
                     hdist /= hdist.max()
                     dist = ldist[decayers]/ldist[decayers].max()
@@ -91,7 +113,6 @@ class GSOM(object):
                     pull /= np.abs(pull).max()
                     # pull = np.array([D]).T
                     delta_dec=(x-self.W[decayers])*wd_coef*pull
-                    delta_dec[:neighbors.shape[0]] = delta_neis
 
                     self.W[decayers] += delta_dec
 
@@ -99,13 +120,10 @@ class GSOM(object):
 
                     if xix % 500 == 0:
                         print (
-                        '\riter %i : %i / %i : batch : %i :|G| = %i : n_neis :%i : LR: %.4f  QE: %.4f sink?: %s : wdFract: %.4f : wd_coef : %.4f' % (
-                        i + 1, xix, X.shape[0], 1, self.W.shape[0], neighbors.shape[0], self.lr, self.errors.sum(),
-                        str(dix), decayers.shape[0] * 1. / self.W.shape[0], np.mean(wd_coef))), ' time = %.2f' % (et),
-                    self.errors[bmu] += np.linalg.norm(self.W[bmu] - x)#**2
-                    ''' Growing When Necessary '''
-                    if self.errors[bmu] > self.GT:
-                        self.error_dist(bmu)
+                        '\rreg %i : %i / %i : batch : %i :|G| = %i : n_neis :%i : LR: %.4f  QE: %.4f sink?: %s : wdFract: %.4f : wd_coef : %.4f' % (
+                        i + 1, xix, X.shape[0], 1, self.W.shape[0], 0, self.lr, self.errors.sum(),
+                        str(dix), decayers.shape[0] * 1. / self.W.shape[0], 0)), ' time = %.2f' % (et),
+
                     xix+=1
 
                 self.prune_mid_training(X)
