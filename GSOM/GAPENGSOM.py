@@ -28,7 +28,7 @@ class GSOM(object):
 
     def train_batch(self, X):
         try:
-            its = 25
+            its = 100
             st = timeit.default_timer()
             self.start_time = st
             self.grid = np.array([[i,j] for i in range(2) for j in range(int(2))])
@@ -56,8 +56,8 @@ class GSOM(object):
                 self.GT = -np.sqrt(X.shape[1]) * np.log(sf) * (X.max() - X.min())
                 self.hits = np.zeros(self.grid.shape[0])
                 r = self.rst*np.exp(lambrad * ntime)# - ntime * (self.rst - rad_min) #(self.rst-rad_min)*(1-ntime) + rad_min#
-                self.wd = 0.016
-                self.lr = self.lrst*(1-ntime)#**2#***2#*np.exp(-lambda_lr*ntime)#self.lrst + (min_lr - self.lrst) * ntime**2 #(1-ntime)#
+                self.wd = 0.01
+                self.lr = self.lrst*(1-ntime)**0.5#***2#*np.exp(-lambda_lr*ntime)#self.lrst + (min_lr - self.lrst) * ntime**2 #(1-ntime)#
                 xix = 0
                 fract = fract_st*np.exp(-lambda_fr*ntime)
                 self.errors *= 0
@@ -76,22 +76,23 @@ class GSOM(object):
                     theta_d = np.array([thetfunc]).T
                     delta_neis = (x-self.W[neighbors])*theta_d*self.lr
                     ''' Gap  Enforcement '''
-                    wd_coef = self.wd*(1-ntime)**0.5#*(fract<0.5)
+                    wd_coef = self.wd*np.exp(-5.*ntime**4)#*(fract<0.5)
                     hdist = np.linalg.norm(self.W[decayers]-x, axis=1)
                     hdist /= hdist.max()
                     dist = ldist[decayers]/ldist[decayers].max()
                     # D = hdist#1-np.exp(-(hdist)**8)
                     # D/=D.max()
-                    D = np.exp(-hdist**1)
-                    d = (1+dist**1)**-1#np.exp(-0.5*dist)#
+                    D = np.exp(-0.5*hdist**3)
+                    d = (1+0.5*dist**3)**-1#np.exp(-0.5*dist)#
                     pull = d-D
                     # if D.max():
                     #     D/=D.max()
                     pull = np.array([pull]).T
-                    pull /= np.abs(pull).max()
+                    # if pull.max():
+                    #     pull /= (pull).max()
                     # pull = np.array([D]).T
                     delta_dec=(x-self.W[decayers])*wd_coef*pull
-                    delta_dec[:neighbors.shape[0]] = delta_neis
+                    delta_dec[:neighbors.shape[0]] += delta_neis
 
                     self.W[decayers] += delta_dec
 
