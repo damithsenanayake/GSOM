@@ -38,11 +38,12 @@ print GSOM.__module__
 
 pack= load_digits()
 dat = pack.data
+dat = PCA(30).fit_transform(dat)
 labels = pack.target
 gc.collect()
 # x, y = SelfOrganizingSwarm(iterations=10, alpha=1, beta=0.1, delta=0, theta=3.5).fit_transform(dat[:samples]).T
 st = timeit.default_timer()
-model = GSOM(lrst=.1,  sf_min=0.6, sf_max=0.6, fd = .2, radius=4, min_rad =2)
+model = GSOM(lrst=.1,  sf_min=0.9, sf_max=0.9, fd = .2, radius=4, min_rad =2)#TSNE(perplexity=40)#
 
 # x, y = MovingMap(iterations=100, beta=1.5).fit_transform(dat[:samples]).T
 Y= model.fit_transform(dat)
@@ -76,46 +77,46 @@ plt.subplot(212)
 #
 plt.scatter(x, y, edgecolors='none',c=plt.cm.jet(kl/10.), alpha = 0.5, s = 15)
 #
-plt.show(block=False)
+# plt.show(block=False)
+# #
+# #
+# fig =plt.figure()
+# #
 #
 #
-fig =plt.figure()
 #
-
-
-
-# #plt.cm.gist_rainbow(model.hits/float(model.hits.max()))
-# plt.subplot(211)
-# plt.scatter(model.grid.T[0], model.grid.T[1] , edgecolors='none', c = 'black', alpha = 0.1, s = 8, marker='+')
-#
-# x, y = model.undelgrid[model.hemis].T
-#
-# plt.scatter(x, y, edgecolors='none', c = 'blue', alpha=0.5, s = 20)
-#
-# x, y = model.undelgrid[model.mid]
-# plt.scatter(x, y, edgecolors='none', c = 'green', alpha = 1., s = 20)
-#
-# x, y = model.undelgrid[model.decayers].T
-# plt.scatter(x, y, edgecolors= 'none', c = 'red', alpha = 0.5, s = 10)
-#
-# x, y = model.undelgrid[model.bmu]
-#
-# plt.scatter(x, y, edgecolors='none', c='black', alpha=0.8, s = 10)
-#
-# x, y = model.undelgrid[model.abcent]
-#
-# plt.scatter(x, y, edgecolors='none', c='orange', alpha=0.8, s = 20, marker= 'x')
-#
-# plt.subplot(212)
-#
-plt.scatter(model.grid.T[0], model.grid.T[1] , edgecolors='none', c = model.errors, cmap= plt.cm.gist_rainbow, alpha = 0.6, s = 20)
-# x, y = model.undelgrid[model.decayers].T
-#
-# colors = np.zeros((x.shape[0],4))
-#
-# colors[:, 3] = model.theta_D.T
-#
-# plt.scatter(x, y, edgecolors= 'none', c = colors, s = 40)
+# # #plt.cm.gist_rainbow(model.hits/float(model.hits.max()))
+# # plt.subplot(211)
+# # plt.scatter(model.grid.T[0], model.grid.T[1] , edgecolors='none', c = 'black', alpha = 0.1, s = 8, marker='+')
+# #
+# # x, y = model.undelgrid[model.hemis].T
+# #
+# # plt.scatter(x, y, edgecolors='none', c = 'blue', alpha=0.5, s = 20)
+# #
+# # x, y = model.undelgrid[model.mid]
+# # plt.scatter(x, y, edgecolors='none', c = 'green', alpha = 1., s = 20)
+# #
+# # x, y = model.undelgrid[model.decayers].T
+# # plt.scatter(x, y, edgecolors= 'none', c = 'red', alpha = 0.5, s = 10)
+# #
+# # x, y = model.undelgrid[model.bmu]
+# #
+# # plt.scatter(x, y, edgecolors='none', c='black', alpha=0.8, s = 10)
+# #
+# # x, y = model.undelgrid[model.abcent]
+# #
+# # plt.scatter(x, y, edgecolors='none', c='orange', alpha=0.8, s = 20, marker= 'x')
+# #
+# # plt.subplot(212)
+# #
+# plt.scatter(model.grid.T[0], model.grid.T[1] , edgecolors='none', c = model.errors, cmap= plt.cm.gist_rainbow, alpha = 0.6, s = 20)
+# # x, y = model.undelgrid[model.decayers].T
+# #
+# # colors = np.zeros((x.shape[0],4))
+# #
+# # colors[:, 3] = model.theta_D.T
+# #
+# # plt.scatter(x, y, edgecolors= 'none', c = colors, s = 40)
 
 plt.show()
 

@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
-from SCALINGSOM import  GSOM
+from SFGSOM import  GSOM
 # from protodsgsom import GSOM
 from sklearn.manifold import TSNE, LocallyLinearEmbedding, MDS
 from sklearn.decomposition import PCA
@@ -12,10 +12,11 @@ fread = np.array(pd.read_csv("/home/senanayaked/data/coil20.csv", header=None))
 print GSOM.__module__
 
 X = fread[:, :-1]
-X = X/X.max()
+# X = X/X.max()
+X = PCA(30).fit_transform(X)
 t = fread[:,-1]
 imlables = ['duck', 'block 1', 'car 1', 'fs cat', 'Anc', 'Car 2', 'block 2', 'baby powder', 'Tylenol', 'Vaseline', 'Mushroom', 'cup', 'piggy', 'socket', 'pot', 'bottle', 'dish', 'cup 2', 'car 3', 'tub']
-model = GSOM(lrst=.1,  sf_min=0.6, sf_max=0.6, fd = .2, radius=6, min_rad =2)
+model = GSOM(lrst=1.,  sf_min=0.99, sf_max=0.99, fd = .2, radius=4, min_rad =2)#TSNE(perplexity=40)#
 Y=model.fit_transform(X)# GSOM().fit_transform(X, lr = 1.0, beta=0.5, sf=0.995, wd=0.02, fd=1.9)
 
 
