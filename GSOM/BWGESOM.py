@@ -55,15 +55,15 @@ class GSOM(object):
                 sf = self.sf_max
                 self.GT = -np.sqrt(X.shape[1]) * np.log(sf) * (X.max() - X.min())
                 self.hits = np.zeros(self.grid.shape[0])
-                r = self.rst*np.exp(lambrad * ntime)# - ntime * (self.rst - rad_min) #(self.rst-rad_min)*(1-ntime) + rad_min#
-                self.wd = 0.04
-                self.lr = self.lrst*(1-ntime)**0.5#***2#*np.exp(-lambda_lr*ntime)#self.lrst + (min_lr - self.lrst) * ntime**2 #(1-ntime)#
+                r = self.rst - ntime * (self.rst - rad_min) #*np.exp(lambrad * ntime)#(self.rst-rad_min)*(1-ntime) + rad_min#
+                self.wd = 0.008
+                self.lr = self.lrst*(1-ntime)#**0.5#***2#*np.exp(-lambda_lr*ntime)#self.lrst + (min_lr - self.lrst) * ntime**2 #(1-ntime)#
                 xix = 0
                 fract = fract_st*np.exp(-lambda_fr*ntime)
                 self.errors *= 0
                 b = 0
 
-                batch_size = 50
+                batch_size = 2*(i/2+1)
 
                 n_batches = X.shape[0]/batch_size
 
@@ -85,7 +85,7 @@ class GSOM(object):
                         theta_d = np.array([thetfunc]).T
                         delta_neis = (x-self.W[neighbors])*theta_d*self.lr
                         ''' Gap  Enforcement '''
-                        wd_coef = self.wd*np.exp(-5.*ntime**4)*(1-ntime)**3#*(fract<0.5)
+                        wd_coef = self.wd*np.exp(-5.*ntime**4)*(1-ntime)**.5#*(fract<0.5)
                         hdist = np.linalg.norm(self.W[decayers]-x, axis=1)
                         rix = np.where(ldist[decayers]<=r)[0].shape[0]
                         hdist -= hdist.min()
