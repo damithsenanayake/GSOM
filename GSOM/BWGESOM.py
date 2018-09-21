@@ -28,7 +28,7 @@ class GSOM(object):
 
     def train_batch(self, X):
         try:
-            its = 100
+            its = 35
             st = timeit.default_timer()
             self.start_time = st
             self.grid = np.array([[i,j] for i in range(2) for j in range(int(2))])
@@ -43,8 +43,8 @@ class GSOM(object):
 
             lambrad = np.log(rad_min * 1./ self.rst)
             fract_st = 1.
-            min_fract =.01# 0.05
-            lrmin = 0.01#*self.lrst#*1./its
+            min_fract =.005# 0.05
+            lrmin = 0.01*self.lrst#*1./its
             lambda_lr = np.log(lrmin/self.lrst)
 
 
@@ -56,15 +56,14 @@ class GSOM(object):
                 self.GT = -np.sqrt(X.shape[1]) * np.log(sf) * (X.max() - X.min())
                 self.hits = np.zeros(self.grid.shape[0])
                 r = self.rst - ntime * (self.rst - rad_min) #*np.exp(lambrad * ntime)#(self.rst-rad_min)*(1-ntime) + rad_min#
-                self.wd = 0.008
-                self.lr = self.lrst*(1-ntime)#**0.5#***2#*np.exp(-lambda_lr*ntime)#self.lrst + (min_lr - self.lrst) * ntime**2 #(1-ntime)#
+                self.wd = 0.16
+                self.lr = self.lrst*np.exp(lambda_lr*ntime)#*#**0.5#***2##self.lrst + (min_lr - self.lrst) * ntime**2 #(1-ntime)#
                 xix = 0
-                fract = fract_st*np.exp(-lambda_fr*ntime)
+                fract = fract_st*np.exp(-lambda_fr*ntime)**0.5
                 self.errors *= 0
                 b = 0
 
-                batch_size = 2*(i/2+1)
-
+                batch_size = int(50*ntime)+1
                 n_batches = X.shape[0]/batch_size
 
                 for b in range(n_batches):
@@ -81,11 +80,11 @@ class GSOM(object):
                         k+=1
                         ''' ** coefficient to consider sinking to neighborhood! ** '''
                         ld = ldist[neighbors]/r
-                        thetfunc = np.exp(-0.5* (ld)**2)#(1+ld**2)**-1#
+                        thetfunc = np.exp(-0.5* (ld))#(1+ld**2)**-1#
                         theta_d = np.array([thetfunc]).T
                         delta_neis = (x-self.W[neighbors])*theta_d*self.lr
                         ''' Gap  Enforcement '''
-                        wd_coef = self.wd*np.exp(-5.*ntime**4)*(1-ntime)**.5#*(fract<0.5)
+                        wd_coef = self.lr*self.wd#*np.exp(-.5*ntime**4)*(1-ntime)**.5#*(fract<0.5)
                         hdist = np.linalg.norm(self.W[decayers]-x, axis=1)
                         rix = np.where(ldist[decayers]<=r)[0].shape[0]
                         hdist -= hdist.min()
