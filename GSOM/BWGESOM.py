@@ -28,7 +28,7 @@ class GSOM(object):
 
     def train_batch(self, X):
         try:
-            its = 35
+            its = 20
             st = timeit.default_timer()
             self.start_time = st
             self.grid = np.array([[i,j] for i in range(2) for j in range(int(2))])
@@ -43,7 +43,7 @@ class GSOM(object):
 
             lambrad = np.log(rad_min * 1./ self.rst)
             fract_st = 1.
-            min_fract =.005# 0.05
+            min_fract =.001# 0.05
             lrmin = 0.01*self.lrst#*1./its
             lambda_lr = np.log(lrmin/self.lrst)
 
@@ -80,7 +80,7 @@ class GSOM(object):
                         k+=1
                         ''' ** coefficient to consider sinking to neighborhood! ** '''
                         ld = ldist[neighbors]/r
-                        thetfunc = np.exp(-0.5* (ld))#(1+ld**2)**-1#
+                        thetfunc = np.exp(-0.5* (ld)**2)#(1+ld**2)**-1#
                         theta_d = np.array([thetfunc]).T
                         delta_neis = (x-self.W[neighbors])*theta_d*self.lr
                         ''' Gap  Enforcement '''
