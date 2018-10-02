@@ -11,29 +11,12 @@ x = np.array(range(100)).astype(float)
 # z = 0.9**x
 x/= x.max()
 print x
-# y = np.sqrt(1-x**2)#-(x)**2+1
-a = 1
-# y = (1 + (x))**-a
-y = np.exp(-5.*x**6)#np.exp(-x)#(1+x)**-1#(1+(0.1*x**2))**-a# 1-np.exp(-4.*((x)**3))
-
-y*=(1-x)**0.5
-# z = 1-y
-z = (1+x)**-1#np.exp(-1*x**3)#
-# z = np.exp(-10.5*(x/float(np.amax(x)))**2)
-# plt.plot(x, 1-x)
-#
-# plt.plot(x, (1-x+(x**6/8)))
-L = 100*np.ones(x.shape)
-for i in range(1, L.shape[0]):
-    L[i] = L[i-1]*(1-x[i])**0.2
-v = z-y
-v/=v.max()
-w = 1-np.exp(-4.5*x**2)
-w/=w.max()
-# plt.plot(x,y)
-# plt.plot(x, (z))
-# # # plt.plot(x, (z-y)/(z-y).max())
+y = 1- (1+x**6)**-1#-(x)**2+1
+a = 0.08
+z = np.exp(-15.*x**2)
 # plt.plot(x, z)
+y *= a
+y += z
 plt.plot(x, y)
 # plt.plot(x, v)
 plt.show()

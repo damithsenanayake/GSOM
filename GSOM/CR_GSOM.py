@@ -28,7 +28,7 @@ class GSOM(object):
 
     def train_batch(self, X):
         try:
-            its = 30
+            its = 20
             st = timeit.default_timer()
             self.start_time = st
             self.grid = np.array([[i,j] for i in range(2) for j in range(int(2))])
@@ -43,8 +43,8 @@ class GSOM(object):
 
             lambrad = np.log(rad_min * 1./ self.rst)
             fract_st = 1.
-            min_fract =.05# 0.05
-            lrmin = 0.005*self.lrst#*1./its
+            min_fract =.1# 0.05
+            lrmin = 0.01*self.lrst#*1./its
             lambda_lr = np.log(lrmin/self.lrst)
 
 
@@ -56,7 +56,7 @@ class GSOM(object):
                 self.GT = -np.sqrt(X.shape[1]) * np.log(sf) * (X.max() - X.min())
                 self.hits = np.zeros(self.grid.shape[0])
                 r = self.rst - ntime * (self.rst - rad_min)
-                self.wd = 0.02
+                self.wd = 0.04
                 self.lr = self.lrst*np.exp(lambda_lr*ntime)
                 xix = 0
                 fract = fract_st*np.exp(-lambda_fr*ntime)
@@ -72,13 +72,13 @@ class GSOM(object):
                         bmu = bmus[k]
                         ldist = np.linalg.norm(self.grid - self.grid[bmu], axis=1)
                         nix = np.where(ldist<=r)[0].shape[0]
-                        dix = max(nix,int(fract * self.W.shape[0]))
+                        dix = max(2*nix,int(fract * self.W.shape[0]))
                         decayers = np.argsort((ldist))[:dix]
                         neighbors = decayers[:nix]
                         k+=1
                         ''' ** coefficient to consider sinking to neighborhood! ** '''
                         ld = ldist[neighbors]/r
-                        thetfunc = np.exp(-0.5* (ld)**2)#(1+ld**2)**-1#
+                        thetfunc = np.exp(-0.5* (ld))#(1+ld**2)**-1#
                         theta_d = np.array([thetfunc]).T
                         delta_neis = (x-self.W[neighbors])*theta_d*self.lr
                         ''' Gap  Enforcement '''
@@ -87,8 +87,8 @@ class GSOM(object):
                         hdist -= hdist.min()
                         hdist /= hdist.max()
                         dist = ldist[decayers]/ldist[decayers].max()
-                        d = (1+(1-dist)**2)**-1
-                        pull = d
+                        d = (1+dist**6)**-1
+                        pull = 1-d
                         pull = np.array([pull]).T
                         delta_dec=(x-self.W[decayers])*wd_coef*pull
                         delta_dec[:neighbors.shape[0]] += delta_neis
@@ -172,11 +172,6 @@ class GSOM(object):
         left = self.grid[g_node] + np.array([-1, 0])
         down = self.grid[g_node] + np.array([0, -1])
         right = self.grid[g_node] + np.array([1, 0])
-        # lu = self.grid[g_node] + np.array([-1,1])
-        # ld = self.grid[g_node] + np.array([-1, -1])
-        # ru = self.grid[g_node] + np.array([1, 1])
-        # rd = self.grid[g_node] + np.array([1, -1])
-
         imm_neis = [up, left, down, right]#, lu, ld, ru, rd]
 
         for nei in imm_neis:
