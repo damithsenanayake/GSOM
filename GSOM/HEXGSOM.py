@@ -21,6 +21,7 @@ class GSOM(object):
         self.rad_min = min_rad
         self.sf_min = sf_min
         self.sf_max = sf_max
+        self.grid_shape = 'hex'
 
     def fit_transform(self, X):
         self.train_batch(X)
@@ -31,7 +32,21 @@ class GSOM(object):
             its = 20
             st = timeit.default_timer()
             self.start_time = st
-            self.grid = np.array([[i,j] for i in range(2) for j in range(int(2))])
+
+            ''' Hexagonal initialization '''
+            if self.grid_shape == 'hex':
+                self.grid = np.zeros((7, 2))
+
+                for i in range(1,7):
+                    angle = 2*np.pi*(i-1)/6
+
+                    x = np.sin(angle)
+                    y = np.cos(angle)
+                    self.grid[i] = np.array([x, y])
+            else:
+                self.grid = np.array([[i, j ] for i in range(2) for j in range(2)])
+
+
             self.W = np.zeros((self.grid.shape[0], X.shape[1]))#np.random.RandomState(seed=5).random_sample(size=(self.grid.shape[0], X.shape[1]))#np.random.random(size=(self.grid.shape[0], X.shape[1]))
             self.W[:, :2] = self.grid
             self.W[:, :2] *= X[:, :2].max(axis=0) - X[:, :2].min(axis=0)
@@ -43,7 +58,7 @@ class GSOM(object):
 
             lambrad = np.log(rad_min * 1./ self.rst)
             fract_st = 1.
-            min_fract =.05# 0.05
+            min_fract =.1# 0.05
             lrmin = .01*self.lrst#*1./its
             lambda_lr = np.log(lrmin/self.lrst)
 
@@ -56,12 +71,12 @@ class GSOM(object):
                 self.GT = -np.sqrt(X.shape[1]) * np.log(sf) * (X.max() - X.min())
                 self.hits = np.zeros(self.grid.shape[0])
                 r = self.rst - ntime * (self.rst - rad_min)
-                self.wd = 0.02
-                self.lr = self.lrst*np.exp(lambda_lr*ntime)
+                self.wd = 0.002
+                self.lr = self.lrst*np.exp(lambda_lr*ntime)#*(1-ntime)#*
                 xix = 0
                 fract = fract_st*np.exp(-lambda_fr*ntime)
                 self.errors *= 0
-                batch_size = int(50*ntime)+1
+                batch_size = 1#int(50*ntime)+1
                 n_batches = X.shape[0]/batch_size
 
                 for b in range(n_batches):
@@ -78,17 +93,16 @@ class GSOM(object):
                         k+=1
                         ''' ** coefficient to consider sinking to neighborhood! ** '''
                         ld = ldist[neighbors]/r
-                        thetfunc = np.exp(-0.5* (ld)**2)#(1+ld**2)**-1#
+                        thetfunc = np.exp(-0.5* (ld)**2)
                         theta_d = np.array([thetfunc]).T
                         delta_neis = (x-self.W[neighbors])*theta_d*self.lr
                         ''' Gap  Enforcement '''
-                        wd_coef = self.lr*self.wd#*np.exp(-.5*ntime**4)*(1-ntime)**.5#*(fract<0.5)
+                        wd_coef = self.wd*(1-ntime)**2
                         hdist = np.linalg.norm(self.W[decayers]-x, axis=1)
                         hdist -= hdist.min()
                         hdist /= hdist.max()
-                        dist = ldist[decayers]/ldist[decayers].max()
-                        d = (1+(1-dist)**2)**-1
-                        pull = d
+                        D = np.exp(-10.*(1-hdist)**2)
+                        pull = D
                         pull = np.array([pull]).T
                         delta_dec=(x-self.W[decayers])*wd_coef*pull
                         delta_dec[:neighbors.shape[0]] += delta_neis
@@ -104,9 +118,9 @@ class GSOM(object):
                         self.errors[bmu] += np.linalg.norm(self.W[bmu] - x)#**2
 
                         xix+=1
-                    ''' Growing When Necessary '''
-                    while self.errors.max() > self.GT:
-                        self.error_dist(self.errors.argmax())
+                        ''' Growing When Necessary '''
+                        while self.errors.max() > self.GT:
+                            self.error_dist(self.errors.argmax())
 
                 self.prune_mid_training(X)
             self.smoothen(X)
@@ -168,16 +182,12 @@ class GSOM(object):
                 print '\r %i / %i smoothen'%(i, its),
 
     def error_dist(self, g_node):
-        up = self.grid[g_node] + np.array([0, 1])
-        left = self.grid[g_node] + np.array([-1, 0])
-        down = self.grid[g_node] + np.array([0, -1])
-        right = self.grid[g_node] + np.array([1, 0])
-        # lu = self.grid[g_node] + np.array([-1,1])
-        # ld = self.grid[g_node] + np.array([-1, -1])
-        # ru = self.grid[g_node] + np.array([1, 1])
-        # rd = self.grid[g_node] + np.array([1, -1])
 
-        imm_neis = [up, left, down, right]#, lu, ld, ru, rd]
+        imm_neis = np.zeros((6, 2))
+
+        for i in range(6):
+            angle = 2* np.pi / 6 * i
+            imm_neis[i] = self.grid[g_node]+np.array([np.sin(angle), np.cos(angle)])
 
         for nei in imm_neis:
             if self.point_exists(self.grid, nei):
@@ -187,7 +197,7 @@ class GSOM(object):
                 gdists_new = np.linalg.norm(nei - self.grid, axis=1)
                 gdists_old = np.linalg.norm(self.grid - self.grid[g_node], axis=1)
                 closest2_new = np.argsort(gdists_new)[:2]
-                if np.any(gdists_old[closest2_new] == 1):
+                if np.any(abs(gdists_old[closest2_new] - 1)<0.00000001):
                     w = self.W[closest2_new].mean(axis=0)
                 else:
                     w = self.W[closest2_new[0]] * 2 - self.W[closest2_new[1]]
@@ -200,10 +210,12 @@ class GSOM(object):
 
 
     def point_exists(self, space, point):
-        return not np.linalg.norm(space-point, axis=1).all()
+        dists = np.linalg.norm(space-point, axis=1)
+
+        return dists.min()<0.0001# not np.linalg.norm(space-point, axis=1).all()
 
     def find_point(self, space, point):
-        return np.where(np.linalg.norm(space-point, axis=1)==0)[0]
+        return np.where(np.linalg.norm(space-point, axis=1)<0.001)[0]
 
     def predict(self, X):
         Y = self.grid[pairwise_distances_argmin(X, self.W)]

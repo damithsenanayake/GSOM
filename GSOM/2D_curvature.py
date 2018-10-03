@@ -1,6 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from BWGESOM import GSOM
+from HEXGSOM import GSOM
 from sklearn.manifold import TSNE
 centers = np.array([[1, 0], [0, 1], [0, -1], [-1, 0], [0, 0]])
 
@@ -23,7 +23,7 @@ for c in centers:
 
 fig = plt.figure()
 
-Y = GSOM(lrst=1., radius=2, min_rad=2, sf_max=0.9, sf_min = 0.9).fit_transform(X)
+Y = GSOM(lrst=.5, radius=4, min_rad=2, sf_max=0.9, sf_min = 0.9).fit_transform(X)
 plt.subplot(311)
 plt.scatter(Y.T[0], Y.T[1], c= cs, cmap=plt.cm.gist_rainbow, alpha = 0.8)
 plt.subplot(312)

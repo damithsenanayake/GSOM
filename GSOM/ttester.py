@@ -11,12 +11,12 @@ x = np.array(range(100)).astype(float)
 # z = 0.9**x
 x/= x.max()
 print x
-y = 1- (1+x**6)**-1#-(x)**2+1
-a = 0.08
-z = np.exp(-15.*x**2)
-# plt.plot(x, z)
-y *= a
-y += z
+y = np.exp(-10.*(1-x)**2)#-(x)**2+1
+# a = 0.08
+# z = np.exp(-15.*x**2)
+# # plt.plot(x, z)
+# y *= a
+# y += z
 plt.plot(x, y)
 # plt.plot(x, v)
 plt.show()
