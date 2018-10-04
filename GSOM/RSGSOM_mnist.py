@@ -38,7 +38,7 @@ print dat.shape
 gc.collect()
 # x, y = SelfOrganizingSwarm(iterations=10, alpha=1, beta=0.1, delta=0, theta=3.5).fit_transform(dat[:samples]).T
 st = timeit.default_timer()
-model = GSOM(lrst=.05, sf_max=0.9, fd = .1, radius=4., min_rad = 2)
+model = GSOM(lrst=.5, sf_max=0.9, fd = .1, radius=4., min_rad = 2)
 
 # x, y = MovingMap(iterations=100, beta=1.5).fit_transform(dat[:samples]).T
 Y= model.fit_transform(dat)

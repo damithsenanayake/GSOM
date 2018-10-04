@@ -29,7 +29,7 @@ class GSOM(object):
 
     def train_batch(self, X):
         try:
-            its = 25
+            its = 40
             st = timeit.default_timer()
             self.start_time = st
 
@@ -56,13 +56,8 @@ class GSOM(object):
             self.lr = self.lrst
             rad_min = self.rad_min
 
-            lambrad = np.log(rad_min * 1./ self.rst)
-            fract_st = .8
-            min_fract =.1# 0.05
             lambda_lr = np.log(0.01)
 
-
-            lambda_fr = -np.log(min_fract/fract_st)
             for i in range(its):
                 ''' Normalized Time Variable for the learning rules.'''
                 ntime = i * 1. / max(its, 1)
@@ -70,7 +65,7 @@ class GSOM(object):
                 self.GT = -np.sqrt(X.shape[1]) * np.log(sf) * (X.max() - X.min())
                 self.hits = np.zeros(self.grid.shape[0])
                 r = self.rst - ntime * (self.rst - rad_min)
-                self.wd = 0.04
+                self.wd = 0.02
                 self.lr = self.lrst*np.exp(lambda_lr*ntime)#self.lr*(1-ntime)#*(1-ntime)#*
                 xix = 0
                 fract = 1#fract_st*np.exp(-lambda_fr*ntime)
@@ -106,7 +101,6 @@ class GSOM(object):
                         pull = np.array([pull]).T
                         delta_dec=(x-self.W[decayers])*wd_coef*pull
                         delta_dec[:neighbors.shape[0]] = delta_neis
-                        # delta_dec/=delta_dec.max()
 
                         self.W[decayers] += delta_dec
                         et = timeit.default_timer()-st
