@@ -56,7 +56,7 @@ class GSOM(object):
             self.lr = self.lrst
             rad_min = self.rad_min
 
-            lambda_lr = np.log(0.01)
+            lambda_lr = np.log(0.005)
 
             for i in range(its):
                 ''' Normalized Time Variable for the learning rules.'''
