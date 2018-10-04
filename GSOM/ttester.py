@@ -11,7 +11,7 @@ x = np.array(range(100)).astype(float)
 # z = 0.9**x
 x/= x.max()
 print x
-y = np.exp(-10.*(1-x)**2)#-(x)**2+1
+y = np.exp(-10.*(1-x)**4)#-(x)**2+1
 # a = 0.08
 # z = np.exp(-15.*x**2)
 # # plt.plot(x, z)

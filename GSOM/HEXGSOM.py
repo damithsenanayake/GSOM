@@ -29,7 +29,7 @@ class GSOM(object):
 
     def train_batch(self, X):
         try:
-            its = 20
+            its = 30
             st = timeit.default_timer()
             self.start_time = st
 
@@ -57,10 +57,10 @@ class GSOM(object):
             rad_min = self.rad_min
 
             lambrad = np.log(rad_min * 1./ self.rst)
-            fract_st = 1.
+            fract_st = .5
             min_fract =.1# 0.05
             lrmin = .01*self.lrst#*1./its
-            lambda_lr = np.log(lrmin/self.lrst)
+            lambda_lr = np.log(0.1)
 
 
             lambda_fr = -np.log(min_fract/fract_st)
@@ -71,8 +71,8 @@ class GSOM(object):
                 self.GT = -np.sqrt(X.shape[1]) * np.log(sf) * (X.max() - X.min())
                 self.hits = np.zeros(self.grid.shape[0])
                 r = self.rst - ntime * (self.rst - rad_min)
-                self.wd = 0.002
-                self.lr = self.lrst*np.exp(lambda_lr*ntime)#*(1-ntime)#*
+                self.wd = 0.02
+                self.lr = self.lrst*np.exp(lambda_lr*ntime)#self.lr*(1-ntime)#*(1-ntime)#*
                 xix = 0
                 fract = fract_st*np.exp(-lambda_fr*ntime)
                 self.errors *= 0
@@ -93,15 +93,16 @@ class GSOM(object):
                         k+=1
                         ''' ** coefficient to consider sinking to neighborhood! ** '''
                         ld = ldist[neighbors]/r
-                        thetfunc = np.exp(-0.5* (ld)**2)
+                        thetfunc = np.exp(-.5* (ld)**2)
                         theta_d = np.array([thetfunc]).T
                         delta_neis = (x-self.W[neighbors])*theta_d*self.lr
                         ''' Gap  Enforcement '''
-                        wd_coef = self.wd*(1-ntime)**2
+                        wd_coef = self.wd*self.lr#(1-ntime)**2
                         hdist = np.linalg.norm(self.W[decayers]-x, axis=1)
                         hdist -= hdist.min()
                         hdist /= hdist.max()
-                        D = np.exp(-10.*(1-hdist)**2)
+                        D = np.exp(-2.*(1-hdist)**2)
+                        D-= D.min()
                         pull = D
                         pull = np.array([pull]).T
                         delta_dec=(x-self.W[decayers])*wd_coef*pull
