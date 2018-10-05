@@ -29,7 +29,7 @@ class GSOM(object):
 
     def train_batch(self, X):
         try:
-            its = 20
+            its = 40
             st = timeit.default_timer()
             self.start_time = st
 
@@ -65,7 +65,7 @@ class GSOM(object):
                 self.GT = -np.sqrt(X.shape[1]) * np.log(sf) * (X.max() - X.min())
                 self.hits = np.zeros(self.grid.shape[0])
                 r = self.rst *np.exp(lambda_rad * ntime)#- ntime * (self.rst - rad_min)
-                self.wd = 0.02
+                self.wd = 0.015
                 self.lr = self.lrst*np.exp(lambda_lr*ntime)#self.lr*(1-ntime)#*(1-ntime)#*
                 xix = 0
                 fract = 1#fract_st*np.exp(-lambda_fr*ntime)
@@ -95,7 +95,7 @@ class GSOM(object):
                         hdist = np.linalg.norm(self.W[decayers]-x, axis=1)
                         hdist -= hdist.min()
                         hdist /= hdist.max()
-                        D = np.exp(-7.*(1-hdist)**2)
+                        D = np.exp(-2.*(1-hdist)**2)
                         D-= D.min()
                         pull = D
                         pull = np.array([pull]).T
