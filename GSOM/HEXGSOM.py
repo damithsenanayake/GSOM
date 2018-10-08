@@ -29,7 +29,7 @@ class GSOM(object):
 
     def train_batch(self, X):
         try:
-            its = 20
+            its = 100
             st = timeit.default_timer()
             self.start_time = st
 
