@@ -7,10 +7,10 @@ from sklearn.cluster import  KMeans
 
 class GSOM(object):
 
-    def __init__(self, min_rad=2.45, lrst=0.1, sf_min=0.3, sf_max=0.9, fd=0.15, radius=10,  wd=0.02, beta=0, PCA = 0):
+    def __init__(self, min_rad=2.45, lrst=0.1, sf_min=0.3, sf_max=0.9, fd=0.15, radius=10,  sd=0.02, beta=0, PCA = 0):
         self.lrst = lrst
         self.fd = fd
-        self.wdst = wd
+        self.wdst = sd
         self.beta = beta
         self.pca_ncomp = PCA
         self.hits = None
@@ -29,7 +29,7 @@ class GSOM(object):
 
     def train_batch(self, X):
         try:
-            its = 40
+            its = 20
             st = timeit.default_timer()
             self.start_time = st
 
@@ -57,6 +57,11 @@ class GSOM(object):
             rad_min = self.rad_min
             lambda_rad = np.log(rad_min*1./self.rst)
             lambda_lr = np.log(0.01)
+            fract_st = 1.
+            fract_min = 0.1
+
+            lambda_fr = -np.log(fract_min/fract_st)
+
 
             for i in range(its):
                 ''' Normalized Time Variable for the learning rules.'''
@@ -65,10 +70,10 @@ class GSOM(object):
                 self.GT = -np.sqrt(X.shape[1]) * np.log(sf) * (X.max() - X.min())
                 self.hits = np.zeros(self.grid.shape[0])
                 r = self.rst *np.exp(lambda_rad * ntime)#- ntime * (self.rst - rad_min)
-                self.wd = 0.015
+                self.wd = self.wdst#*(0.1+0.9*ntime)
                 self.lr = self.lrst*np.exp(lambda_lr*ntime)#self.lr*(1-ntime)#*(1-ntime)#*
                 xix = 0
-                fract = 1#fract_st*np.exp(-lambda_fr*ntime)
+                fract = fract_st*(1-ntime)#*np.exp(-lambda_fr*ntime)
                 self.errors *= 0
                 batch_size = 1#int(50*ntime)+1
                 n_batches = X.shape[0]/batch_size
@@ -95,7 +100,7 @@ class GSOM(object):
                         hdist = np.linalg.norm(self.W[decayers]-x, axis=1)
                         hdist -= hdist.min()
                         hdist /= hdist.max()
-                        D = np.exp(-2.*(1-hdist)**2)
+                        D = np.exp(-10.*(1-hdist)**2)
                         D-= D.min()
                         pull = D
                         pull = np.array([pull]).T
@@ -114,7 +119,7 @@ class GSOM(object):
 
                         xix+=1
                         ''' Growing When Necessary '''
-                        while self.errors.max() > self.GT:
+                        while self.errors.max() > self.GT and i+1 < its:
                             self.error_dist(self.errors.argmax())
 
                 self.prune_mid_training(X)

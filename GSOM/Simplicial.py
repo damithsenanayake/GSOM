@@ -20,7 +20,7 @@ for cent in centers:
     x /= x.max()
     x /=0.5
     # x *=2
-    x += cent
+    x += cent*2
     try:
         X = np.concatenate((X,x), axis=0)#X.append(x)
     except:
@@ -45,7 +45,7 @@ ax.scatter(X.T[0], X.T[1], X.T[2], c=c, cmap=plt.cm.gist_rainbow)
 
 plt.show(block=False)
 print np.linalg.norm(X - X[1], axis = 1)
-model = GSOM(lrst=.5,  sf_min=0.9, sf_max=0.9, fd = .1, radius=4, min_rad =2)#UMAP()#
+model = GSOM(lrst=.05,  sf_min=0.9, sf_max=0.9, fd = .1, radius=4, min_rad =2, sd=0.005)#UMAP()#
 
 Y = model.fit_transform(X)#PCA().fit_transform(X)
 fig = plt.figure()
