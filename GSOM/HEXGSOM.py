@@ -103,7 +103,7 @@ class GSOM(object):
                         hdist = np.linalg.norm(self.W[decayers]-x, axis=1)
                         hdist -= hdist.min()
                         hdist /= hdist.max()
-                        D = np.exp(-2.*(1-hdist)**2)
+                        D = np.exp(-10.*(1-hdist)**2)
                         D-= D.min()
                         pull = D
                         pull = np.array([pull]).T

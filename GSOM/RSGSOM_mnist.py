@@ -38,11 +38,23 @@ print dat.shape
 gc.collect()
 # x, y = SelfOrganizingSwarm(iterations=10, alpha=1, beta=0.1, delta=0, theta=3.5).fit_transform(dat[:samples]).T
 st = timeit.default_timer()
-model = GSOM(lrst=.08, sf_max=0.9, fd = .1, radius=5., min_rad = 2, sd=0.04, its=20, min_fract=1.)
+model = GSOM(lrst=.05, sf_max=0.9, fd = .1, radius=4., min_rad = 2, sd=0.04, its=20, min_fract=1.)
 
 # x, y = MovingMap(iterations=100, beta=1.5).fit_transform(dat[:samples]).T
 Y= model.fit_transform(dat)
 # Y = PCA(2).fit_transform(dat)
+
+YS = model.grid
+WS = model.W
+
+ds = np.linalg.norm(YS-YS[2], axis=1)
+order = ds.argsort()
+DS = np.linalg.norm(WS-WS[2], axis=1)
+ds/=ds.max()
+DS/=DS.max()
+
+plt.plot(ds[order], DS[order])
+plt.show(block=False)
 
 et = timeit.default_timer() - st
 hrs = np.floor(et/3600)
