@@ -7,8 +7,9 @@ from sklearn.cluster import  KMeans
 
 class GSOM(object):
 
-    def __init__(self, min_rad=2.45, lrst=0.1, sf_min=0.3, sf_max=0.9, fd=0.15, radius=10,  sd=0.02, beta=0, PCA = 0):
+    def __init__(self, min_rad=2.45, lrst=0.1, sf_min=0.3, sf_max=0.9, fd=0.15, radius=10,  sd=0.02, beta=0, PCA = 0, its=20):
         self.lrst = lrst
+        self.its = its
         self.fd = fd
         self.wdst = sd
         self.beta = beta
@@ -29,7 +30,7 @@ class GSOM(object):
 
     def train_batch(self, X):
         try:
-            its = 10
+            its = self.its
             st = timeit.default_timer()
             self.start_time = st
 
