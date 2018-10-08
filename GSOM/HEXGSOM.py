@@ -7,7 +7,7 @@ from sklearn.cluster import  KMeans
 
 class GSOM(object):
 
-    def __init__(self, min_rad=2.45, lrst=0.1, sf_min=0.3, sf_max=0.9, fd=0.15, radius=10,  sd=0.02, beta=0, PCA = 0, its=20):
+    def __init__(self, min_rad=2.45, lrst=0.1, sf_min=0.3, sf_max=0.9, fd=0.15, radius=10,  sd=0.02, beta=0, PCA = 0, its=20,min_fract = 0.1):
         self.lrst = lrst
         self.its = its
         self.fd = fd
@@ -23,6 +23,7 @@ class GSOM(object):
         self.sf_min = sf_min
         self.sf_max = sf_max
         self.grid_shape = 'hex'
+        self.min_fract = min_fract
 
     def fit_transform(self, X):
         self.train_batch(X)
@@ -59,7 +60,7 @@ class GSOM(object):
             lambda_rad = np.log(rad_min*1./self.rst)
             lambda_lr = np.log(0.01)
             fract_st = 1.
-            fract_min = 0.1
+            fract_min = self.min_fract
 
             lambda_fr = -np.log(fract_min/fract_st)
 
