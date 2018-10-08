@@ -45,7 +45,7 @@ ax.scatter(X.T[0], X.T[1], X.T[2], c=c, cmap=plt.cm.gist_rainbow)
 
 plt.show(block=False)
 print np.linalg.norm(X - X[1], axis = 1)
-model = GSOM(lrst=.05,  sf_min=0.9, sf_max=0.9, fd = .1, radius=4, min_rad =2, sd=0.005)#UMAP()#
+model = GSOM(lrst=.05, sf_max=0.9, fd = .1, radius=4, min_rad =2, sd=0.05)#UMAP()#
 
 Y = model.fit_transform(X)#PCA().fit_transform(X)
 fig = plt.figure()

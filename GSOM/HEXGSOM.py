@@ -29,7 +29,7 @@ class GSOM(object):
 
     def train_batch(self, X):
         try:
-            its = 100
+            its = 10
             st = timeit.default_timer()
             self.start_time = st
 
@@ -73,7 +73,7 @@ class GSOM(object):
                 self.wd = self.wdst#*(0.1+0.9*ntime)
                 self.lr = self.lrst*np.exp(lambda_lr*ntime)#self.lr*(1-ntime)#*(1-ntime)#*
                 xix = 0
-                fract = fract_st*(1-ntime)#*np.exp(-lambda_fr*ntime)
+                fract = fract_st*np.exp(-lambda_fr*ntime)#*(1-ntime)#
                 self.errors *= 0
                 batch_size = 1#int(50*ntime)+1
                 n_batches = X.shape[0]/batch_size
