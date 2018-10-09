@@ -105,6 +105,7 @@ class GSOM(object):
                         hdist /= hdist.max()
                         D = np.exp(-10.*(1-hdist)**2)
                         D-= D.min()
+                        D/= D.max()
                         pull = D
                         pull = np.array([pull]).T
                         delta_dec=(x-self.W[decayers])*wd_coef*pull
