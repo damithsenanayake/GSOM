@@ -11,15 +11,29 @@ x = np.array(range(100)).astype(float)
 # z = 0.9**x
 x/= x.max()
 print x
-y = np.exp(-10.*(1-x)**2)#-(x)**2+1
-y-=y.min()
-y/=y.max()
-a = 0.08
-# z = np.exp(-15.*x**2)
-# z[z<0.6]=0
-# # # plt.plot(x, z)
-# y *= a
-# y += z
-plt.plot(x, y)
+for i in range(1, 15):
+    y = np.exp(-i*(1-x)**2)#-(x)**2+1
+    y-=y.min()
+    y/=y.max()
+    a = 0.08
+    # z = np.exp(-15.*x**2)
+    # z[z<0.6]=0
+    # # # plt.plot(x, z)
+    # y *= a
+    # y += z
+    plt.plot(x, y)
+plt.show(block=False)
+fig=plt.figure()
+for i in range(1, 8):
+    y = np.exp(-15*(1-x)**i)#-(x)**2+1
+    y-=y.min()
+    y/=y.max()
+    a = 0.08
+    # z = np.exp(-15.*x**2)
+    # z[z<0.6]=0
+    # # # plt.plot(x, z)
+    # y *= a
+    # y += z
+    plt.plot(x, y)
 # plt.plot(x, v)
 plt.show()

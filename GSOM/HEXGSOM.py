@@ -4,10 +4,11 @@ from sklearn.metrics.pairwise import pairwise_distances_argmin, pairwise_distanc
 import timeit
 from sklearn.decomposition import PCA
 from sklearn.cluster import  KMeans
+import matplotlib.pyplot as plt
 
 class GSOM(object):
 
-    def __init__(self, min_rad=2.45, lrst=0.1, sf_min=0.3, sf_max=0.9, fd=0.15, radius=10,  sd=0.02, beta=0, PCA = 0, its=20,min_fract = 0.1, fract_start = 1.):
+    def __init__(self, min_rad=2.45, lrst=0.1, sf_min=0.3, sf_max=0.9, fd=0.15, radius=10,  sd=0.02, beta=0, PCA = 0, its=20,min_fract = 0.1, fract_start = 1., labels = None):
         self.lrst = lrst
         self.its = its
         self.fd = fd
@@ -25,6 +26,8 @@ class GSOM(object):
         self.grid_shape = 'hex'
         self.min_fract = min_fract
         self.fract_start = fract_start
+        self.plot = True
+        self.labels = labels
 
     def fit_transform(self, X):
         self.train_batch(X)
@@ -59,7 +62,7 @@ class GSOM(object):
             self.lr = self.lrst
             rad_min = self.rad_min
             lambda_rad = np.log(rad_min*1./self.rst)
-            lambda_lr = np.log(0.1)
+            lambda_lr = np.log(0.01)
             fract_st = self.fract_start
             fract_min = self.min_fract
 
@@ -99,14 +102,14 @@ class GSOM(object):
                         theta_d = np.array([thetfunc]).T
                         delta_neis = (x-self.W[neighbors])*theta_d*self.lr
                         ''' Gap  Enforcement '''
-                        wd_coef = self.wd*self.lr*fract#(1-ntime)**2
+                        wd_coef = self.wd*self.lr#(1-ntime)**2
                         hdist = np.linalg.norm(self.W[decayers]-x, axis=1)
                         hdist -= hdist.min()
                         hdist /= hdist.max()
                         D = np.exp(-10.*(1-hdist)**2)
                         D-= D.min()
                         D/= D.max()
-                        pull = D
+                        pull = 1#D
                         pull = np.array([pull]).T
                         delta_dec=(x-self.W[decayers])*wd_coef*pull
                         delta_dec[:neighbors.shape[0]] = delta_neis
@@ -127,6 +130,17 @@ class GSOM(object):
                             self.error_dist(self.errors.argmax())
 
                 self.prune_mid_training(X)
+
+                if self.plot:
+                    fig = plt.figure(figsize=(5, 5))
+                    Y = self.predict(X)
+                    x, y = Y.T
+                    plt.scatter(x, y, edgecolors='none', c=plt.cm.jet(self.labels / 10.), alpha=0.5, s=15, marker='h')
+                    # plt.show(block=False)
+                    plt.savefig('./images/map_'+str(i)+'.png')
+                    plt.close(fig)
+
+
             self.smoothen(X)
         except KeyboardInterrupt:
             return
