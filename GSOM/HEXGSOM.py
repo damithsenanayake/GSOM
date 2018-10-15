@@ -94,7 +94,7 @@ class GSOM(object):
                         nix = np.where(ldist<=r)[0].shape[0]
                         dix = max(nix,int(fract * self.W.shape[0]))
                         decayers = np.argsort((ldist))[:dix]
-                        neighbors = decayers#[:nix]
+                        neighbors = decayers[:nix]
                         k+=1
                         ''' ** coefficient to consider sinking to neighborhood! ** '''
                         ld = ldist[neighbors]/r
