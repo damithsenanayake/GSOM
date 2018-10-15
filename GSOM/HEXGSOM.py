@@ -94,7 +94,7 @@ class GSOM(object):
                         nix = np.where(ldist<=r)[0].shape[0]
                         dix = max(nix,int(fract * self.W.shape[0]))
                         decayers = np.argsort((ldist))[:dix]
-                        neighbors = decayers[:nix]
+                        neighbors = decayers#[:nix]
                         k+=1
                         ''' ** coefficient to consider sinking to neighborhood! ** '''
                         ld = ldist[neighbors]/r
@@ -106,10 +106,10 @@ class GSOM(object):
                         hdist = np.linalg.norm(self.W[decayers]-x, axis=1)
                         hdist -= hdist.min()
                         hdist /= hdist.max()
-                        D = np.exp(-10.*(1-hdist)**2)
+                        D = np.exp(-.5*(1-hdist)**2)
                         D-= D.min()
                         D/= D.max()
-                        pull = 1#D
+                        pull = D
                         pull = np.array([pull]).T
                         delta_dec=(x-self.W[decayers])*wd_coef*pull
                         delta_dec[:neighbors.shape[0]] = delta_neis
