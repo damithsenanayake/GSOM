@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 
 class GSOM(object):
 
-    def __init__(self, min_rad=2.45, lrst=0.1, sf_min=0.3, sf_max=0.9, fd=0.15, radius=10,  sd=0.02, beta=0, PCA = 0, its=20,min_fract = 0.1, fract_start = 1., labels = None):
+    def __init__(self, min_rad=2.45, lrst=0.1, sf_min=0.3, sf_max=0.9, fd=0.15, radius=10,  sd=0.02, beta=0, PCA = 0, its=20,min_fract = 0.1, fract_start = 1., labels = np.array([])):
         self.lrst = lrst
         self.its = its
         self.fd = fd
@@ -134,11 +134,11 @@ class GSOM(object):
 
                 self.prune_mid_training(X)
 
-                if not(self.labels == None):
+                if self.labels.shape[0]:
                     fig = plt.figure(figsize=(5, 5))
                     Y = self.predict(X)
                     x, y = Y.T
-                    plt.scatter(x, y, edgecolors='none', c=plt.cm.jet(self.labels *1./np.unique(self.labels) ), alpha=0.5, s=15, marker='h')
+                    plt.scatter(x, y, edgecolors='none', c=plt.cm.jet(self.labels *1./np.unique(self.labels).shape[0] ), alpha=0.5, s=15, marker='h')
                     # plt.show(block=False)
                     plt.savefig('./images/map_'+str(i)+'.png')
                     plt.close(fig)
