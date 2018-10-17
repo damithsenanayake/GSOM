@@ -106,10 +106,13 @@ class GSOM(object):
                         hdist = np.linalg.norm(self.W[decayers]-x, axis=1)
                         hdist -= hdist.min()
                         hdist /= hdist.max()
-                        D = np.exp(-.5*(1-hdist)**2)
+                        D = np.exp(-2.*(1-hdist)**2)
                         D-= D.min()
                         D/= D.max()
-                        pull = D
+                        d = ldist[decayers]/r
+                        push = np.exp(-0.00001*d**6)
+                        pull = D*push
+                        pull /= pull.max()
                         pull = np.array([pull]).T
                         delta_dec=(x-self.W[decayers])*wd_coef*pull
                         delta_dec[:neighbors.shape[0]] = delta_neis
