@@ -134,11 +134,11 @@ class GSOM(object):
 
                 self.prune_mid_training(X)
 
-                if self.plot:
+                if not(self.labels == None):
                     fig = plt.figure(figsize=(5, 5))
                     Y = self.predict(X)
                     x, y = Y.T
-                    plt.scatter(x, y, edgecolors='none', c=plt.cm.jet(self.labels / 10.), alpha=0.5, s=15, marker='h')
+                    plt.scatter(x, y, edgecolors='none', c=plt.cm.jet(self.labels *1./np.unique(self.labels) ), alpha=0.5, s=15, marker='h')
                     # plt.show(block=False)
                     plt.savefig('./images/map_'+str(i)+'.png')
                     plt.close(fig)
