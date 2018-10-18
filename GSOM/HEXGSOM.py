@@ -128,7 +128,7 @@ class GSOM(object):
                         self.errors[bmu] += np.linalg.norm(self.W[bmu] - x)#**2
 
                         xix+=1
-                        ''' Growing When Necessary '''
+                        ''' Growing When Necessary  '''
                         if self.errors[bmu] > self.GT and i+1 < its:
                             self.error_dist(bmu)
 
