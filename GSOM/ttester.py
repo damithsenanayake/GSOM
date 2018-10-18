@@ -11,8 +11,8 @@ x = np.array(range(100)).astype(float)
 # z = 0.9**x
 y = x/(x.max()*.1)
 z = x/x.max()
-y = np.exp(-0.00001*y**6)
-z = np.exp(-50.*(1-z)**4)
+y = np.exp(-0.01*y**2)
+z = np.exp(-10.*(1-z)**3)
 z-=z.min()
 z/=z.max()
 # print x

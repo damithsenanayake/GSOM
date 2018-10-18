@@ -62,7 +62,7 @@ class GSOM(object):
             self.lr = self.lrst
             rad_min = self.rad_min
             lambda_rad = np.log(rad_min*1./self.rst)
-            lambda_lr = np.log(0.05)
+            lambda_lr = np.log(0.0001)
             fract_st = self.fract_start
             fract_min = self.min_fract
 
@@ -77,7 +77,7 @@ class GSOM(object):
                 self.hits = np.zeros(self.grid.shape[0])
                 r = self.rst *np.exp(lambda_rad * ntime)#- ntime * (self.rst - rad_min)
                 self.wd = self.wdst#*(0.1+0.9*ntime)
-                self.lr = self.lrst*np.exp(lambda_lr*ntime)#self.lr*(1-ntime)#*(1-ntime)#*
+                self.lr = self.lrst*np.exp(lambda_lr*ntime**2)#self.lr*(1-ntime)#*(1-ntime)#*
                 xix = 0
                 fract = fract_st*np.exp(-lambda_fr*ntime)#*(1-ntime)#
                 self.errors *= 0
@@ -106,11 +106,11 @@ class GSOM(object):
                         hdist = np.linalg.norm(self.W[decayers]-x, axis=1)
                         hdist -= hdist.min()
                         hdist /= hdist.max()
-                        D = np.exp(-50.*(1-hdist)**4)
+                        D = np.exp(-10.*(1-hdist)**3)
                         D-= D.min()
                         D/= D.max()
                         d = ldist[decayers]/r
-                        push = np.exp(-0.00001*d**6)
+                        push = np.exp(-0.01*d**2)
                         pull = D*push
                         pull /= pull.max()
                         pull = np.array([pull]).T
@@ -128,7 +128,7 @@ class GSOM(object):
                         self.errors[bmu] += np.linalg.norm(self.W[bmu] - x)#**2
 
                         xix+=1
-                        ''' Growing When Necessary  '''
+                        ''' Growing When Necessary '''
                         if self.errors[bmu] > self.GT and i+1 < its:
                             self.error_dist(bmu)
 
