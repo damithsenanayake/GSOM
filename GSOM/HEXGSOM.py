@@ -62,7 +62,7 @@ class GSOM(object):
             self.lr = self.lrst
             rad_min = self.rad_min
             lambda_rad = np.log(rad_min*1./self.rst)
-            lambda_lr = np.log(0.01)
+            lambda_lr = np.log(0.05)
             fract_st = self.fract_start
             fract_min = self.min_fract
 
@@ -106,7 +106,7 @@ class GSOM(object):
                         hdist = np.linalg.norm(self.W[decayers]-x, axis=1)
                         hdist -= hdist.min()
                         hdist /= hdist.max()
-                        D = np.exp(-2.*(1-hdist)**2)
+                        D = np.exp(-50.*(1-hdist)**4)
                         D-= D.min()
                         D/= D.max()
                         d = ldist[decayers]/r
@@ -129,8 +129,8 @@ class GSOM(object):
 
                         xix+=1
                         ''' Growing When Necessary '''
-                        while self.errors.max() > self.GT and i+1 < its:
-                            self.error_dist(self.errors.argmax())
+                        if self.errors[bmu] > self.GT and i+1 < its:
+                            self.error_dist(bmu)
 
                 self.prune_mid_training(X)
 
