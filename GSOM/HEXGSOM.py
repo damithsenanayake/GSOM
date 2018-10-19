@@ -62,7 +62,7 @@ class GSOM(object):
             self.lr = self.lrst
             rad_min = self.rad_min
             lambda_rad = np.log(rad_min*1./self.rst)
-            lambda_lr = np.log(0.0001)
+            lambda_lr = np.log(0.01)
             fract_st = self.fract_start
             fract_min = self.min_fract
 
@@ -106,13 +106,13 @@ class GSOM(object):
                         hdist = np.linalg.norm(self.W[decayers]-x, axis=1)
                         hdist -= hdist.min()
                         hdist /= hdist.max()
-                        D = np.exp(-10.*(1-hdist)**3)
+                        D = np.exp(-.5*(1-hdist)**2)
                         D-= D.min()
                         D/= D.max()
                         d = ldist[decayers]/r
                         push = np.exp(-0.01*d**2)
                         pull = D*push
-                        pull /= pull.max()
+                        # pull /= pull.max()
                         pull = np.array([pull]).T
                         delta_dec=(x-self.W[decayers])*wd_coef*pull
                         delta_dec[:neighbors.shape[0]] = delta_neis
