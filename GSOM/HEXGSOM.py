@@ -83,7 +83,6 @@ class GSOM(object):
                 self.errors *= 0
                 batch_size = 1#int(50*ntime)+1
                 n_batches = X.shape[0]/batch_size
-
                 for b in range(n_batches):
                     bmus = pairwise_distances_argmin(X[b*batch_size:(b+1)*batch_size], self.W)
                     k =0
@@ -106,13 +105,13 @@ class GSOM(object):
                         hdist = np.linalg.norm(self.W[decayers]-x, axis=1)
                         hdist -= hdist.min()
                         hdist /= hdist.max()
-                        D = np.exp(-.5*(1-hdist)**2)
+                        D = np.exp(-4.*(1-hdist)**2)
                         D-= D.min()
                         D/= D.max()
                         d = ldist[decayers]/r
-                        push = np.exp(-0.01*d**2)
+                        push = d<50#np.exp(-0.0001*d**2)
                         pull = D*push
-                        # pull /= pull.max()
+                        pull /= pull.max()
                         pull = np.array([pull]).T
                         delta_dec=(x-self.W[decayers])*wd_coef*pull
                         delta_dec[:neighbors.shape[0]] = delta_neis
@@ -122,9 +121,9 @@ class GSOM(object):
 
                         if xix % 500 == 0:
                             print (
-                            '\riter %i of %i : %i / %i : batch : %i :|G| = %i : n_neis :%i : LR: %.4f  QE: %.4f sink?: %s : wdFract: %.4f : wd_coef : %.4f' % (
+                            '\riter %i of %i : %i / %i : batch : %i :|G| = %i : n_neis :%i : LR: %.4f  QE: %.4f sink?: %s : fd: %.4f : wd_coef : %.4f' % (
                             i + 1,its,  xix, X.shape[0], b, self.W.shape[0], neighbors.shape[0], self.lr, self.errors.sum(),
-                            str(dix), decayers.shape[0] * 1. / self.W.shape[0], np.mean(wd_coef))), ' time = %.2f' % (et),
+                            str(dix), self.fd, np.mean(wd_coef))), ' time = %.2f' % (et),
                         self.errors[bmu] += np.linalg.norm(self.W[bmu] - x)#**2
 
                         xix+=1
