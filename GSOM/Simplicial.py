@@ -42,14 +42,14 @@ for cent in centers:
 fig = plt.figure()
 ax = fig.add_subplot(111, projection = '3d')
 
-ax.scatter(X.T[0], X.T[1], X.T[2], c=c, cmap=plt.cm.gist_rainbow)
+ax.scatter(X.T[0], X.T[1], X.T[2], c=c, cmap=plt.cm.jet)
 
 plt.show(block=False)
 print np.linalg.norm(X - X[1], axis = 1)
-model = GSOM(lrst=.01, sf_max=0.8, fd = .1, radius=10, min_rad =3, sd=0.004, its= 20, min_fract=1., fract_start=1., labels=c)#UMAP()#
+model = GSOM(lrst=.01, sf_max=0.8, fd = .1, radius=10, min_rad =3, sd=0.00, its= 20, min_fract=1., fract_start=1., labels=c)#UMAP()#
 
 Y = model.fit_transform(X)#PCA().fit_transform(X)
 fig = plt.figure()
 # ax = fig.add_subplot(212)
-plt.scatter(Y.T[0], Y.T[1], c= c, cmap=plt.cm.jet, alpha=0.4, s=20)
+plt.scatter(Y.T[0], Y.T[1], c= c, cmap=plt.cm.jet, alpha=0.4, s=15)
 plt.show()

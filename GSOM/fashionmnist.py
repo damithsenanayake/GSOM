@@ -21,7 +21,7 @@ with warnings.catch_warnings():
 print GSOM.__module__
 fi = pd.read_csv('~/data/fashionmnist/fashion-mnist_train.csv')
 # test = pd.read_csv('../mnist_test.csv', header=None)
-samples = 15000
+samples = 12000
 
 dat =(np.array(fi)[:samples, 1:]).astype(float)#/255.0
 dat = PCA(10, random_state=1).fit_transform(dat)
@@ -37,7 +37,7 @@ print dat.shape
 gc.collect()
 # x, y = SelfOrganizingSwarm(iterations=10, alpha=1, beta=0.1, delta=0, theta=3.5).fit_transform(dat[:samples]).T
 st = timeit.default_timer()
-model = GSOM(lrst=.1, sf_max=0.9, fd = .1, radius=4.5, min_rad = 1.5, sd=0.002,its=50, min_fract=1., fract_start=1., labels = labels)
+model = GSOM(lrst=.05, sf_max=0.9, fd = .1, radius=8., min_rad = 4., sd=0.002,its=15, min_fract=1., fract_start=1., labels = labels)
 
 # x, y = MovingMap(iterations=100, beta=1.5).fit_transform(dat[:samples]).T
 Y= model.fit_transform(dat)

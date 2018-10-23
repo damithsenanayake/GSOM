@@ -97,7 +97,7 @@ class GSOM(object):
                         k+=1
                         ''' ** coefficient to consider sinking to neighborhood! ** '''
                         ld = ldist[neighbors]/r
-                        thetfunc = np.exp(-.5* (ld)**2)
+                        thetfunc = np.exp(-3.5* (ld)**2)
                         theta_d = np.array([thetfunc]).T
                         delta_neis = (x-self.W[neighbors])*theta_d*self.lr
                         ''' Gap  Enforcement '''
@@ -108,8 +108,8 @@ class GSOM(object):
                         D = np.exp(-4.*(1-hdist)**2)
                         D-= D.min()
                         D/= D.max()
-                        d = ldist[decayers]/(40*r)
-                        push = np.exp(-0.01*d**2)
+                        d = ldist[decayers]/(50*r)
+                        push = np.exp(-0.001*d**5)
                         pull = D*push
                         pull /= pull.max()
                         pull = np.array([pull]).T
