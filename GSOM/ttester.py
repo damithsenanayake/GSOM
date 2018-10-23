@@ -9,9 +9,9 @@ def sigmoid(x):
 x = np.array(range(100)).astype(float)
 # y =np.exp(-20.5*((x)/float(np.amax(x)))**(6))#(1.+(x/100.)**2)**-6#sigmoid(x**2/100.**2)#
 # z = 0.9**x
-y = x/(x.max()*0.1)
+y = x/(x.max()*.25)
 z = x/(x.max())
-y = np.exp(-.001*y**2)
+y = np.exp(-8*y**3)
 y-=y.min()
 y/=y.max()
 z = np.exp(-4.*(1-z)**2)
