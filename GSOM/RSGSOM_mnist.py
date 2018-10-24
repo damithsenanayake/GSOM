@@ -3,7 +3,7 @@ import pandas as pd
 import numpy as np
 import gc
 from MovingMap import  MovingMap
-from HEXGSOM import GSOM
+from dist_disp_SOM import GSOM
 from sklearn.preprocessing import normalize
 from sklearn.manifold import MDS, TSNE, LocallyLinearEmbedding
 from sklearn.cluster import KMeans, DBSCAN
@@ -38,7 +38,7 @@ print dat.shape
 gc.collect()
 # x, y = SelfOrganizingSwarm(iterations=10, alpha=1, beta=0.1, delta=0, theta=3.5).fit_transform(dat[:samples]).T
 st = timeit.default_timer()
-model = GSOM(lrst=.1, sf_max=0.9, fd = .1, radius=12., min_rad = 12., sd=0.02, its=20, min_fract=1., fract_start=1., labels=labels)
+model = GSOM(lrst=.08, sf_max=0.9, fd = .1, radius=12., min_rad = 12., sd=0.01, its=40, min_fract=1., fract_start=1., labels=labels)
 
 # x, y = MovingMap(iterations=100, beta=1.5).fit_transform(dat[:samples]).T
 Y= model.fit_transform(dat)
