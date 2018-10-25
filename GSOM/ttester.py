@@ -14,9 +14,9 @@ z = x/(x.max())
 y = np.exp(-8*y**3)
 y-=y.min()
 y/=y.max()
-z = np.exp(-4.*(1-z)**2)
-z-=z.min()
-z/= z.max()
+z = np.exp(-40.*(1-z)**6)
+# z-=z.min()
+# z/= z.max()
 # print x
 # for i in range(1, 15):
 #     y = np.exp(-i*(1-x)**2)#-(x)**2+1
