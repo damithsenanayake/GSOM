@@ -102,7 +102,7 @@ class GSOM(object):
                         D = np.exp(-4.*(1-hdist)**2)
                         pull = D
                         pull = np.array([pull]).T
-                        delta_dec=(x-self.W[decayers])*wd_coef*pull
+                        delta_dec=(x-self.W[decayers])*wd_coef*pull*(1-ntime)**.5
                         delta_dec[:neighbors.shape[0]] += delta_neis
                         self.errors[bmu] += np.linalg.norm(self.W[bmu] - x)#**2
 
