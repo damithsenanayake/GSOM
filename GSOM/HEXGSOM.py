@@ -62,7 +62,7 @@ class GSOM(object):
             self.lr = self.lrst
             rad_min = self.rad_min
             lambda_rad = np.log(rad_min*1./self.rst)
-            lambda_lr = np.log(0.001)
+            lambda_lr = np.log(0.1)
             fract_st = self.fract_start
             fract_min = self.min_fract
 
@@ -77,10 +77,9 @@ class GSOM(object):
                 self.hits = np.zeros(self.grid.shape[0])
                 r = self.rst *np.exp(lambda_rad * ntime)#- ntime * (self.rst - rad_min)
                 self.wd = self.wdst#*(0.1+0.9*ntime)
-                self.lr = self.lrst*(1-ntime)#np.exp(lambda_lr*ntime**2)#self.lr*(1-ntime)#*(1-ntime)#*
+                self.lr = self.lrst*np.exp(lambda_lr*ntime)#self.lr*(1-ntime)#*(1-ntime)#*
                 xix = 0
                 fract = fract_st*np.exp(-lambda_fr*ntime)#*(1-ntime)#
-                self.errors *= 0
                 batch_size = 1#int(50*ntime)+1
                 n_batches = X.shape[0]/batch_size
                 for b in range(n_batches):
@@ -97,7 +96,7 @@ class GSOM(object):
                         k+=1
                         ''' ** coefficient to consider sinking to neighborhood! ** '''
                         ld = ldist[neighbors]/r
-                        thetfunc = np.exp(-8* (ld)**2)
+                        thetfunc = np.exp(-.5* (ld)**2)
                         theta_d = np.array([thetfunc]).T
                         delta_neis = (x-self.W[neighbors])*theta_d*self.lr
                         ''' Gap  Enforcement '''
@@ -108,13 +107,13 @@ class GSOM(object):
                         D = np.exp(-4.*(1-hdist)**2)
                         D-= D.min()
                         D/= D.max()
-                        d = ldist[decayers]/(50*r)
-                        push = np.exp(-0.001*d**5)
-                        pull = D*push
+
+                        pull = D
                         pull /= pull.max()
                         pull = np.array([pull]).T
-                        delta_dec=(x-self.W[decayers])*wd_coef*pull
+                        delta_dec=(x-self.W[decayers])*wd_coef*pull*(1-ntime)**0.5
                         delta_dec[:neighbors.shape[0]] = delta_neis
+                        self.errors[bmu] += np.linalg.norm(self.W[bmu] - x)#**2
 
                         self.W[decayers] += delta_dec
                         et = timeit.default_timer()-st
@@ -124,7 +123,6 @@ class GSOM(object):
                             '\riter %i of %i : %i / %i : batch : %i :|G| = %i : n_neis :%i : LR: %.4f  QE: %.4f sink?: %s : fd: %.4f : wd_coef : %.4f' % (
                             i + 1,its,  xix, X.shape[0], b, self.W.shape[0], neighbors.shape[0], self.lr, self.errors.sum(),
                             str(dix), self.fd, np.mean(wd_coef))), ' time = %.2f' % (et),
-                        self.errors[bmu] += np.linalg.norm(self.W[bmu] - x)#**2
 
                         xix+=1
                         ''' Growing When Necessary '''
@@ -169,7 +167,7 @@ class GSOM(object):
         for b in bmus:
             self.hits[b]+=1
         ''' Moving Average Filter to identify contiguous regions in the map '''
-        self.mean_filter(1)
+        self.mean_filter(4)
 
         ''' Prune nodes in the non-continguous regions of the map to shave of training time '''
         self.prune_map(np.where(self.hits == 0)[0])
