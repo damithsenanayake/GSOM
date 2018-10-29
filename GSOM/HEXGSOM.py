@@ -63,18 +63,15 @@ class GSOM(object):
             rad_min = self.rad_min
             lambda_rad = np.log(rad_min*1./self.rst)
             lambda_lr = np.log(0.01)
-            fract_st = self.fract_start
-            fract_min = self.min_fract
 
             for i in range(its):
                 ''' Normalized Time Variable for the learning rules.'''
                 ntime = i * 1. / max(its, 1)
                 sf = self.sf_max
                 self.GT = -np.sqrt(X.shape[1]) * np.log(sf) * (X.max() - X.min())
-                self.hits = np.zeros(self.grid.shape[0])
                 r = self.rst *np.exp(lambda_rad * ntime)#- ntime * (self.rst - rad_min)
-                self.wd = self.wdst#*(0.1+0.9*ntime)
-                self.lr = self.lrst*np.exp(lambda_lr*ntime)#self.lr*(1-ntime)#*(1-ntime)#*
+                self.wd = self.wdst
+                self.lr = self.lr*(1-ntime)**0.2#np.exp(lambda_lr*ntime)#self.lr*(1-ntime)#*(1-ntime)#*
                 xix = 0
                 self.errors *= 0
                 batch_size = 1#int(50*ntime)+1
@@ -99,7 +96,7 @@ class GSOM(object):
                         wd_coef = self.wd*self.lr#(1-ntime)**2
                         hdist = np.linalg.norm(self.W[decayers]-x, axis=1)
                         hdist /= hdist.max()
-                        D = 1#np.exp(-4.*(1-hdist)**2)
+                        D = np.exp(-4.*(1-hdist)**2)
                         pull = D
                         pull = np.array([pull]).T
                         delta_dec=(x-self.W[decayers])*wd_coef*pull#*(1-ntime)**.5

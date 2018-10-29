@@ -77,9 +77,9 @@ class GSOM(object):
                 self.hits = np.zeros(self.grid.shape[0])
                 r = self.rst *np.exp(lambda_rad * ntime)#- ntime * (self.rst - rad_min)
                 self.wd = self.wdst#*(0.1+0.9*ntime)
-                self.lr = self.lrst*(1-ntime)#np.exp(lambda_lr*ntime**2)#self.lr*(1-ntime)#*(1-ntime)#*
+                self.lr = self.lr*(1-ntime)#np.exp(lambda_lr*ntime**2)#self.lr*(1-ntime)#*(1-ntime)#*
                 xix = 0
-                fract = fract_st*np.exp(-lambda_fr*ntime)#*(1-ntime)#
+                fract = 1.#fract_st*np.exp(-lambda_fr*ntime)#*(1-ntime)#
                 self.errors *= 0
                 batch_size = 1#int(50*ntime)+1
                 n_batches = X.shape[0]/batch_size
@@ -97,7 +97,7 @@ class GSOM(object):
                         k+=1
                         ''' ** coefficient to consider sinking to neighborhood! ** '''
                         ld = ldist[neighbors]/r
-                        thetfunc = np.exp(-8* (ld)**2)
+                        thetfunc = np.exp(-4* (ld)**2)
                         theta_d = np.array([thetfunc]).T
                         delta_neis = (x-self.W[neighbors])*theta_d*self.lr
                         ''' Gap  Enforcement '''
@@ -139,7 +139,7 @@ class GSOM(object):
                     x, y = Y.T
                     plt.scatter(x, y, edgecolors='none', c=plt.cm.jet(self.labels *1./np.unique(self.labels).shape[0] ), alpha=0.5, s=15, marker='h')
                     # plt.show(block=False)
-                    plt.savefig('./images/map_'+str(i)+'.png')
+                    plt.savefig('./images/map_'+str(i)+'_d.png')
                     plt.close(fig)
 
 

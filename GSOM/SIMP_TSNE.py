@@ -18,8 +18,8 @@ for cent in centers:
     x -= x.min()
     # x /= 2
     x /= x.max()
-    x -=0.5
-    x *=2
+    x /=0.5
+    # x *=2
     x += cent
     try:
         X = np.concatenate((X,x), axis=0)#X.append(x)
@@ -36,7 +36,7 @@ for cent in centers:
 # reds = np.zeros((X.shape[0], 100))
 #
 # X = np.concatenate((X, reds), axis=1)
-X, c = make_blobs(6000, n_features=9, centers=10, cluster_std=8, random_state=1, )
+X, c = make_blobs(10000, n_features=60, centers=10, cluster_std=15, random_state=1, )
 # c = np.array(c).flatten(order=1)
 # X, c = make_s_curve(2500)
 fig = plt.figure()
@@ -45,9 +45,8 @@ P = PCA(3).fit_transform(X)
 ax.scatter(P.T[0], P.T[1], P.T[2], c=c, cmap=plt.cm.jet)
 
 plt.show(block=False)
-# print np.linalg.norm(X - X[1], axis = 1)
-model = GSOM(lrst=.2, sf_max=0.8, fd = .0, radius=4, min_rad =2, sd=0.0, its= 40, min_fract=.4, fract_start=1., labels=c)#UMAP()#
-# model = TSNE(perplexity=40)
+print np.linalg.norm(X - X[1], axis = 1)
+model = TSNE(perplexity=10)#GSOM(lrst=.1, sf_max=0.8, fd = .1, radius=8, min_rad =6, sd=0.005, its= 20, min_fract=1., fract_start=1., labels=c)#UMAP()#
 
 Y = model.fit_transform(X)#PCA().fit_transform(X)
 fig = plt.figure()
