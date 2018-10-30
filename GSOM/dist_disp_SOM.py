@@ -77,7 +77,7 @@ class GSOM(object):
                 self.hits = np.zeros(self.grid.shape[0])
                 r = self.rst *np.exp(lambda_rad * ntime)#- ntime * (self.rst - rad_min)
                 self.wd = self.wdst#*(0.1+0.9*ntime)
-                self.lr = self.lr*(1-ntime)#np.exp(lambda_lr*ntime**2)#self.lr*(1-ntime)#*(1-ntime)#*
+                self.lr = self.lrst*(1-ntime)#np.exp(lambda_lr*ntime**2)#self.lr*(1-ntime)#*(1-ntime)#*
                 xix = 0
                 fract = 1.#fract_st*np.exp(-lambda_fr*ntime)#*(1-ntime)#
                 self.errors *= 0
@@ -92,29 +92,32 @@ class GSOM(object):
                         ldist = np.linalg.norm(self.grid - self.grid[bmu], axis=1)
                         nix = np.where(ldist<=r)[0].shape[0]
                         dix = max(nix,int(fract * self.W.shape[0]))
-                        decayers = np.argsort((ldist))[:dix]
+                        decayers = np.argsort((ldist))[:nix]
                         neighbors = decayers[:nix]
                         k+=1
                         ''' ** coefficient to consider sinking to neighborhood! ** '''
                         ld = ldist[neighbors]/r
-                        thetfunc = np.exp(-4* (ld)**2)
+                        thetfunc = np.exp(-.5* (ld)**2)
                         theta_d = np.array([thetfunc]).T
                         delta_neis = (x-self.W[neighbors])*theta_d*self.lr
                         ''' Gap  Enforcement '''
                         wd_coef = self.wd*self.lr#(1-ntime)**2
                         hdist = np.linalg.norm(self.W[decayers]-x, axis=1)
-                        hdist -= hdist.min()
-                        hdist /= hdist.max()
-                        D = np.exp(-(hdist))
-                        d = ldist[decayers]/ldist.max()
-                        d = (1+d)**-1
+                        if ldist[decayers].max():
+                            d = ldist[decayers]/ldist[decayers].max()#.max()
+                        # d = (1+0.5*d**2)**-1
+                        if hdist.max():
+                            hdist /= (hdist.max())
+                        D = hdist#np.exp(-0.5*(hdist)**2)
+
 
                         pull = d-D
-                        pull/=np.abs(pull).max()
+                        # pull /= np.abs(pull).max()
+                        # pull/=np.abs(pull).max()
                         # pull /= pull.max()
                         pull = np.array([pull]).T
                         delta_dec=(x-self.W[decayers])*wd_coef*pull
-                        delta_dec[:neighbors.shape[0]] = delta_neis
+                        delta_dec[:neighbors.shape[0]] += delta_neis
 
                         self.W[decayers] += delta_dec
                         et = timeit.default_timer()-st
