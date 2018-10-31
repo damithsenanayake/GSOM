@@ -21,7 +21,7 @@ with warnings.catch_warnings():
 print GSOM.__module__
 fi = pd.read_csv('~/data/fashionmnist/fashion-mnist_train.csv')
 # test = pd.read_csv('../mnist_test.csv', header=None)
-samples = 18000
+samples = 6000
 
 dat =(np.array(fi)[:samples, 1:]).astype(float)#/255.0
 dat = PCA(10, random_state=1).fit_transform(dat)
