@@ -85,12 +85,12 @@ class GSOM(object):
                         ldist = np.linalg.norm(self.grid - self.grid[bmu], axis=1)
                         nix = np.where(ldist<=r)[0].shape[0]
                         dix = np.where(ldist<=10*r)[0].shape[0]
-                        decayers = np.argsort((ldist))[:dix]#[:25*nix]#[:dix]
+                        decayers = np.argsort((ldist))#[:dix]#[:25*nix]#[:dix]
                         neighbors = decayers[:nix]
                         k+=1
                         ''' ** coefficient to consider sinking to neighborhood! ** '''
                         ld = ldist[neighbors]/r
-                        thetfunc = np.exp(-(np.log(i+1)+.5)* (ld)**2)
+                        thetfunc = np.exp(-.5* (ld)**2)
                         theta_d = np.array([thetfunc]).T
                         delta_neis = (x-self.W[neighbors])*theta_d*self.lr
                         ''' Gap  Enforcement '''
@@ -98,8 +98,8 @@ class GSOM(object):
                         hdist = np.linalg.norm(self.W[decayers]-x, axis=1)
                         hdist /= hdist.max()
                         D = hdist#np.exp(-2*(1-hdist)**2)#np.exp(-4.*(1-hdist)**2)
-                        pull = D#1/D**2
-                        pull /= pull.max()
+                        pull = np.exp(-ldist[decayers]/ldist.max())-np.exp(-D)
+                        # pull /= pull.max()
                         pull = np.array([pull]).T
                         delta_dec=(x-self.W[decayers])*wd_coef*pull#*(ntime)#**3
                         delta_dec[:neighbors.shape[0]] += delta_neis

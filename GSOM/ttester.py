@@ -6,15 +6,17 @@ import matplotlib.pyplot as plt
 def sigmoid(x):
     return (1./(1+np.exp(-x)))
 
-x = np.array(range(100)).astype(float)
+x = np.random.randn(100).astype(float)
+x[-20:]/01131ds\
+    =5
+x-=x.min()
+x.sort()
 # y =np.exp(-20.5*((x)/float(np.amax(x)))**(6))#(1.+(x/100.)**2)**-6#sigmoid(x**2/100.**2)#
 # z = 0.9**x
-y = x/(x.max())
+y = x/(x.sum())
+# y = y/y.max()
 z = x/(x.max())
-y = np.exp(-50*y**4)
-# y-=y.min()
-# y/=y.max()
-z = np.exp(-50.*(1-z)**6)
+
 # z-=z.min()
 # z/= z.max()
 # print x
@@ -42,6 +44,7 @@ z = np.exp(-50.*(1-z)**6)
 #     # y *= a
 #     # y += z
 plt.plot(x, y)
+plt.plot(x, z)
 # plt.plot(x, z)
 # plt.plot(x, y*z/(y*z).max())
 # plt.plot(x, v)
