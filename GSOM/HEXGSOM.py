@@ -95,13 +95,14 @@ class GSOM(object):
                         ''' Gap  Enforcement '''
                         wd_coef = self.wd*self.lr#(1-ntime)**2
                         hdist = np.linalg.norm(self.W[decayers]-x, axis=1)
-                        hdist /= hdist.sum()
-                        D = np.exp(-2*(1-hdist)**2)#np.exp(-4.*(1-hdist)**2)
-                        d = np.exp(-2*(ldist[decayers]/ldist.max())**2)
-                        pull = (D*d)**.5
+                        hdist /= hdist.max()
+                        D = hdist#np.exp(-2*(1-hdist)**2)#np.exp(-4.*(1-hdist)**2)
+                        # d = np.exp(-2*(ldist[decayers]/ldist.max())**2)
+                        pull = 1/D**2
+                        pull /= pull.max()
                         pull = np.array([pull]).T
                         delta_dec=(x-self.W[decayers])*wd_coef*pull#*(ntime)**3
-                        delta_dec[:neighbors.shape[0]] += delta_neis
+                        delta_dec[:neighbors.shape[0]] = delta_neis
                         self.errors[bmu] += np.linalg.norm(self.W[bmu] - x)#**2
 
                         self.W[decayers] += delta_dec
