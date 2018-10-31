@@ -98,7 +98,7 @@ class GSOM(object):
                         hdist = np.linalg.norm(self.W[decayers]-x, axis=1)
                         hdist /= hdist.max()
                         D = hdist#np.exp(-2*(1-hdist)**2)#np.exp(-4.*(1-hdist)**2)
-                        pull = np.exp(-ldist[decayers]/ldist.max())-np.exp(-D)
+                        pull = np.exp(-(ldist[decayers]/ldist.max())**2)-np.exp(-D**2)
                         # pull /= pull.max()
                         pull = np.array([pull]).T
                         delta_dec=(x-self.W[decayers])*wd_coef*pull#*(ntime)#**3
