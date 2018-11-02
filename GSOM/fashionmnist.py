@@ -24,7 +24,7 @@ fi = pd.read_csv('~/data/fashionmnist/fashion-mnist_train.csv')
 samples = 6000
 
 dat =(np.array(fi)[:samples, 1:]).astype(float)#/255.0
-dat = PCA(10, random_state=1).fit_transform(dat)
+# dat = PCA(8, random_state=1).fit_transform(dat)
 # dat -= dat.min()
 # dat /= dat.max()
 labels = np.array(fi)[:samples, 0].astype(int)
@@ -37,8 +37,8 @@ print dat.shape
 gc.collect()
 # x, y = SelfOrganizingSwarm(iterations=10, alpha=1, beta=0.1, delta=0, theta=3.5).fit_transform(dat[:samples]).T
 st = timeit.default_timer()
-model = GSOM(lrst=.01, sf_max=0.99, fd = .1, radius=6, min_rad = 4 , sd=.08,its=25, min_fract=.2, fract_start=.2, labels = labels)
-
+model = GSOM(lrst=.02, sf_max=0.999, fd = .1, radius=6, min_rad = 4 , sd=.02,its=10, min_fract=.2, fract_start=.2, labels = labels)
+# model = TSNE(perplexity=40)#
 # x, y = MovingMap(iterations=100, beta=1.5).fit_transform(dat[:samples]).T
 Y= model.fit_transform(dat)
 # Y = PCA(2).fit_transform(dat)

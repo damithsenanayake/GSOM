@@ -71,7 +71,7 @@ class GSOM(object):
                 self.GT = -np.sqrt(X.shape[1]) * np.log(sf)* (X.max() - X.min())
                 r = self.rst - (ntime)*(self.rst - self.rad_min)# *np.exp(lambda_rad * ntime)#- ntime * (self.rst - rad_min)
                 self.wd = self.wdst
-                self.lr = self.lr*(1-ntime)**0.2#np.exp(lambda_lr*ntime)#self.lr*(1-ntime)#*(1-ntime)#*
+                self.lr = self.lrst*(1-ntime)#**0.2#np.exp(lambda_lr*ntime)#self.lr*(1-ntime)#*(1-ntime)#*
                 xix = 0
                 self.errors *= 0
                 batch_size = 1#int(50*ntime)+1
@@ -156,7 +156,7 @@ class GSOM(object):
         for b in bmus:
             self.hits[b]+=1
         ''' Moving Average Filter to identify contiguous regions in the map '''
-        self.mean_filter(1)
+        # self.mean_filter(1)
 
         ''' Prune nodes in the non-continguous regions of the map to shave of training time '''
         self.prune_map(np.where(self.hits == 0)[0])
