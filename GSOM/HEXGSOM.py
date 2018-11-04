@@ -8,25 +8,21 @@ import matplotlib.pyplot as plt
 
 class GSOM(object):
 
-    def __init__(self, min_rad=2.45, lrst=0.1, sf_min=0.3, sf_max=0.9, fd=0.15, radius=10,  sd=0.02, beta=0, PCA = 0, its=20,min_fract = 0.1, fract_start = 1., labels = np.array([])):
+    def __init__(self,  radius=10, min_rad=2.45, lrst=0.1, sf=0.9, fd=0.15,  sd=0.02, cluster_spacing_factor = 10, its=20, labels=np.array([])):
         self.lrst = lrst
         self.its = its
         self.fd = fd
         self.wdst = sd
-        self.beta = beta
-        self.pca_ncomp = PCA
         self.hits = None
         self.W = None
         self.grid = None
         self.neighbor_setting = 'radial'
         self.rst = radius
         self.rad_min = min_rad
-        self.sf_min = sf_min
-        self.sf_max = sf_max
+        self.sf_max = sf
         self.grid_shape = 'hex'
-        self.min_fract = min_fract
-        self.fract_start = fract_start
         self.plot = True
+        self.csf = cluster_spacing_factor
         self.labels = labels
 
     def fit_transform(self, X):
@@ -80,7 +76,7 @@ class GSOM(object):
                     bmu = pairwise_distances_argmin(np.array([x]), self.W, axis=1)
                     ldist = np.linalg.norm(self.grid - self.grid[bmu], axis=1)
                     nix = np.where(ldist<=r)[0].shape[0]
-                    decayers = np.argsort((ldist))[:10*nix]#[:dix]#[:25*nix]#[:dix]
+                    decayers = np.argsort((ldist))[:self.csf*nix]#[:dix]#[:25*nix]#[:dix]
                     neighbors = decayers[:nix]
 
                     ''' ** coefficient to consider sinking to neighborhood! ** '''
