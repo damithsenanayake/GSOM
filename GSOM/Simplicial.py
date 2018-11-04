@@ -39,6 +39,10 @@ for cent in centers:
 # X, c = make_blobs(6000, n_features=9, centers=10, cluster_std=8, random_state=1, )
 # c = np.array(c).flatten(order=1)
 # X, c = make_s_curve(2500)
+
+order = np.random.permutation(range(X.shape[0]))
+X = X[order]
+c = c[order]
 fig = plt.figure()
 ax = fig.add_subplot(111, projection = '3d')
 P = PCA(3).fit_transform(X)
@@ -46,7 +50,7 @@ ax.scatter(P.T[0], P.T[1], P.T[2], c=c, cmap=plt.cm.jet)
 
 plt.show(block=False)
 # print np.linalg.norm(X - X[1], axis = 1)
-model = GSOM(lrst=.01, sf_max=0.4, fd = .9, radius=6, min_rad =4, sd=0.02, its= 25, min_fract=.4, fract_start=1., labels=c)#UMAP()#
+model = GSOM(lrst=.1, sf_max=0.8, fd = .1, radius=4, min_rad =2, sd=0.04, its= 10, min_fract=.4, fract_start=1., labels=c)#UMAP()#
 # model = TSNE(perplexity=40)
 
 Y = model.fit_transform(X)#PCA().fit_transform(X)
