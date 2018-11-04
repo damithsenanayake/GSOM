@@ -89,11 +89,11 @@ class GSOM(object):
                     wd_coef = self.wd*self.lr#(1-ntime)**2
                     hdist = np.linalg.norm(self.W[decayers]-x, axis=1)
                     hdist /= hdist.max()
-                    D = np.exp(-4*(1-hdist))#np.exp(-2*(1-hdist)**2)#np.exp(-4.*(1-hdist)**2)
+                    D = np.exp(-4*(1-hdist)**2)#np.exp(-2*(1-hdist)**2)#np.exp(-4.*(1-hdist)**2)
                     pull = D
                     pull = np.array([pull]).T
                     delta_dec=(x-self.W[decayers])*wd_coef*pull#*(ntime)#**3
-                    delta_dec[:neighbors.shape[0]] += delta_neis
+                    delta_dec[:neighbors.shape[0]] = delta_neis
                     self.W[decayers] += delta_dec
                     et = timeit.default_timer()-st
 
