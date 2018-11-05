@@ -24,6 +24,7 @@ class GSOM(object):
         self.plot = True
         self.csf = cluster_spacing_factor
         self.labels = labels
+        self.last_hit = np.array([])
 
     def fit_transform(self, X):
         self.train_batch(X)
@@ -67,7 +68,7 @@ class GSOM(object):
                 self.GT = -np.sqrt(X.shape[1]) * np.log(sf)* (X.max() - X.min())
                 r = self.rst *np.exp(lambda_rad * ntime)#- ntime * (self.rst - rad_min)
                 self.wd = self.wdst
-                self.lr = self.lrst*(1-ntime)#np.exp(lambda_lr*ntime)#self.lr*(1-ntime)#*(1-ntime)#*
+                self.lr = self.lrst*(1-ntime)**2#np.exp(lambda_lr*ntime)#self.lr*(1-ntime)#*(1-ntime)#*
                 xix = 0
                 self.errors *= 0
                 for x in X:
@@ -76,7 +77,8 @@ class GSOM(object):
                     bmu = pairwise_distances_argmin(np.array([x]), self.W, axis=1)
                     ldist = np.linalg.norm(self.grid - self.grid[bmu], axis=1)
                     nix = np.where(ldist<=r)[0].shape[0]
-                    decayers = np.argsort((ldist))[:self.csf*nix]#[:dix]#[:25*nix]#[:dix]
+                    dix = np.where(ldist<=r*self.csf)[0].shape[0]
+                    decayers = np.argsort((ldist))[:dix]#[:dix]#[:25*nix]#[:dix]
                     neighbors = decayers[:nix]
 
                     ''' ** coefficient to consider sinking to neighborhood! ** '''
@@ -89,9 +91,8 @@ class GSOM(object):
                     wd_coef = self.wd*self.lr#(1-ntime)**2
                     hdist = np.linalg.norm(self.W[decayers]-x, axis=1)
                     hdist /= hdist.max()
-                    D = np.exp(-hdist**2)
-                    d = np.exp(-(ldist[decayers]/(ldist.max()))**2)#np.exp(-2*(1-hdist)**2)#np.exp(-4.*(1-hdist)**2)
-                    pull = (d-D)/d
+                    D = np.exp(-2*(1-hdist)**2)
+                    pull = D/D.max()
                     pull = np.array([pull]).T
                     delta_dec=(x-self.W[decayers])*wd_coef*pull#*(ntime)#**3
                     delta_dec[:neighbors.shape[0]] = delta_neis
@@ -149,7 +150,7 @@ class GSOM(object):
         for b in bmus:
             self.hits[b]+=1
         ''' Moving Average Filter to identify contiguous regions in the map '''
-        # self.mean_filter(1)
+        self.mean_filter(1)
 
         ''' Prune nodes in the non-continguous regions of the map to shave of training time '''
         self.prune_map(np.where(self.hits == 0)[0])
