@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 
 class GSOM(object):
 
-    def __init__(self,  radius=10, min_rad=2.45, lrst=0.1, sf=0.9, fd=0.15,  sd=0.02, cluster_spacing_factor = 10, its=20, labels=np.array([])):
+    def __init__(self,  radius=10, min_rad=2.45, lrst=0.1, sf=0.9, fd=0.15,  sd=0.02, cluster_spacing_factor = .9, its=20, labels=np.array([])):
         self.lrst = lrst
         self.its = its
         self.fd = fd
@@ -22,7 +22,7 @@ class GSOM(object):
         self.sf_max = sf
         self.grid_shape = 'hex'
         self.plot = True
-        self.csf = cluster_spacing_factor
+        self.csf = np.nan_to_num(1/(1-cluster_spacing_factor))
         self.labels = labels
         self.last_hit = np.array([])
 
@@ -83,7 +83,7 @@ class GSOM(object):
 
                     ''' ** coefficient to consider sinking to neighborhood! ** '''
                     ld = ldist[neighbors]/r
-                    thetfunc = np.exp(-0.5* (ld)**2)
+                    thetfunc = np.exp(-.5* (ld)**2)
                     theta_d = np.array([thetfunc]).T
                     delta_neis = (x-self.W[neighbors])*theta_d*self.lr
 
@@ -94,8 +94,8 @@ class GSOM(object):
                     D = np.exp(-2*(1-hdist)**2)
                     pull = D/D.max()
                     pull = np.array([pull]).T
-                    delta_dec=(x-self.W[decayers])*wd_coef*pull#*(ntime)#**3
-                    delta_dec[:neighbors.shape[0]] = delta_neis
+                    delta_dec=(x-self.W[decayers])*wd_coef*pull#*(1-ntime)#*(ntime)#**3
+                    delta_dec[:neighbors.shape[0]] += delta_neis
                     self.W[decayers] += delta_dec
                     et = timeit.default_timer()-st
 

@@ -21,7 +21,7 @@ with warnings.catch_warnings():
 print GSOM.__module__
 fi = pd.read_csv('~/data/fashionmnist/fashion-mnist_train.csv')
 # test = pd.read_csv('../mnist_test.csv', header=None)
-samples = 40000
+samples = 60000
 
 dat =(np.array(fi)[:samples, 1:]).astype(float)#/255.0
 dat = PCA(15, random_state=1).fit_transform(dat)
@@ -36,8 +36,12 @@ print dat.shape
 
 gc.collect()
 # x, y = SelfOrganizingSwarm(iterations=10, alpha=1, beta=0.1, delta=0, theta=3.5).fit_transform(dat[:samples]).T
+'''Cluster Separation Factor :
+    dix = 1/(1-csf)
+'''
+
 st = timeit.default_timer()
-model = GSOM(lrst=.05, sf=0.999, fd = .1, radius=6, min_rad = 3, sd=.4, its=20, cluster_spacing_factor=5, labels = labels)
+model = GSOM(lrst=.15, sf=0.999, fd = .1, radius=6, min_rad = 3, sd=.08, its=10, cluster_spacing_factor=0.8, labels = labels)
 # model = TSNE(perplexity=40)#
 # x, y = MovingMap(iterations=100, beta=1.5).fit_transform(dat[:samples]).T
 Y= model.fit_transform(dat)
