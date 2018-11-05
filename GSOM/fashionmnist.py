@@ -21,7 +21,7 @@ with warnings.catch_warnings():
 print GSOM.__module__
 fi = pd.read_csv('~/data/fashionmnist/fashion-mnist_train.csv')
 # test = pd.read_csv('../mnist_test.csv', header=None)
-samples = 60000
+samples = 40000
 
 dat =(np.array(fi)[:samples, 1:]).astype(float)#/255.0
 dat = PCA(15, random_state=1).fit_transform(dat)
@@ -41,7 +41,7 @@ gc.collect()
 '''
 
 st = timeit.default_timer()
-model = GSOM(lrst=.15, sf=0.999, fd = .1, radius=6, min_rad = 3, sd=.08, its=10, cluster_spacing_factor=0.8, labels = labels)
+model = GSOM(lrst=.4, sf=0.9, fd = .1, radius=2, min_rad = 2, sd=.08, its=10, cluster_spacing_factor=0.9, labels = labels)
 # model = TSNE(perplexity=40)#
 # x, y = MovingMap(iterations=100, beta=1.5).fit_transform(dat[:samples]).T
 Y= model.fit_transform(dat)
