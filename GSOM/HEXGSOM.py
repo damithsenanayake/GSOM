@@ -22,6 +22,7 @@ class GSOM(object):
         self.sf_max = sf
         self.grid_shape = 'hex'
         self.plot = True
+        self.recsf = cluster_spacing_factor
         if cluster_spacing_factor<1:
             self.csf = np.nan_to_num(1/(1-cluster_spacing_factor))
         else:
@@ -74,6 +75,7 @@ class GSOM(object):
                 self.lr = self.lrst*(1-ntime)**2#np.exp(lambda_lr*ntime)#self.lr*(1-ntime)#*(1-ntime)#*
                 xix = 0
                 self.errors *= 0
+                self.csf = 1/(1-min(ntime**.3, self.recsf))
                 for x in X:
 
                     ''' Training For Instances'''
@@ -94,7 +96,7 @@ class GSOM(object):
                     wd_coef = self.wd*self.lr#(1-ntime)**2
                     hdist = np.linalg.norm(self.W[decayers]-x, axis=1)
                     hdist /= hdist.max()
-                    D = np.exp(-2*(1-hdist)**2)
+                    D = np.exp(-4*(1-hdist)**2)
                     D-=D.min()
                     pull = D/D.max()
                     pull = np.array([pull]).T
