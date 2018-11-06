@@ -70,7 +70,8 @@ class GSOM(object):
                 ntime = i * 1. / max(its, 1)
                 sf = self.sf_max
                 self.GT = -np.sqrt(X.shape[1]) * np.log(sf)* (X.max() - X.min())
-                r = self.rst *np.exp(lambda_rad * ntime)#- ntime * (self.rst - rad_min)
+                fr = 0.2*(1-ntime)*self.W.shape[0]
+                r = max(np.sqrt(fr/np.pi), self.rad_min)#self.rst *np.exp(lambda_rad * ntime)#- ntime * (self.rst - rad_min)
                 self.wd = self.wdst
                 self.lr = self.lrst*(1-ntime)**2#np.exp(lambda_lr*ntime)#self.lr*(1-ntime)#*(1-ntime)#*
                 xix = 0
@@ -91,7 +92,7 @@ class GSOM(object):
 
                     ''' ** coefficient to consider sinking to neighborhood! ** '''
                     ld = ldist[neighbors]/r
-                    thetfunc = np.exp(-5* (ld)**2)
+                    thetfunc = np.exp(-2* (ld)**2)
                     theta_d = np.array([thetfunc]).T
                     delta_neis = (x-self.W[neighbors])*theta_d*self.lr
 

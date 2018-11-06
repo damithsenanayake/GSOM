@@ -10,15 +10,15 @@ x = np.array(range(100)).astype(float)#np.random.randn(100).astype(float)
 
 ## y =np.exp(-20.5*((x)/float(np.amax(x)))**(6))#(1.+(x/100.)**2)**-6#sigmoid(x**2/100.**2)#
 # z = 0.9**x
-dix = 10
+# dix = 10
+#
+# xs = x/x.max()
+# xd = xs[dix]
+# xs -= xs[dix]
+# xs /= xd
+x/=x.max()
 
-xs = x/x.max()
-xd = xs[dix]
-xs -= xs[dix]
-xs /= xd
-
-
-y = np.exp(-(xs)**2)
+y = np.exp(-5*(x)**2)
 # y = y/y.max()
 # z = (1+x)**-1
 
