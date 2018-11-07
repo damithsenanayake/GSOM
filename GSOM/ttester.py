@@ -17,8 +17,11 @@ x = np.array(range(100)).astype(float)#np.random.randn(100).astype(float)
 # xs -= xs[dix]
 # xs /= xd
 x/=x.max()
+# x/=x[8]
 
-y = np.exp(-5*(x)**2)
+
+
+y = 1-x**3#np.exp(-5*(x)**2)
 # y = y/y.max()
 # z = (1+x)**-1
 

@@ -63,7 +63,6 @@ class GSOM(object):
             self.lr = self.lrst
             rad_min = self.rad_min
             lambda_rad = np.log(rad_min*1./self.rst)
-            lambda_lr = np.log(0.01)
 
             for i in range(its):
                 ''' Normalized Time Variable for the learning rules.'''
@@ -72,7 +71,7 @@ class GSOM(object):
                 self.GT = -np.sqrt(X.shape[1]) * np.log(sf)* (X.max() - X.min())
                 r = self.rst *np.exp(lambda_rad * ntime)#- ntime * (self.rst - rad_min)
                 self.wd = self.wdst
-                self.lr = self.lrst*(1-ntime)**2#np.exp(lambda_lr*ntime)#self.lr*(1-ntime)#*(1-ntime)#*
+                self.lr = self.lr*(1-ntime)#np.exp(lambda_lr*ntime)#self.lr*(1-ntime)#*(1-ntime)#*
                 xix = 0
                 self.errors *= 0
                 try:
