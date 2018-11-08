@@ -83,29 +83,34 @@ class GSOM(object):
                     ''' Training For Instances'''
                     bmu = pairwise_distances_argmin(np.array([x]), self.W, axis=1)
                     ldist = np.linalg.norm(self.grid - self.grid[bmu], axis=1)
+                    hdist = np.linalg.norm(self.W - x, axis=1)
                     nix = np.where(ldist<=r)[0].shape[0]
-                    dix = np.where(ldist<=r*self.csf)[0].shape[0]
+                    dix = np.where(ldist<=r*self.csf)[0].shape[0]#nix*self.csf**2#np.where(ldist<=r*self.csf)[0].shape[0]
                     decayers = np.argsort((ldist))[:dix]#[:dix]#[:25*nix]#[:dix]
-                    neighbors = decayers[:nix]
+                    neighbors = np.argsort((ldist))[:nix]
 
                     ''' ** coefficient to consider sinking to neighborhood! ** '''
                     ld = ldist[neighbors]/r
-                    thetfunc = np.exp(-5* (ld)**2)
+                    thetfunc = np.exp(-4.* (ld)**2)
                     theta_d = np.array([thetfunc]).T
                     delta_neis = (x-self.W[neighbors])*theta_d*self.lr
 
                     ''' Gap  Enforcement '''
                     wd_coef = self.wd*self.lr#(1-ntime)**2
-                    hdist = np.linalg.norm(self.W[decayers]-x, axis=1)
+                    hdist = hdist[decayers]
                     hdist /= hdist.max()
-                    D = np.exp(-.5*(1-hdist)**2)
+                    D = hdist**4#np.exp(-.5*(1-hdist)**2)
                     D-=D.min()
                     pull = D/D.max()
                     pull = np.array([pull]).T
+                    deltas = np.zeros(self.W.shape)
                     delta_dec=(x-self.W[decayers])*wd_coef*pull#*(1-ntime)#*(ntime)#**3
-                    delta_dec[:neighbors.shape[0]] += delta_neis
-                    self.W[decayers] += delta_dec
+                    deltas[decayers] = delta_dec
+                    deltas[neighbors] += delta_neis
+
+                    self.W += deltas
                     et = timeit.default_timer()-st
+                    self.errors[bmu] += np.linalg.norm(self.W[bmu] - x)#**2
 
                     if xix % 500 == 0:
                         print (
@@ -114,7 +119,6 @@ class GSOM(object):
                         str(decayers.shape[0]), self.fd, np.mean(wd_coef))), ' time = %.2f' % (et),
 
                     xix+=1
-                    self.errors[bmu] += np.linalg.norm(self.W[bmu] - x)#**2
 
                     ''' Growing When Necessary '''
                     if self.errors[bmu] > self.GT and i+1 < its:
