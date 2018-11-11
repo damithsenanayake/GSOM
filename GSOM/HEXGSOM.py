@@ -71,7 +71,7 @@ class GSOM(object):
                 self.GT = -np.sqrt(X.shape[1]) * np.log(sf)* (X.max() - X.min())
                 r = self.rst *np.exp(lambda_rad * ntime)#- ntime * (self.rst - rad_min)
                 self.wd = self.wdst
-                self.lr = self.lr*(1-ntime)#np.exp(lambda_lr*ntime)#self.lr*(1-ntime)#*(1-ntime)#*
+                self.lr = self.lr*(1-ntime)**0.2#np.exp(lambda_lr*ntime)#self.lr*(1-ntime)#*(1-ntime)#*
                 xix = 0
                 self.errors *= 0
                 try:
@@ -90,8 +90,8 @@ class GSOM(object):
                     neighbors = np.argsort((ldist))[:nix]
 
                     ''' ** coefficient to consider sinking to neighborhood! ** '''
-                    ld = ldist[neighbors]/r
-                    thetfunc = np.exp(-4.* (ld)**2)
+                    ld = ldist[neighbors]#/r
+                    thetfunc = 1./(1+0.5*ld**2)
                     theta_d = np.array([thetfunc]).T
                     delta_neis = (x-self.W[neighbors])*theta_d*self.lr
 
@@ -99,8 +99,8 @@ class GSOM(object):
                     wd_coef = self.wd*self.lr#(1-ntime)**2
                     hdist = hdist[decayers]
                     hdist /= hdist.max()
-                    D = hdist**4#np.exp(-.5*(1-hdist)**2)
-                    D-=D.min()
+                    D = np.exp(-4.5*(1-hdist)**2)
+                    # D-=D.min()
                     pull = D/D.max()
                     pull = np.array([pull]).T
                     deltas = np.zeros(self.W.shape)
@@ -138,6 +138,7 @@ class GSOM(object):
 
             self.smoothen(X)
         except KeyboardInterrupt:
+            print self.W.shape[0]
             return
 
     def get_mid(self, decayers):
@@ -202,15 +203,25 @@ class GSOM(object):
             angle = 2* np.pi / 6 * i
             imm_neis[i] = self.grid[g_node]+np.array([np.sin(angle), np.cos(angle)])
 
+        max_nei = 0
+        max_err = 0
+        i = 0
+        neierrors = np.zeros(6)
         for nei in imm_neis:
+            i += 1
             if self.point_exists(self.grid, nei):
                 n_point = self.find_point(self.grid, nei)
-                self.errors[n_point] += (self.errors[g_node]-self.GT) * self.fd
-            else:
+                neierrors[i-1]=self.errors[n_point][0]
+                self.errors[n_point] += (self.errors[g_node]) * self.fd
+
+        for i in range(6):
+            max_nei=np.argsort(neierrors)[i]
+            nei = imm_neis[(max_nei+3)%6]
+            if not self.point_exists(self.grid, nei):
                 gdists_new = np.linalg.norm(nei - self.grid, axis=1)
                 gdists_old = np.linalg.norm(self.grid - self.grid[g_node], axis=1)
                 closest2_new = np.argsort(gdists_new)[:2]
-                if np.any(abs(gdists_old[closest2_new] - 1)<0.00000001):
+                if np.any(abs(gdists_old[closest2_new] - 1)< .00000001):
                     w = self.W[closest2_new].mean(axis=0)
                 else:
                     w = self.W[closest2_new[0]] * 2 - self.W[closest2_new[1]]
@@ -219,7 +230,7 @@ class GSOM(object):
                 self.errors = np.append(self.errors, 0.)
                 self.grid = np.append(self.grid, np.array([nei]), axis=0)
                 self.hits = np.append(self.hits, 0.)
-        self.errors[g_node] = 0*self.GT / 2
+                self.errors[g_node] = 0
 
 
     def point_exists(self, space, point):
