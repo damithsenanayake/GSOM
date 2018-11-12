@@ -71,7 +71,7 @@ class GSOM(object):
                 self.GT = -np.sqrt(X.shape[1]) * np.log(sf)* (X.max() - X.min())
                 r = self.rst *np.exp(lambda_rad * ntime)#- ntime * (self.rst - rad_min)
                 self.wd = self.wdst
-                self.lr = self.lr*(1-ntime)**0.5#np.exp(lambda_lr*ntime)#self.lr*(1-ntime)#*(1-ntime)#*
+                self.lr = self.lrst*(1-ntime)#np.exp(lambda_lr*ntime)#self.lr*(1-ntime)#*(1-ntime)#*
                 xix = 0
                 self.errors *= 0
                 try:
@@ -100,13 +100,13 @@ class GSOM(object):
                     hdist = hdist[decayers]
                     # hdist_unit = np.unique(hdist)[1]-np.unique(hdist)[0]
                     hdist /= hdist.max()
-                    hdist = hdist.max() - hdist
+                    # hdist = hdist.max() - hdist
                     D = 1./(1+0.5*hdist**2)#np.exp(-4.5*(1-hdist)**2)
                     # D-=D.min()
                     pull = D/D.max()
                     pull = np.array([pull]).T
                     deltas = np.zeros(self.W.shape)
-                    delta_dec=(x-self.W[decayers])*wd_coef*pull#*(1-ntime)#*(ntime)#**3
+                    delta_dec=-(x-self.W[decayers])*wd_coef*pull#*(1-ntime)#*(ntime)#**3
                     deltas[decayers] = delta_dec
                     deltas[neighbors] += delta_neis
 
