@@ -13,8 +13,8 @@ X=[]
 c = []
 i = 1
 for cent in centers:
-    x = np.random.randn(1000, 3)#make_blobs(n_samples=1000, n_features=3, centers=1, cluster_std=0.5)
-    t = np.ones(1000)
+    x = np.random.randn(800, 3)#make_blobs(n_samples=1000, n_features=3, centers=1, cluster_std=0.5)
+    t = np.ones(800)
     x -= x.min()
     # x /= 2
     x /= x.max()
@@ -38,7 +38,7 @@ for cent in centers:
 # X = np.concatenate((X, reds), axis=1)
 # X, c = make_blobs(6000, n_features=9, centers=10, cluster_std=8, random_state=1, )
 # c = np.array(c).flatten(order=1)
-X, c = make_s_curve(4000)
+# X, c = make_s_curve(4000)
 
 order = np.random.permutation(range(X.shape[0]))
 X = X[order]
@@ -50,7 +50,7 @@ ax.scatter(P.T[0], P.T[1], P.T[2], c=c, cmap=plt.cm.jet)
 
 plt.show(block=False)
 # print np.linalg.norm(X - X[1], axis = 1)
-model = GSOM(lrst=1., sf=0.9, fd = .9, radius=2, min_rad =3, sd=0.0, its= 100, cluster_spacing_factor=1., labels=c)#UMAP()#
+model = GSOM(lrst=.05, sf=0.9, fd = .9, radius=6, min_rad =6, sd=0.08, its= 100, cluster_spacing_factor=.8, labels=c)#UMAP()#
 # model = TSNE(perplexity=40)
 
 Y = model.fit_transform(X)#PCA().fit_transform(X)

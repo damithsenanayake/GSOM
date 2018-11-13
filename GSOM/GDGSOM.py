@@ -63,7 +63,6 @@ class GSOM(object):
             self.lr = self.lrst
             rad_min = self.rad_min
             lambda_rad = np.log(rad_min*1./self.rst)
-            X_orig = X
 
             for i in range(its):
                 ''' Normalized Time Variable for the learning rules.'''
@@ -80,7 +79,10 @@ class GSOM(object):
                 except:
                     self.csf = np.inf
 
+                while self.errors.max() > self.GT and i+1 < its:
+                    self.error_dist(self.errors.argmax())
                 self.errors *= 0
+                # Ds = self.geodesic_pairwise_distances(W=self.W, grid=self.grid)
                 for x in X:
 
                     ''' Training For Instances'''
@@ -102,23 +104,19 @@ class GSOM(object):
                     wd_coef = self.wd*self.lr#*(ntime)**.5
                     hdist = hdist[decayers]
                     hdist /= hdist.max()
-                    D = np.exp(hdist)
+                    D = np.exp(hdist)#*np.exp(-8*(ldist[decayers]/ldist.max())**4)#np.exp(-40.5*(1-hdist)**2)
+                    # D-=D.min()
                     pull = D/D.max()
                     pull = np.array([pull]).T
                     deltas = np.zeros(self.W.shape)
-                    delta_dec=(x-self.W[decayers])*wd_coef*pull
+                    delta_dec=(x-self.W[decayers])*wd_coef*pull #*(ntime)#**3
                     deltas[decayers] = delta_dec
                     deltas[neighbors] += delta_neis
+                    self.errors[decayers]*=(1+self.fd*wd_coef*pull.T[0])
+
                     self.W += deltas
-
-
                     et = timeit.default_timer()-st
-
                     self.errors[bmu] += np.linalg.norm(self.W[bmu] - x)#**2
-                    ''' Growing the map '''
-
-                    while self.errors.max() > self.GT and i + 1 < its:
-                        self.error_dist(self.errors.argmax())
 
                     if xix % 500 == 0:
                         print (
@@ -127,6 +125,15 @@ class GSOM(object):
                         str(decayers.shape[0]), self.fd, np.mean(wd_coef))), ' time = %.2f' % (et),
 
                     xix+=1
+
+                '''negative sample training '''
+
+                bmus = pairwise_distances_argmin(X, self.W)
+
+                negatives = np.setdiff1d(np.array(range(self.W.shape[0])), np.unique(bmus))
+
+                X = np.concatenate((X, self.W[negatives]), axis=0)
+
 
                 self.prune_mid_training(X)
 
@@ -185,6 +192,23 @@ class GSOM(object):
         self.errors = np.delete(self.errors, ixs)
         self.grid = np.delete(self.grid, ixs,  axis=0)
         self.hits = np.delete(self.hits, ixs)
+
+    def geodesic_pairwise_distances(self, W, grid):
+        print "\r calculating geodesic metric ",
+        G = np.zeros((W.shape[0], W.shape[0]))
+
+        ldist = pairwise_distances(grid, grid)
+
+        G[ldist<=1]=1
+        G *= pairwise_distances(W, W)
+        Ds=np.zeros(G.shape)
+        v = W.shape[0]
+        for k in range(0, v):
+            for i in range(0, v):
+                for j in range(0, v):
+                    if Ds[i, j] > G[i, k] + G[k, j]:
+                        Ds[i, j] = G[i, k] + G[k, j]
+        print "... done ",
 
 
     def smoothen(self, X):
