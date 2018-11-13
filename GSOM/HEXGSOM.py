@@ -99,16 +99,16 @@ class GSOM(object):
                     delta_neis = (x-self.W[neighbors])*theta_d*self.lr
 
                     ''' Gap  Enforcement '''
-                    wd_coef = self.wd*self.lr#*(ntime)**.5
+                    wd_coef = self.wd*self.lr**.5#*(ntime)**.5
                     hdist = hdist[decayers]
                     hdist /= hdist.max()
-                    D = np.exp(hdist)
+                    D = 1-np.exp(-8*hdist)
                     pull = D/D.max()
                     pull = np.array([pull]).T
                     deltas = np.zeros(self.W.shape)
-                    delta_dec=(x-self.W[decayers])*wd_coef*pull
+                    delta_dec=(x-self.W[decayers])*wd_coef*pull*(i>1)
                     deltas[decayers] = delta_dec
-                    deltas[neighbors] += delta_neis
+                    deltas[neighbors] = delta_neis
                     self.W += deltas
 
 
