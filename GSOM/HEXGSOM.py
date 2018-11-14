@@ -86,7 +86,7 @@ class GSOM(object):
                     ''' Training For Instances'''
                     bmu = pairwise_distances_argmin(np.array([x]), self.W, axis=1)
                     ldist = np.linalg.norm(self.grid - self.grid[bmu], axis=1)
-                    hdist = np.linalg.norm(self.W - x, axis=1)
+                    hdist = np.linalg.norm(self.W - self.W[bmu], axis=1)
                     nix = np.where(ldist<=r)[0].shape[0]
                     dix = np.where(ldist<=r*self.csf)[0].shape[0]#nix*self.csf**2#np.where(ldist<=r*self.csf)[0].shape[0]
                     decayers = np.argsort((ldist))[:dix]#[:dix]#[:25*nix]#[:dix]
@@ -102,11 +102,11 @@ class GSOM(object):
                     wd_coef = self.wd*self.lr**.5#*(ntime)**.5
                     hdist = hdist[decayers]
                     hdist /= hdist.max()
-                    D = 1-np.exp(-8*hdist)
-                    pull = D/D.max()
+                    D = np.exp(-6*(1-hdist))
+                    pull = D
                     pull = np.array([pull]).T
                     deltas = np.zeros(self.W.shape)
-                    delta_dec=(x-self.W[decayers])*wd_coef*pull*(i>1)
+                    delta_dec=(self.W[bmu]-self.W[decayers])*wd_coef*pull*(i>1)
                     deltas[decayers] = delta_dec
                     deltas[neighbors] = delta_neis
                     self.W += deltas

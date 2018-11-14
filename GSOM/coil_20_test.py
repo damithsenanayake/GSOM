@@ -16,7 +16,7 @@ X = fread[:, :-1]
 X = PCA(30).fit_transform(X)
 t = fread[:,-1]
 imlables = ['duck', 'block 1', 'car 1', 'fs cat', 'Anc', 'Car 2', 'block 2', 'baby powder', 'Tylenol', 'Vaseline', 'Mushroom', 'cup', 'piggy', 'socket', 'pot', 'bottle', 'dish', 'cup 2', 'car 3', 'tub']
-model = GSOM(lrst=.1,sf=0.999999, fd = .1, radius=8, min_rad =8., sd=0.005, cluster_spacing_factor=0.9, its=2000, labels=t)#TSNE(perplexity=40)#
+model = GSOM(lrst=.7,sf=0.999999, fd = .1, radius=8, min_rad =8., sd=0.005, cluster_spacing_factor=1., its=200, labels=t)#TSNE(perplexity=40)#
 Y=model.fit_transform(X)# GSOM().fit_transform(X, lr = 1.0, beta=0.5, sf=0.995, wd=0.02, fd=1.9)
 
 
