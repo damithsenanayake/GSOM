@@ -25,9 +25,9 @@ samples = 6000
 
 dat =(np.array(fi)[:samples, 1:]).astype(float)#/255.0
 order = np.random.permutation(range(samples))
-dat = PCA(10, random_state=1).fit_transform(dat)[order]
-# dat -= dat.min()
-# dat /= dat.max()
+dat = PCA(30, random_state=1).fit_transform(dat)[order]
+dat -= dat.min()
+dat /= dat.max()
 labels = np.array(fi)[:samples, 0].astype(int)[order]
 
 # dat = dat[(labels ==5) | (labels == 3)]
@@ -42,7 +42,7 @@ gc.collect()
 '''
 
 st = timeit.default_timer()
-model = GSOM(lrst=.5, sf=0.95, fd = .99, radius=3.5, min_rad = 3., sd=.2, its=10, cluster_spacing_factor=.7, labels = labels)
+model = GSOM(lrst=.5, sf=0.95, fd = .99, radius=6, min_rad = 3., sd=.8, its=30, cluster_spacing_factor=.7, labels = labels)
 # model = TSNE(perplexity=40)#
 # x, y = MovingMap(iterations=100, beta=1.5).fit_transform(dat[:samples]).T
 Y= model.fit_transform(dat)
