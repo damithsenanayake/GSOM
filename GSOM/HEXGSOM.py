@@ -63,6 +63,7 @@ class GSOM(object):
             self.lr = self.lrst
             rad_min = self.rad_min
             lambda_rad = np.log(rad_min*1./self.rst)
+            lambda_lr = np.log(0.01)
             X_orig = X
 
             for i in range(its):
@@ -70,10 +71,10 @@ class GSOM(object):
                 ntime = i * 1. / max(its, 1)
                 sf = self.sf_max
                 self.GT = -np.sqrt(X.shape[1]) * np.log(sf)* (X.max() - X.min())
-                r = self.rst #*np.exp(lambda_rad * ntime)#- ntime * (self.rst - rad_min)
+                r = self.rst *np.exp(lambda_rad * ntime)#- ntime * (self.rst - rad_min)
                 self.r = r
                 self.wd = self.wdst
-                self.lr = self.lrst*(1-ntime)#np.exp(lambda_lr*ntime)#self.lr*(1-ntime)#*(1-ntime)#*
+                self.lr = self.lrst*np.exp(lambda_lr*ntime)#np.exp(lambda_lr*ntime)#self.lr*(1-ntime)#*(1-ntime)#*
                 xix = 0
                 try:
                     self.csf = 1/(1-self.recsf)
@@ -101,8 +102,9 @@ class GSOM(object):
                     ''' Gap  Enforcement '''
                     wd_coef = self.wd*self.lr#*(ntime)**.5
                     hdist = hdist[decayers]
+                    hdist -= hdist.min()
                     hdist /= hdist.max()
-                    D = np.exp(-2*(1-hdist)**2)
+                    D = np.exp(-7.*(1-hdist)**2)
                     pull = D-D.min()
                     pull = np.array([pull]).T
                     deltas = np.zeros(self.W.shape)
