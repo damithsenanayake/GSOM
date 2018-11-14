@@ -50,7 +50,7 @@ ax.scatter(P.T[0], P.T[1], P.T[2], c=c, cmap=plt.cm.jet)
 
 plt.show(block=False)
 # print np.linalg.norm(X - X[1], axis = 1)
-model = GSOM(lrst=.05, sf=0.9, fd = .9, radius=6, min_rad =6, sd=0.08, its= 100, cluster_spacing_factor=.8, labels=c)#UMAP()#
+model = GSOM(lrst=.5, sf=0.9, fd = .9, radius=6, min_rad =2, sd=0.02, its= 10, cluster_spacing_factor=.8, labels=c)#UMAP()#
 # model = TSNE(perplexity=40)
 
 Y = model.fit_transform(X)#PCA().fit_transform(X)
