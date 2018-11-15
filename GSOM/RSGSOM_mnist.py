@@ -24,7 +24,7 @@ fi = pd.read_csv('~/data/mnist_train.csv', header=None)
 samples = 6000
 
 dat =(np.array(fi)[:samples, 1:])#/255.0
-dat = PCA(30, random_state=1).fit_transform(dat)
+dat = PCA(15, random_state=1).fit_transform(dat)
 # dat += 100000
 # dat -= dat.min()901131ds
 

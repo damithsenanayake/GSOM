@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 
 class GSOM(object):
 
-    def __init__(self,  radius=10, min_rad=2.45, lrst=0.1, sf=0.9, fd=0.15,  sd=0.02, cluster_spacing_factor = .9, its=20, labels=np.array([])):
+    def __init__(self,  radius=10, min_rad=2.45, lrst=0.1, sf=0.9, fd=0.15,  sd=0.02, cluster_spacing_factor = .9, its=20, labels=np.array([]), momentum = 0.02):
         self.lrst = lrst
         self.its = its
         self.fd = fd
@@ -29,6 +29,7 @@ class GSOM(object):
             self.csf = np.inf
         self.labels = labels
         self.last_hit = np.array([])
+        self.momentum = momentum
 
     def fit_transform(self, X):
         self.train_batch(X)
@@ -65,6 +66,7 @@ class GSOM(object):
             lambda_rad = np.log(rad_min*1./self.rst)
             lambda_lr = np.log(0.01)
             X_orig = X
+            self.prevW = self.W*0
 
             for i in range(its):
                 ''' Normalized Time Variable for the learning rules.'''
@@ -97,7 +99,7 @@ class GSOM(object):
                     ld = ldist[neighbors]/r
                     thetfunc = np.exp(-.5*ld**2)
                     theta_d = np.array([thetfunc]).T
-                    delta_neis = (x-self.W[neighbors])*theta_d*self.lr
+                    delta_neis = (x-self.W[neighbors])*theta_d*self.lr+ self.momentum * self.prevW[neighbors]
 
                     ''' Gap  Enforcement '''
                     wd_coef = self.wd*self.lr#*(ntime)**.5
@@ -112,7 +114,7 @@ class GSOM(object):
                     deltas[decayers] = delta_dec
                     deltas[neighbors] += delta_neis
                     self.W += deltas
-
+                    self.prevW[neighbors] = delta_neis
 
                     et = timeit.default_timer()-st
 
@@ -238,6 +240,7 @@ class GSOM(object):
                 self.grid = np.append(self.grid, np.array([nei]), axis=0)
                 self.hits = np.append(self.hits, 0.)
                 self.errors[g_node] = 0
+                self.prevW = np.append(self.W, np.zeros((1,self.W.shape[1])), axis=0)
 
 
     def point_exists(self, space, point):
