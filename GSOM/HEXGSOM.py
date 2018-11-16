@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 
 class GSOM(object):
 
-    def __init__(self,  radius=10, min_rad=2.45, lrst=0.1, sf=0.9, fd=0.15,  sd=0.02, cluster_spacing_factor = .9, its=20, labels=np.array([]), momentum = 0.02):
+    def __init__(self,  radius=10, min_rad=2.45, lrst=0.1, sf=0.9, fd=0.15,  sd=0.02, cluster_spacing_factor = .9, its=20, labels=np.array([]), momentum = 0.85):
         self.lrst = lrst
         self.its = its
         self.fd = fd
@@ -99,7 +99,7 @@ class GSOM(object):
                     ld = ldist[neighbors]/r
                     thetfunc = np.exp(-.5*ld**2)
                     theta_d = np.array([thetfunc]).T
-                    delta_neis = (x-self.W[neighbors])*theta_d*self.lr+ self.momentum * self.prevW[neighbors]
+                    delta_neis = (x-self.W[neighbors])*theta_d*self.lr#+ self.momentum *np.exp(-5*(1-ntime)**6)* self.prevW[neighbors]
 
                     ''' Gap  Enforcement '''
                     wd_coef = self.wd*self.lr#*(ntime)**.5
@@ -109,13 +109,13 @@ class GSOM(object):
                     D = np.exp(-7.*(1-hdist)**2)
                     pull = D-D.min()
                     pull = np.array([pull]).T
-                    deltas = np.zeros(self.W.shape)
+                    deltas = self.momentum*self.prevW#np.zeros(self.W.shape)
                     delta_dec=(x-self.W[decayers])*wd_coef*pull#*(i>1)
-                    deltas[decayers] = delta_dec
+                    deltas[decayers] += delta_dec
                     deltas[neighbors] += delta_neis
                     self.W += deltas
-                    self.prevW[neighbors] = delta_neis
-
+                    # self.prevW[neighbors] = delta_neis
+                    self.prevW = deltas
                     et = timeit.default_timer()-st
 
                     self.errors[bmu] += np.linalg.norm(self.W[bmu] - x)#**2
@@ -186,6 +186,7 @@ class GSOM(object):
 
     def prune_map(self, ixs):
         self.W = np.delete(self.W, ixs, axis=0)
+        self.prevW = np.delete(self.prevW, ixs, axis=0)
         self.errors = np.delete(self.errors, ixs)
         self.grid = np.delete(self.grid, ixs,  axis=0)
         self.hits = np.delete(self.hits, ixs)
@@ -240,7 +241,7 @@ class GSOM(object):
                 self.grid = np.append(self.grid, np.array([nei]), axis=0)
                 self.hits = np.append(self.hits, 0.)
                 self.errors[g_node] = 0
-                self.prevW = np.append(self.W, np.zeros((1,self.W.shape[1])), axis=0)
+                self.prevW = np.append(self.prevW, np.zeros((1,self.W.shape[1])), axis=0)
 
 
     def point_exists(self, space, point):
