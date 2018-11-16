@@ -35,6 +35,8 @@ gc.collect()
     dix = 1/(1-csf)
 '''
 
+'''graph vis gives good fashionmnist'''
+
 st = timeit.default_timer()
 model = GSOM(lrst=.1, sf=0.9, fd = .99, radius=4, min_rad = 2., sd=.08, its=10, cluster_spacing_factor=.8, labels = labels, momentum=0.8)
 # model = TSNE(perplexity=40)#
