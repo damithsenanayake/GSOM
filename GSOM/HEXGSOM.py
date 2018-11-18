@@ -106,10 +106,10 @@ class GSOM(object):
                     hdist = hdist[decayers]
                     hdist -= hdist.min()
                     hdist /= hdist.max()
-                    D = np.exp(-7.*(1-hdist)**np.sqrt(X.shape[1]))*(i>3)
+                    D = np.exp(-7.*(1-hdist)**(-np.log(1./X.shape[1]))*2)*(ntime>0.3)
                     pull = D-D.min()
                     pull = np.array([pull]).T
-                    deltas =(((i<2)*0.8 + 0.2)* self.momentum)*self.prevW#np.zeros(self.W.shape)
+                    deltas =(((ntime<.5)*0.9 + 0.1)* self.momentum)*self.prevW#np.zeros(self.W.shape)
                     delta_dec=(x-self.W[decayers])*wd_coef*pull#*(i>1)
                     deltas[decayers] += delta_dec
                     deltas[neighbors] += delta_neis
