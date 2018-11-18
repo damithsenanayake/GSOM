@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 
 class GSOM(object):
 
-    def __init__(self,  radius=10, min_rad=2.45, lrst=0.1, sf=0.9, fd=0.15,  sd=0.02, cluster_spacing_factor = .9, its=20, labels=np.array([]), momentum = 0.85):
+    def __init__(self,  radius=10, min_rad=2.45, lrst=0.1, sf=0.9, fd=0.15,  sd=0.02, cluster_spacing_factor = .9, its=20, labels=np.array([]), momentum = 0.85, map_structure = 'hex'):
         self.lrst = lrst
         self.its = its
         self.fd = fd
@@ -30,7 +30,7 @@ class GSOM(object):
         self.labels = labels
         self.last_hit = np.array([])
         self.momentum = momentum
-
+        self.structure = map_structure
     def fit_transform(self, X):
         self.train_batch(X)
         return self.predict(X)
@@ -42,17 +42,24 @@ class GSOM(object):
             self.start_time = st
 
             ''' Hexagonal initialization '''
-            if self.grid_shape == 'hex':
-                self.grid = np.zeros((7, 2))
 
-                for i in range(1,7):
-                    angle = 2*np.pi*(i-1)/6
+            self.n_low_neighbors = 0
 
-                    x = np.sin(angle)
-                    y = np.cos(angle)
-                    self.grid[i] = np.array([x, y])
-            else:
-                self.grid = np.array([[i, j ] for i in range(2) for j in range(2)])
+            if self.structure == 'hex':
+                self.n_low_neighbors = 6
+
+            elif self.structure == 'square':
+                self.n_low_neighbors = 4
+
+            self.grid = np.zeros((self.n_low_neighbors+1, 2))
+
+            for i in range(1,self.n_low_neighbors+1):
+                angle = 2*np.pi*(i-1)/self.n_low_neighbors
+
+                x = np.sin(angle)
+                y = np.cos(angle)
+                self.grid[i] = np.array([x, y])
+
 
 
             self.W = np.zeros((self.grid.shape[0], X.shape[1]))#np.random.RandomState(seed=5).random_sample(size=(self.grid.shape[0], X.shape[1]))#np.random.random(size=(self.grid.shape[0], X.shape[1]))
@@ -106,7 +113,7 @@ class GSOM(object):
                     hdist = hdist[decayers]
                     hdist -= hdist.min()
                     hdist /= hdist.max()
-                    D = np.exp(-7.*(1-hdist)**(-np.log(1./X.shape[1]))*2)*(ntime>0.3)
+                    D = np.exp(-7.*(1-hdist)**(-np.log(1./X.shape[1]))*2)*(ntime>0.1)
                     pull = D-D.min()
                     pull = np.array([pull]).T
                     deltas =(((ntime<.5)*0.9 + 0.1)* self.momentum)*self.prevW#np.zeros(self.W.shape)
@@ -206,16 +213,16 @@ class GSOM(object):
 
     def error_dist(self, g_node):
 
-        imm_neis = np.zeros((6, 2))
+        imm_neis = np.zeros((self.n_low_neighbors, 2))
 
-        for i in range(6):
-            angle = 2* np.pi / 6 * i
+        for i in range(self.n_low_neighbors):
+            angle = 2* np.pi / self.n_low_neighbors * i
             imm_neis[i] = self.grid[g_node]+np.array([np.sin(angle), np.cos(angle)])
 
         max_nei = 0
         max_err = 0
         i = 0
-        neierrors = np.zeros(6)
+        neierrors = np.zeros(self.n_low_neighbors)
         for nei in imm_neis:
             i += 1
             if self.point_exists(self.grid, nei):
@@ -224,9 +231,9 @@ class GSOM(object):
                 self.errors[n_point] += (self.errors[n_point]) * self.fd
                 self.errors[g_node]=0
 
-        for i in range(6):
+        for i in range(self.n_low_neighbors):
             max_nei=np.argsort(neierrors)[i]
-            nei = imm_neis[(max_nei+3)%6]
+            nei = imm_neis[(max_nei+int(self.n_low_neighbors/2))%(self.n_low_neighbors)]
             if not self.point_exists(self.grid, nei):
                 gdists_new = np.linalg.norm(nei - self.grid, axis=1)
                 gdists_old = np.linalg.norm(self.grid - self.grid[g_node], axis=1)
