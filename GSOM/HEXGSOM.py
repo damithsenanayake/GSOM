@@ -50,6 +50,8 @@ class GSOM(object):
 
             elif self.structure == 'square':
                 self.n_low_neighbors = 4
+            else:
+                self.n_low_neighbors= self.structure
 
             self.grid = np.zeros((self.n_low_neighbors+1, 2))
 
@@ -124,6 +126,7 @@ class GSOM(object):
                     # self.prevW[neighbors] = delta_neis
                     self.prevW = deltas
                     et = timeit.default_timer()-st
+                    self.surface_tension(neighbors)
 
                     self.errors[bmu] += np.linalg.norm(self.W[bmu] - x)#**2
                     ''' Growing the map '''
@@ -160,15 +163,15 @@ class GSOM(object):
 
         return np.linalg.norm(self.grid[decayers] - self.grid[decayers].mean(axis=0), axis=1).argmin()
 
-    def surface_tension(self):
+    def surface_tension(self, ixs):
 
-        newW = np.zeros(self.W.shape)
+        newW =self.W
 
-        for i in range(self.W.shape[0]):
+        for i in ixs:
 
-            neis = np.where(np.linalg.norm(self.grid[i]-self.grid, axis=1)==1)
+            neis = np.where(np.linalg.norm(self.grid[i]-self.grid, axis=1)-1<=0.00000001)
 
-            newW[i] = self.W[i] + (self.W[neis]-self.W[i]).sum(axis=0)
+            newW[neis] = self.W[neis] + self.wd*(self.W[i]-self.W[neis])#.sum(axis=0)
         self.W = newW
 
     def prune_mid_training(self, X):
