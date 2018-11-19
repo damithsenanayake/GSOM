@@ -126,7 +126,6 @@ class GSOM(object):
                     # self.prevW[neighbors] = delta_neis
                     self.prevW = deltas
                     et = timeit.default_timer()-st
-                    self.surface_tension(neighbors)
 
                     self.errors[bmu] += np.linalg.norm(self.W[bmu] - x)#**2
                     ''' Growing the map '''
