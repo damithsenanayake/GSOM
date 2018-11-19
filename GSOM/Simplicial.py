@@ -13,8 +13,8 @@ X=[]
 c = []
 i = 1
 for cent in centers:
-    x = np.random.randn(800, 3)#make_blobs(n_samples=1000, n_features=3, centers=1, cluster_std=0.5)
-    t = np.ones(800)
+    x = np.random.randn(1000, 3)#make_blobs(n_samples=1000, n_features=3, centers=1, cluster_std=0.5)
+    t = np.ones(1000)
     x -= x.min()
     # x /= 2
     x /= x.max()
@@ -50,7 +50,7 @@ ax.scatter(P.T[0], P.T[1], P.T[2], c=c, cmap=plt.cm.jet)
 
 plt.show(block=False)
 # print np.linalg.norm(X - X[1], axis = 1)
-model = GSOM(lrst=.5, sf=0.9, fd = .9, radius=6, min_rad =2, sd=0.08, its= 10, cluster_spacing_factor=.8, labels=c, momentum=.2)#UMAP()#
+model = GSOM(lrst=.4, sf=0.9, fd = .1, radius=6, min_rad =2, sd=0.08, its= 5, cluster_spacing_factor=.8, labels=c, momentum=.0)#UMAP()#
 # model = TSNE(perplexity=40)
 
 Y = model.fit_transform(X)#PCA().fit_transform(X)

@@ -93,6 +93,10 @@ class GSOM(object):
                     self.csf = np.inf
 
                 self.errors *= 0
+
+                thetas = self.errors*0
+                thetaxs = self.errors*0
+
                 for x in X:
 
                     ''' Training For Instances'''
@@ -100,7 +104,7 @@ class GSOM(object):
                     ldist = np.linalg.norm(self.grid - self.grid[bmu], axis=1)
                     hdist = np.linalg.norm(self.W - x, axis=1)
                     nix = np.where(ldist<=r)[0].shape[0]
-                    dix = np.where(ldist<=self.rst*self.csf)[0].shape[0]#nix*self.csf**2#np.where(ldist<=r*self.csf)[0].shape[0]
+                    dix = np.where(ldist<=r*self.csf)[0].shape[0]#nix*self.csf**2#np.where(ldist<=r*self.csf)[0].shape[0]
                     decayers = np.argsort((ldist))[:dix]#[:dix]#[:25*nix]#[:dix]
                     neighbors = np.argsort((ldist))[:nix]
 
@@ -115,10 +119,10 @@ class GSOM(object):
                     hdist = hdist[decayers]
                     hdist -= hdist.min()
                     hdist /= hdist.max()
-                    D = np.exp(-7.*(1-hdist)**(2))
+                    D = np.exp(-7.*(1-hdist)**(-np.log(1./X.shape[1]))*2)*(ntime>0.1)
                     pull = D-D.min()
                     pull = np.array([pull]).T
-                    deltas =(((ntime>.5)*0.9 + 0.1)* self.momentum)*self.prevW#np.zeros(self.W.shape)
+                    deltas =(((ntime>.2)*0.9 + 0.1)* self.momentum)*self.prevW#np.zeros(self.W.shape)
                     delta_dec=(x-self.W[decayers])*wd_coef*pull#*(i>1)
                     deltas[decayers] += delta_dec
                     deltas[neighbors] += delta_neis
@@ -129,10 +133,7 @@ class GSOM(object):
                     self.surface_tension(neighbors)
 
                     self.errors[bmu] += np.linalg.norm(self.W[bmu] - x)#**2
-                    ''' Growing the map '''
 
-                    while self.errors.max() > self.GT and i + 1 < its:
-                        self.error_dist(self.errors.argmax())
 
                     if xix % 500 == 0:
                         print (
@@ -141,6 +142,10 @@ class GSOM(object):
                         str(decayers.shape[0]), self.fd, np.mean(wd_coef))), ' time = %.2f' % (et),
 
                     xix+=1
+                ''' Growing the map '''
+
+                while self.errors.max() > self.GT and i + 1 < its:
+                    self.error_dist(self.errors.argmax())
 
                 self.prune_mid_training(X)
 
@@ -251,7 +256,7 @@ class GSOM(object):
                 self.grid = np.append(self.grid, np.array([nei]), axis=0)
                 self.hits = np.append(self.hits, 0.)
                 self.errors[g_node] = 0
-                self.prevW = np.append(self.prevW, np.array([w-self.W[g_node]]), axis=0)
+                self.prevW = np.append(self.prevW, np.zeros((1,self.W.shape[1])), axis=0)
 
 
     def point_exists(self, space, point):
