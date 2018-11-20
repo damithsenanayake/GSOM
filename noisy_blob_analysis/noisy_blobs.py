@@ -32,8 +32,13 @@ for config in configurations:
     ]
 
     scores = []
+
     for model in models:
-        print '!-------------- ', str(model.__class__), ' -----------------!'
+        print str(model.__class__).split(".")[-1], '    ',
+
+    print ''
+
+    for model in models:
 
         Y = model.fit_transform(X)#PCA().fit_transform(X)
 
@@ -44,9 +49,9 @@ for config in configurations:
         ars = adjusted_rand_score(c, preds)
         ami = adjusted_mutual_info_score(c, preds)
 
-        print 'ars / ami '
-        print  str(ars), ' / ', str(ami)
+        print  str(ars), ' / ', str(ami),'  ',
         scores.append(str(model.__class__)+"\t"+str(ars)+"\t"+str(ami))
+    print ''
     values.append(str(config))
     values.append(scores)
 
