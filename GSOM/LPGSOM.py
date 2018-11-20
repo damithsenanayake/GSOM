@@ -37,19 +37,20 @@ class GSOM(object):
     def fit(self, X ):
         self.start_time = timeit.default_timer()
         self.dims = X.shape[1]
-        self.GT = -self.dims * np.log(self.sf)  # /255.0
+        self.GT = -self.dims * np.log(self.sf)*(X.max()-X.min())  # /255.0
         init_vect = np.random.random(self.dims)
-        self.radius = 30# np.exp(1)
-        for i in range(40):
-            for j in range(40):
+        perplexity = 600
+        self.radius = np.sqrt(perplexity/2)# np.exp(1)
+        for i in range(2):
+            for j in range(2):
                 self.neurons[str([i, j])] = np.random.random(self.dims)
                 self.grid[str([i, j])] = [i, j]
                 self.errors[str([i, j])] = 0
 
 
         st = timeit.default_timer()
-        # self.train_batch(X[np.random.permutation(np.array(range(X.shape[0])))])
-        self.lr/=2.
+        self.train_batch(X[np.random.permutation(np.array(range(X.shape[0])))])
+        # self.lr/=2.
         et = timeit.default_timer() - st
         print "\n elapsed time for growing : ", et , "\n"
         self.Y = np.array(self.grid.values()).astype(float)
@@ -61,115 +62,16 @@ class GSOM(object):
         gridar = np.array(self.grid.values())
 
         for n in range(self.n_graph.shape[0]):
-            self.n_graph[np.where(np.linalg.norm(gridar[n]-gridar, axis=1)==1)[0]]=1
-
-        self.smoothen(X)
+            self.n_graph[n][np.where(np.linalg.norm(gridar[n]-gridar, axis=1)==1)[0]]=1
+        np.savetxt('y.csv',self.Y)
+        np.savetxt('c.csv', self.C)
+        # self.Y = np.loadtxt('y.csv', dtype=float)
+        # self.C = np.loadtxt('c.csv', dtype=float)
         self.smoothen_wd(X)
 
 
-    def smoothen(self, X):
-        self.thet_vis_bundle = {}
-        r_st = 0.9
-        its = 0
-        lr = self.lr
-        print self.wd
-        st = timeit.default_timer()
-        grid_dists = pairwise_distances(self.Y, self.Y)
-        self.cand_hits = np.ones(shape=(self.Y.shape[0])).astype(float)
-        alphas = np.ones(shape=self.Y.shape[0]) * lr
-        self.radii = np.zeros(shape = self.Y.shape[0])
-        self.radii.fill(r_st)
-        for i in range(its):
-            # self.cand_hits = np.zeros(shape=(self.Y.shape[0])).astype(float)
-            pows = None
-            sample_size = 10
 
-            lrcoefs = 1+ 20.*self.cand_hits/self.cand_hits.sum()
 
-            self.radii = r_st* np.exp(-2.* i/(its)) * lrcoefs
-            alpha = lr - i * lr * 1.0 / its #* np.exp(-1.5*i/(its))
-            alphas = alpha * (lrcoefs)
-            # alphas = alphas *  redbase * lrcoefs
-            #int(np.ceil(X.shape[0]*float(i/10+1)*10./its))
-            xix = 0
-            trinds = np.random.choice(X.shape[0],sample_size)
-            for x in X[trinds]:
-                et = timeit.default_timer() - self.start_time
-                xix += 1
-                bmu = pairwise_distances_argmin(np.array([x]), self.C, axis=1)[0]
-                print '\r smoothing epoch %i / %i: %s : radius: %s : training_sample : %i / %i : time : %s '%(i+1, its, str(alphas[bmu]), str(self.radii[bmu]), xix, sample_size, str(et)),
-
-                Ldist = grid_dists[bmu]
-                # if (i+20 >= 2000):
-                self.cand_hits[bmu]+=1
-                neighborhood =np.where(Ldist < self.radii[bmu])[0]
-                if neighborhood.shape[0] == 0:
-                    neighborhood = np.argsort(Ldist)[:5]
-                thet_d = np.array([np.exp(-(7.5)*Ldist[neighborhood]**2/np.max([self.radii[bmu], Ldist[neighborhood].max()])**2)]).T
-                w = np.array(self.C)[neighborhood]
-                delts =  np.array([alphas[neighborhood]]).T * ((x-w) * (thet_d))#-self.wd*w*(1-np.exp(-2.5*(i**12/float(its)**12))))#*(1-thet_d))#*(1-np.exp(-2.5*(i/float(its)))))#*(i>=its-5))
-                w += delts
-                self.C[neighborhood] = w
-
-        print "\ntime for first smoothing iteration : ", (timeit.default_timer()-st), "\n"
-
-    def smoothen_wd(self, X):
-        self.thet_vis_bundle = {}
-        r_st = .9
-        its = 12000
-
-        lr = self.lr
-        print self.wd
-        st = timeit.default_timer()
-        grid_dists = pairwise_distances(self.Y, self.Y)
-        self.cand_hits = np.ones(shape=(self.Y.shape[0])).astype(float)
-        self.radii = np.zeros(shape = self.Y.shape[0])
-        self.radii.fill(r_st)
-        for i in range(its):
-            sample_size = 10
-            # if i %(X.shape[0]/100) == 0:
-            #     self.cand_hits.fill(0)
-            if np.any(self.cand_hits):
-                lrcoefs = 1+ 1.*self.cand_hits/self.cand_hits.max()
-            else :
-                pows = 1+self.cand_hits
-                lrcoefs = 1 + self.cand_hits
-            self.radii = r_st* np.exp(-2.* i/(its)) / lrcoefs
-            alpha = lr - i * lr * 1.0 / its #* np.exp(-1.5*i/(its))
-            alphas = alpha * (lrcoefs)
-            # alphas = alphas *  redbase * lrcoefs
-            #int(np.ceil(X.shape[0]*float(i/10+1)*10./its))
-            xix = 0
-            trinds = np.random.choice(X.shape[0],sample_size)
-            for x in X[trinds]:
-                et = timeit.default_timer() - self.start_time
-                xix += 1
-                bmu = pairwise_distances_argmin(np.array([x]), self.C, axis=1)[0]
-                print '\r smoothing epoch %i / %i: %s : radius: %s : training_sample : %i / %i : time : %s '%(i+1, its, str(alphas[bmu]), str(self.radii[bmu]), xix, sample_size, str(et)),
-
-                Ldist = grid_dists[bmu]
-                # if (i+20 >= 2000):
-                self.cand_hits[bmu]+=1
-                neighborhood =np.where(Ldist < self.radii[bmu])[0]
-                if neighborhood.shape[0] == 0:
-                    neighborhood = np.argsort(Ldist)[:5]
-                ''' we're going to fuck shit up with this'''
-
-                Hdist = np.linalg.norm(self.C-self.C[bmu], axis=1)[neighborhood]
-                thet_D = np.array([np.exp(-15.5*Hdist**6/Hdist.max()**6)]).T
-                thet_d = np.array([np.exp(-(15.5)*Ldist[neighborhood]**2/np.max([self.radii[bmu], Ldist[neighborhood].max()])**2)]).T
-                w = np.array(self.C)[neighborhood]
-                delts =  np.array([alphas[neighborhood]]).T * ((x-w) * (thet_d)-self.wd*w*(1-thet_D))#*(1-np.exp(-2.5*(i/float(its)))))#*(1-thet_d))#*(1-np.exp(-2.5*(i/float(its)))))#*(i>=its-5))
-                w += delts
-                self.C[neighborhood] = w
-                if i == its/2 and xix ==1:
-                    self.thet_vis_bundle['Y']=self.Y
-                    self.thet_vis_bundle['bmu']=bmu
-                    self.thet_vis_bundle['thet_d']=thet_d
-                    self.thet_vis_bundle['thet_D']=thet_D
-                    self.thet_vis_bundle['neighborhood']=neighborhood
-
-        print "\ntime for first smoothing iteration : ", (timeit.default_timer()-st), "\n"
 
     def predict_inner(self, X):
         hits = []
@@ -189,48 +91,48 @@ class GSOM(object):
         self.lrst  = lr
         self.spawns = 0
         rad = self.radius
-        while self.lr > 0.5*lr:
+        wd_orig = self.wd
+        its = 10
+        self.its = its
+        self.it_rate = 0
+        while i< its:#self.lr > 0.5*lr:
             c = 0
+            self.i = i
+            s_size = 6000
             t = X.shape[0]
             self.Herr=0
             self.hits = {}
-
-            Xtr = X[np.random.choice(range(t),np.floor((0.4+0.1*i)*t).astype(int)).astype(int)]
-
+            self.it_rate = (i+1.)/its
+            trset = np.array(range(s_size*i, s_size*(i+1)))%t
+            Xtr = X[trset]
+            self.wd = wd_orig * ((i+1)*1./its)
             for x in Xtr:
                 c+=1
                 self.train_single(x)
+                while self.Herr >= self.GT and np.random.binomial(1, 1):
+                    growinds = np.where(np.array(self.errors.values()) >= self.GT)[0]
+                    self.grid_changed = 1
+                    for g in growinds:
+                        self.grow(self.errors.keys()[g])
+                    self.Herr = np.array(self.errors.values()).max()
                 et = timeit.default_timer() - self.start_time
 
                 sys.stdout.write('\r epoch %i :  %i%% : nodes - %i : LR - %s : radius : %s : time : %s' %(i+1, c*100/t, len(self.neurons), str(self.lr), str(self.radius), str(et)))
                 sys.stdout.flush()
                 self.Herr = np.array(self.errors.values()).max()
 
-                # while self.Herr >= self.GT and i <= 5:
-                #     growinds = np.where(np.array(self.errors.values()) >= self.GT)[0]
-                #     self.grid_changed = 1
-                #     for g in growinds:
-                #         self.grow(self.errors.keys()[g])
-                #     self.Herr = np.array(self.errors.values()).max()
-
             if self.radius <=1:
                 break
             self.Herr = np.array(self.errors.values()).max()
-
-            while self.Herr >= self.GT and i<=5:
-                growinds = np.where(np.array(self.errors.values())>=self.GT)[0]
-                self.grid_changed=1
-                for g in growinds:
-                    self.grow(self.errors.keys()[g])
-                self.Herr = np.array(self.errors.values()).max()
-            self.lr *= 0.9 #* (1 - 3.8 / len(self.neurons))  # np.exp(-i/50.0)#
-            self.radius = rad*np.exp(-2.*i/float(20))  # (1 - 3.8 / len(self.w))
-            for k in self.errors.keys():
-                self.errors[k] = 0
+            self.lr = self.lrst * np.exp(-0.5*((i)/float(its))**2)* (1 - 3.8 / len(self.neurons))#1#0.7 #  # np.exp(-i/50.0)#
+            self.radius = rad*np.exp(-.5*(self.i)**2/float(self.its)**2)  # (1 - 3.8 / len(self.w))
+            # self.radius = rad *(1-i*1./its)
+            # for k in self.errors.keys():
+            #     self.errors[k] = 0
             i += 1
 
             # self.prune()
-
+        self.wd = wd_orig
         print 'spawns ',self.spawns
 
 
@@ -240,17 +142,24 @@ class GSOM(object):
         W = np.array(self.neurons.values())
         winner = pairwise_distances_argmin(np.array([x]), W, axis=1)[0]
         bmu = self.neurons.keys()[winner]
+        try:
+            self.hits[bmu] += 1
+        except KeyError:
+            self.hits[bmu] = 1
         # neighbors , dists = self.get_neighbourhood(bmu)
         # self.fd = 1.0 / len(neighbors)
         l_dists = np.linalg.norm(np.array(self.grid.values())-np.array(self.grid.values()[winner]), axis=1)
         neighbors = np.where(l_dists<self.radius)[0]#np.argsort(l_dists)[:20]
         dists = l_dists[neighbors]
-        hs = np.array([np.exp(-12.5*dists**2/(self.radius**2))]).T
+        h_dists = np.linalg.norm(np.array(self.neurons.values())-np.array(self.neurons[bmu]), axis=1)[neighbors]
+        theta_D = np.array([2-np.exp(-.5*h_dists**2 / (h_dists.max())**2)]).T
+        hs = np.array([np.exp(-15.5*dists**2/(self.radius**2))]).T
         # hs.fill(1)
         weights = np.array(self.neurons.values())[neighbors]
-
-        weights +=  (x - weights) * self.lr*hs #- (1-1*self.lr/self.lrst)*self.lr * self.wd*weights
         err = np.linalg.norm(W[winner]-x)
+
+        weights += (x - weights)  * self.lr*hs - (np.exp(-4.5*(self.i)**4/float(self.its)**4))* weights * theta_D*self.wd# * 2.5*self.wd/self.its# * self.lr/self.lrst
+        # weights -= weights * theta_D * self.wd #* self.lr# - theta_D*self.wd*weights#*self.it_rate#- (1-1*self.lr/self.lrst)*self.lr * self.wd*weights
         for neighbor, w in zip(np.array(self.neurons.keys())[neighbors], weights):
             self.neurons[neighbor] = w
         try:
@@ -351,7 +260,7 @@ class GSOM(object):
 
                 self.neurons[str(list(nei))] = w
                 self.grid[str(list(nei))] = list(nei)
-                self.errors[str(list(nei))] = self.errors[bmu]*self.fd
+                self.errors[str(list(nei))] = 0#self.errors[bmu]*self.fd
                 self.ages[str(list(nei))]=0
 
         self.errors[bmu] = self.GT / 2
@@ -382,7 +291,64 @@ class GSOM(object):
                     self.spawns +=1
             return 2 * w1 - w2
 
-########################################################################################################################
+    def smoothen_wd(self, X):
+        self.thet_vis_bundle = {}
+        r_st = .5
+        its =0# X.shape[0]
+        self.sigmas = np.zeros(self.Y.shape[0])
+        lr = self.lr
+        print self.wd
+        st = timeit.default_timer()
+        grid_dists = pairwise_distances(self.Y, self.Y)
+        self.cand_hits = np.ones(shape=(self.Y.shape[0])).astype(float)
+        self.radii = np.zeros(shape=self.Y.shape[0])
+        self.radii.fill(r_st)
+        for i in range(its):
+            sample_size = 6000
+
+            if np.any(self.cand_hits):
+                lrcoefs = 1 + 0. * self.cand_hits / self.cand_hits.max()
+            else:
+                pows = 1 + self.cand_hits
+                lrcoefs = 1 + self.cand_hits
+            self.radii = r_st * np.exp(-(2. * i) / (its)) * lrcoefs
+            alpha = lr - i * lr * 1.0 / its  # * np.exp(-1.5*i/(its))
+            alphas = alpha * (lrcoefs)
+
+            xix = 0
+            trinds = np.array(range(i*sample_size,(i+1)*sample_size))%X.shape[0]#np.random.choice(X.shape[0], sample_size,replace=0)
+            for x in X[trinds]:
+                et = timeit.default_timer() - self.start_time
+                xix += 1
+                bmu = pairwise_distances_argmin(np.array([x]), self.C, axis=1)[0]
+                print '\r smoothing epoch %i / %i: %s : radius: %s : training_sample : %i / %i : time : %s ' % (
+                i + 1, its, str(alphas[bmu]), str(self.radii[bmu]), xix, sample_size, str(et)),
+
+                Ldist = grid_dists[bmu]
+                # if (i+20 >= 2000):
+                self.cand_hits[bmu] += 1
+                neighborhood = np.where(Ldist < self.radii[bmu])[0]
+
+                ''' we're going to fuck shit up with this'''
+
+                Hdist = np.linalg.norm(self.C - self.C[bmu], axis=1)[neighborhood]
+                thet_D = np.array([np.exp(-10.5 * Hdist ** 4 / Hdist.max() ** 4)]).T
+                thet_D = 1- thet_D
+                thet_d = np.array([np.exp( -(15.5) * Ldist[neighborhood] ** 2 / self.radii[bmu]** 2)]).T
+                w = np.array(self.C)[neighborhood]
+                delts = np.array([alphas[neighborhood]]).T * ((x - w) * (thet_d)) #- self.wd * w * ( thet_D))
+                w += delts
+                self.C[neighborhood] = w
+                if i == its/2 and xix == 1:
+                    self.thet_vis_bundle['Y'] = self.Y
+                    self.thet_vis_bundle['bmu'] = bmu
+                    self.thet_vis_bundle['thet_d'] = np.array([alphas[neighborhood]]).T * (thet_d)
+                    self.thet_vis_bundle['thet_D'] = thet_D * self.wd
+                    self.thet_vis_bundle['neighborhood'] = neighborhood
+
+        print "\ntime for first smoothing iteration : ", (timeit.default_timer() - st), "\n"
+
+        ########################################################################################################################
 
     def LMDS(self, X):
         r_st = 0.4

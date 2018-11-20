@@ -19,17 +19,16 @@ with warnings.catch_warnings():
     import md5, sha
 
 print GSOM.__module__
-fi = pd.read_csv('~/data/mnist_train.csv', header=None)
+fi = pd.read_csv('~/data/fashionmnist/fashion-mnist_train.csv')
 # test = pd.read_csv('../mnist_test.csv', header=None)
 samples = 6000
 
-dat =(np.array(fi)[:samples, 1:])#/255.0
-dat = PCA(15, random_state=1).fit_transform(dat)
-# dat += 100000
-# dat -= dat.min()901131ds
-
-# dat /= dat.max()
-labels = np.array(fi)[:samples, 0]
+dat =(np.array(fi)[:samples, 1:]).astype(float)#/255.0
+order = np.random.permutation(range(samples))
+dat = PCA(15, random_state=1).fit_transform(dat)[order]
+dat -= dat.min()
+dat /= dat.max()
+labels = np.array(fi)[:samples, 0].astype(int)[order]
 
 # dat = dat[(labels ==5) | (labels == 3)]
 # labels = labels[(labels == 5)|( labels == 3)]
@@ -38,24 +37,28 @@ print dat.shape
 
 gc.collect()
 # x, y = SelfOrganizingSwarm(iterations=10, alpha=1, beta=0.1, delta=0, theta=3.5).fit_transform(dat[:samples]).T
-st = timeit.default_timer()
-model = GSOM(lrst=.1, sf=0.9, fd = .8, radius=6., min_rad = 4.,cluster_spacing_factor=1., sd=.02, its=40, labels=labels, momentum=.8)
+'''Cluster Separation Factor :
+    dix = 1/(1-csf)
+'''
 
+st = timeit.default_timer()
+model = GSOM(lrst=.01, sf=0.9, fd = .99, radius=8., min_rad = 4., sd=.02, its=20, cluster_spacing_factor=1., labels = labels, momentum=.0, map_structure='hex', neighbor_func='bubble')
+# model = TSNE(perplexity=40)#
 # x, y = MovingMap(iterations=100, beta=1.5).fit_transform(dat[:samples]).T
 Y= model.fit_transform(dat)
 # Y = PCA(2).fit_transform(dat)
-
-YS = model.grid
-WS = model.W
-
-ds = np.linalg.norm(YS-YS[2], axis=1)
-order = ds.argsort()
-DS = np.linalg.norm(WS-WS[2], axis=1)
-ds/=ds.max()
-DS/=DS.max()
-
-plt.plot(ds[order], DS[order])
-plt.show(block=False)
+#
+# YS = model.grid
+# WS = model.W
+#
+# ds = np.linalg.norm(YS-YS[2], axis=1)
+# order = ds.argsort()
+# DS = np.linalg.norm(WS-WS[2], axis=1)
+# ds/=ds.max()
+# DS/=DS.max()
+#
+# plt.plot(ds[order], DS[order])
+# plt.show(block=False)
 
 et = timeit.default_timer() - st
 hrs = np.floor(et/3600)

@@ -1,0 +1,17 @@
+from umap import UMAP
+from sklearn.manifold import TSNE
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+from HEXGSOM import  GSOM
+
+X = np.array(pd.read_csv('/home/senanayaked/data/data_yadeesha_labels.csv',delimiter='\t', header=None))#np.loadtxt('/home/senanayaked/data/data_yadeesha.csv', delimiter=',', dtype=str)
+C = X[:, -1]
+
+data = X[:, :-1]
+
+Y = GSOM(lrst=.2, sd=0.08, cluster_spacing_factor=1., its = 500, radius=40, min_rad=4.0, sf=0.99999999).fit_transform(X[:, :-1])
+# Y = TSNE(perplexity=10).fit_transform(X[:, :-1])
+plt.scatter(Y.T[0], Y.T[1], c = C, cmap = plt.cm.jet, alpha=0.6)
+plt.colorbar()
+plt.show()

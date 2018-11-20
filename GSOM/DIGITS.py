@@ -3,7 +3,8 @@ import pandas as pd
 import numpy as np
 import gc
 from MovingMap import  MovingMap
-from HEXGSOM import GSOM
+from sklearn.datasets import load_digits
+from SFGSOM import GSOM
 from sklearn.preprocessing import normalize
 from sklearn.manifold import MDS, TSNE, LocallyLinearEmbedding
 from sklearn.cluster import KMeans, DBSCAN
@@ -19,43 +20,34 @@ with warnings.catch_warnings():
     import md5, sha
 
 print GSOM.__module__
-fi = pd.read_csv('~/data/mnist_train.csv', header=None)
-# test = pd.read_csv('../mnist_test.csv', header=None)
-samples = 6000
+# fi = pd.read_csv('~/data/mnist_train.csv', header=None)
+# # test = pd.read_csv('../mnist_test.csv', header=None)
+# samples = 6000
 
-dat =(np.array(fi)[:samples, 1:])#/255.0
-dat = PCA(15, random_state=1).fit_transform(dat)
+# dat =(np.array(fi)[:samples, 1:])#/255.0
+# dat = PCA(30).fit_transform(dat)
 # dat += 100000
-# dat -= dat.min()901131ds
-
-# dat /= dat.max()
-labels = np.array(fi)[:samples, 0]
+# # dat -= dat.min()
+# # dat /= dat.max()
+# labels = np.array(fi)[:samples, 0]
 
 # dat = dat[(labels ==5) | (labels == 3)]
 # labels = labels[(labels == 5)|( labels == 3)]
-del fi
-print dat.shape
+# del fi
+# print dat.shape
 
+pack= load_digits()
+dat = pack.data
+dat = PCA(30).fit_transform(dat)
+labels = pack.target
 gc.collect()
 # x, y = SelfOrganizingSwarm(iterations=10, alpha=1, beta=0.1, delta=0, theta=3.5).fit_transform(dat[:samples]).T
 st = timeit.default_timer()
-model = GSOM(lrst=.1, sf=0.9, fd = .8, radius=6., min_rad = 4.,cluster_spacing_factor=1., sd=.02, its=40, labels=labels, momentum=.8)
+model = GSOM(lrst=.1,  sf_min=0.9, sf_max=0.9, fd = .2, radius=4, min_rad =2)#TSNE(perplexity=40)#
 
 # x, y = MovingMap(iterations=100, beta=1.5).fit_transform(dat[:samples]).T
 Y= model.fit_transform(dat)
 # Y = PCA(2).fit_transform(dat)
-
-YS = model.grid
-WS = model.W
-
-ds = np.linalg.norm(YS-YS[2], axis=1)
-order = ds.argsort()
-DS = np.linalg.norm(WS-WS[2], axis=1)
-ds/=ds.max()
-DS/=DS.max()
-
-plt.plot(ds[order], DS[order])
-plt.show(block=False)
 
 et = timeit.default_timer() - st
 hrs = np.floor(et/3600)
@@ -73,58 +65,58 @@ x, y = Y.T
 clusterer = KMeans(10)#DBSCAN(eps=0.025)
 kl = clusterer.fit(Y).labels_
 # print " lr=1,  beta=0.3, sf=0.9, fd = 0.9, wd=0.025"
-print 'instances : ', samples
+# print 'instances : ', samples
 print 'ars :', adjusted_rand_score(labels, kl)
 print 'ami :', adjusted_mutual_info_score(labels, kl)
 fig = plt.figure(figsize=(5, 10))
 plt.subplot(211)
 
-np.savetxt('mnist_'+str(samples)+'.csv', np.concatenate((Y, np.array([labels]).T),axis=1))
-plt.scatter(x, y, edgecolors='none',c=plt.cm.jet(labels/10.), alpha = 0.5, s = 15, marker='h')
+# np.savetxt('mnist_'+str(samples)+'.csv', np.concatenate((Y, np.array([labels]).T),axis=1))
+plt.scatter(x, y, edgecolors='none',c=plt.cm.jet(labels/10.), alpha = 0.5, s = 15)
 plt.subplot(212)
 #
-plt.scatter(x, y, edgecolors='none',c=plt.cm.jet(kl/10.), alpha = 0.5, s = 15, marker='h')
+plt.scatter(x, y, edgecolors='none',c=plt.cm.jet(kl/10.), alpha = 0.5, s = 15)
 #
 # plt.show(block=False)
-#
-#
+# #
+# #
 # fig =plt.figure()
+# #
 #
-
-
-
-# #plt.cm.gist_rainbow(model.hits/float(model.hits.max()))
-# plt.subplot(211)
-# plt.scatter(model.grid.T[0], model.grid.T[1] , edgecolors='none', c = 'black', alpha = 0.1, s = 8, marker='+')
 #
-# x, y = model.undelgrid[model.hemis].T
 #
-# plt.scatter(x, y, edgecolors='none', c = 'blue', alpha=0.5, s = 20)
-#
-# x, y = model.undelgrid[model.mid]
-# plt.scatter(x, y, edgecolors='none', c = 'green', alpha = 1., s = 20)
-#
-# x, y = model.undelgrid[model.decayers].T
-# plt.scatter(x, y, edgecolors= 'none', c = 'red', alpha = 0.5, s = 10)
-#
-# x, y = model.undelgrid[model.bmu]
-#
-# plt.scatter(x, y, edgecolors='none', c='black', alpha=0.8, s = 10)
-#
-# x, y = model.undelgrid[model.abcent]
-#
-# plt.scatter(x, y, edgecolors='none', c='orange', alpha=0.8, s = 20, marker= 'x')
-#
-# plt.subplot(212)
-#
+# # #plt.cm.gist_rainbow(model.hits/float(model.hits.max()))
+# # plt.subplot(211)
+# # plt.scatter(model.grid.T[0], model.grid.T[1] , edgecolors='none', c = 'black', alpha = 0.1, s = 8, marker='+')
+# #
+# # x, y = model.undelgrid[model.hemis].T
+# #
+# # plt.scatter(x, y, edgecolors='none', c = 'blue', alpha=0.5, s = 20)
+# #
+# # x, y = model.undelgrid[model.mid]
+# # plt.scatter(x, y, edgecolors='none', c = 'green', alpha = 1., s = 20)
+# #
+# # x, y = model.undelgrid[model.decayers].T
+# # plt.scatter(x, y, edgecolors= 'none', c = 'red', alpha = 0.5, s = 10)
+# #
+# # x, y = model.undelgrid[model.bmu]
+# #
+# # plt.scatter(x, y, edgecolors='none', c='black', alpha=0.8, s = 10)
+# #
+# # x, y = model.undelgrid[model.abcent]
+# #
+# # plt.scatter(x, y, edgecolors='none', c='orange', alpha=0.8, s = 20, marker= 'x')
+# #
+# # plt.subplot(212)
+# #
 # plt.scatter(model.grid.T[0], model.grid.T[1] , edgecolors='none', c = model.errors, cmap= plt.cm.gist_rainbow, alpha = 0.6, s = 20)
-# x, y = model.undelgrid[model.decayers].T
-#
-# colors = np.zeros((x.shape[0],4))
-#
-# colors[:, 3] = model.theta_D.T
-#
-# plt.scatter(x, y, edgecolors= 'none', c = colors, s = 40)
+# # x, y = model.undelgrid[model.decayers].T
+# #
+# # colors = np.zeros((x.shape[0],4))
+# #
+# # colors[:, 3] = model.theta_D.T
+# #
+# # plt.scatter(x, y, edgecolors= 'none', c = colors, s = 40)
 
 plt.show()
 

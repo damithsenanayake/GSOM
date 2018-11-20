@@ -31,11 +31,11 @@ configs = []
 configs.append(GSOM())
 configs.append(DSGSOM())
 
-X=  normalize(X)
+# X=  normalize(X)
 
 # fig = plt.figure()
 
-Y= DSGSOM().fit_transform(X, lr = .1, beta=0., sf=0.9, wd=0.2, fd=0.9)#X,lr = 1.0, beta=0.0,sf=0.01, fd=0.75, wd=0.5)
+Y= DSGSOM(lr = .2, beta=0.45, sf=0.9, wd=0.2, fd=0.15).fit_transform(X)#X,lr = 1.0, beta=0.0,sf=0.01, fd=0.75, wd=0.5)
 # fig = plt.figure()
 # ax = Axes3D(fig)00
 # ax.scatter(X.T[0], X.T.[1], X.T[2],c = color, alpha=0.5, edgecolors='none')
