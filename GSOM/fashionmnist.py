@@ -5,12 +5,12 @@ import gc
 from MovingMap import  MovingMap
 from HEXGSOM import GSOM
 from sklearn.preprocessing import normalize
-from sklearn.manifold import MDS, TSNE, LocallyLinearEmbedding
+# from sklearn.manifold import MDS, TSNE, LocallyLinearEmbedding
 from sklearn.cluster import KMeans, DBSCAN
 from sklearn.metrics import adjusted_mutual_info_score, adjusted_rand_score
 from SelfOrganizingSwarm import SelfOrganizingSwarm
 from sklearn.decomposition import PCA
-# from TSNE import TSNE
+from TSNE import TSNE
 import timeit
 import warnings
 
@@ -25,7 +25,7 @@ samples = 6000
 
 dat =(np.array(fi)[:samples, 1:]).astype(float)#/255.0
 order = np.random.permutation(range(samples))
-dat = PCA(15, random_state=1).fit_transform(dat)[order]
+dat = PCA(30, random_state=1).fit_transform(dat)[order]
 dat -= dat.min()
 dat /= dat.max()
 labels = np.array(fi)[:samples, 0].astype(int)[order]
@@ -42,10 +42,10 @@ gc.collect()
 '''
 
 st = timeit.default_timer()
-model = GSOM(lrst=.01, sf=0.9, fd = .99, radius=8., min_rad = 4., sd=.02, its=20, cluster_spacing_factor=1., labels = labels, momentum=.0, map_structure='hex', neighbor_func='bubble')
-# model = TSNE(perplexity=40)#
+# model = GSOM(lrst=.01, sf=0.9, fd = .99, radius=8., min_rad = 4., sd=.02, its=20, cluster_spacing_factor=1., labels = labels, momentum=.0, map_structure='hex', neighbor_func='bubble')
+model = TSNE()#
 # x, y = MovingMap(iterations=100, beta=1.5).fit_transform(dat[:samples]).T
-Y= model.fit_transform(dat)
+Y= model.fit_transform(dat,perplexity=40)
 # Y = PCA(2).fit_transform(dat)
 #
 # YS = model.grid

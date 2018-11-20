@@ -45,7 +45,7 @@ for config in configurations:
         ami = adjusted_mutual_info_score(c, preds)
 
         print 'ars / ami '
-        print , str(ars), ' / ', str(ami)
+        print  str(ars), ' / ', str(ami)
         scores.append(str(model.__class__)+"\t"+str(ars)+"\t"+str(ami))
     values.append(str(config))
     values.append(scores)
