@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 
 class GEGSOM(object):
 
-    def __init__(self,  radius=8, min_rad=2, lrst=0.5, sf=0.9, fd=0.9,  sd=0.02, cluster_spacing_factor = 1., its=20, labels=np.array([]), momentum = 0., map_structure = 'hex', neighbor_func = 'cut_gaussian', verbose = False):
+    def __init__(self,  radius=8, min_rad=4, lrst=0.5, sf=0.9, fd=0.9,  sd=0.04, cluster_spacing_factor = 1., its=20, labels=np.array([]), momentum = 0., map_structure = 'hex', neighbor_func = 'cut_gaussian', verbose = False):
         self.lrst = lrst
         self.its = its
         self.fd = fd
