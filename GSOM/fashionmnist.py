@@ -42,7 +42,7 @@ gc.collect()
 '''
 
 st = timeit.default_timer()
-model = GSOM(lrst=.1, sf=0.9, fd = .99, radius=4., min_rad = 2., sd=.08, its=20, cluster_spacing_factor=.85, labels = labels, momentum=0.95, map_structure=4)
+model = GSOM(lrst=.8, sf=0.9, fd = .99, radius=6., min_rad = 4., sd=.04, its=20, cluster_spacing_factor=.78, labels = labels, momentum=.8, map_structure='hex', neighbor_func='epanechicov')
 # model = TSNE(perplexity=40)#
 # x, y = MovingMap(iterations=100, beta=1.5).fit_transform(dat[:samples]).T
 Y= model.fit_transform(dat)

@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 
 class GSOM(object):
 
-    def __init__(self,  radius=10, min_rad=2.45, lrst=0.1, sf=0.9, fd=0.15,  sd=0.02, cluster_spacing_factor = .9, its=20, labels=np.array([]), momentum = 0.85, map_structure = 'hex'):
+    def __init__(self,  radius=10, min_rad=2.45, lrst=0.1, sf=0.9, fd=0.15,  sd=0.02, cluster_spacing_factor = .9, its=20, labels=np.array([]), momentum = 0.85, map_structure = 'hex', neighbor_func = 'gaussian'):
         self.lrst = lrst
         self.its = its
         self.fd = fd
@@ -21,6 +21,7 @@ class GSOM(object):
         self.rad_min = min_rad
         self.sf_max = sf
         self.grid_shape = 'hex'
+        self._nei_func = neighbor_func
         self.plot = True
         self.recsf = cluster_spacing_factor
         if cluster_spacing_factor<1:
@@ -106,7 +107,7 @@ class GSOM(object):
 
                     ''' ** coefficient to consider sinking to neighborhood! ** '''
                     ld = ldist[neighbors]/r
-                    thetfunc = np.exp(-.5*ld**2)
+                    thetfunc = self.neighbor_func(ld)#np.exp(-.5*ld**2)
                     theta_d = np.array([thetfunc]).T
                     delta_neis = (x-self.W[neighbors])*theta_d*self.lr#+ self.momentum *np.exp(-5*(1-ntime)**6)* self.prevW[neighbors]
 
@@ -221,8 +222,6 @@ class GSOM(object):
             angle = 2* np.pi / self.n_low_neighbors * i
             imm_neis[i] = self.grid[g_node]+np.array([np.sin(angle), np.cos(angle)])
 
-        max_nei = 0
-        max_err = 0
         i = 0
         neierrors = np.zeros(self.n_low_neighbors)
         for nei in imm_neis:
@@ -268,3 +267,12 @@ class GSOM(object):
 
         return Y
 
+    def neighbor_func(self, dists):
+        if self._nei_func == 'bubble':
+            return dists*0+1
+        elif self._nei_func == 'cut_gaussian':
+            return np.exp(-.5*dists**2)
+        elif self._nei_func == 'gaussian':
+            return np.exp(-3.5*dists**2)
+        elif self._nei_func == 'epanechicov':
+            return 1-dists**2
