@@ -4,7 +4,11 @@ from mpl_toolkits.mplot3d import Axes3D
 from sklearn.datasets import make_blobs,make_swiss_roll, make_s_curve
 from sklearn.decomposition import PCA
 from HEXGSOM import GSOM
+from sklearn.cluster import KMeans
 from sklearn.manifold import TSNE
+from sklearn.metrics import adjusted_mutual_info_score, adjusted_rand_score
+from umap import UMAP
+
 # centers = np.array([[2, 0, 0], [-1, np.sqrt(3), 0], [-1, -np.sqrt(3),0], [0,0, np.sqrt(8)], [0,0, np.sqrt(8)/3]])
 centers = np.array([[1,0,0],[-1, 0, 0],[0, 1, 0],[0, -1, 0], [0, 0, 0], [1, 1, 1], [-1, -1, -1], [1, 1, -1], [-1, -1, 1]])
 randnoise = np.random
@@ -13,8 +17,8 @@ X=[]
 c = []
 i = 1
 for cent in centers:
-    x = np.random.randn(1000, 3)#make_blobs(n_samples=1000, n_features=3, centers=1, cluster_std=0.5)
-    t = np.ones(1000)
+    x = np.random.randn(500, 3)#make_blobs(n_samples=1000, n_features=3, centers=1, cluster_std=0.5)
+    t = np.ones(500)
     x -= x.min()
     # x /= 2
     x /= x.max()
@@ -36,7 +40,7 @@ for cent in centers:
 # reds = np.zeros((X.shape[0], 100))
 #
 # X = np.concatenate((X, reds), axis=1)
-# X, c = make_blobs(6000, n_features=9, centers=10, cluster_std=8, random_state=1, )
+X, c = make_blobs(6000, n_features=9, centers=10, cluster_std=8, random_state=1, )
 # c = np.array(c).flatten(order=1)
 # X, c = make_s_curve(4000)
 
@@ -49,12 +53,32 @@ P = PCA(3).fit_transform(X)
 ax.scatter(P.T[0], P.T[1], P.T[2], c=c, cmap=plt.cm.jet)
 
 plt.show(block=False)
-# print np.linalg.norm(X - X[1], axis = 1)
-model = GSOM(lrst=.1, sf=0.8, fd = .1, radius=6, min_rad =6, sd=0.2, its= 5, cluster_spacing_factor=.75, labels=c, momentum=.0)#UMAP()#
-# model = TSNE(perplexity=40)
 
-Y = model.fit_transform(X)#PCA().fit_transform(X)
-fig = plt.figure()
-# ax = fig.add_subplot(212)
-plt.scatter(Y.T[0], Y.T[1], c= c, cmap=plt.cm.jet, alpha=0.4, s=15, edgecolors='none')
-plt.show()
+models = [
+    UMAP(),
+    GSOM(lrst=.5, sf=0.9, fd = .9, radius=8, min_rad =4, sd=0.08, its= 10, cluster_spacing_factor=1., labels=c, momentum=.0, neighbor_func='cut_gaussian'),
+    TSNE(perplexity=40)
+]
+
+# print np.linalg.norm(X - X[1], axis = 1)
+# model = GSOM(lrst=.5, sf=0.9, fd = .9, radius=6, min_rad =2, sd=0.08, its= 20, cluster_spacing_factor=.8, labels=c, momentum=.2)#UMAP()#
+for model in models:
+    print '!-------------- ', str(model.__class__), ' -----------------!'
+
+    Y = model.fit_transform(X)#PCA().fit_transform(X)
+
+    clusterer = KMeans(np.unique(c).shape[0])
+    clusterer.fit(Y)
+    preds = clusterer.labels_
+
+    ars = adjusted_rand_score(c, preds)
+    ami = adjusted_mutual_info_score(c, preds)
+
+    print 'ars : ', str(ars)
+    print 'ami : ', str(ami)
+
+
+# fig = plt.figure()
+# # ax = fig.add_subplot(212)
+# plt.scatter(Y.T[0], Y.T[1], c= c, cmap=plt.cm.jet, alpha=0.4, s=15, edgecolors='none')
+# plt.show()
