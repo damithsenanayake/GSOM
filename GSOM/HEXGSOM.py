@@ -20,7 +20,6 @@ class GSOM(object):
         self.rst = radius
         self.rad_min = min_rad
         self.sf_max = sf
-        self.grid_shape = 'hex'
         self._nei_func = neighbor_func
         self.plot = True
         self.recsf = cluster_spacing_factor
@@ -32,6 +31,10 @@ class GSOM(object):
         self.last_hit = np.array([])
         self.momentum = momentum
         self.structure = map_structure
+        self.n_low_neighbors = 0
+
+
+
     def fit_transform(self, X):
         self.train_batch(X)
         return self.predict(X)
@@ -44,7 +47,6 @@ class GSOM(object):
 
             ''' Hexagonal initialization '''
 
-            self.n_low_neighbors = 0
 
             if self.structure == 'hex':
                 self.n_low_neighbors = 6
@@ -52,7 +54,7 @@ class GSOM(object):
             elif self.structure == 'square':
                 self.n_low_neighbors = 4
             else:
-                self.n_low_neighbors= self.structure
+                self.n_low_neighbors= int(self.structure)
 
             self.grid = np.zeros((self.n_low_neighbors+1, 2))
 
@@ -101,7 +103,8 @@ class GSOM(object):
                     ldist = np.linalg.norm(self.grid - self.grid[bmu], axis=1)
                     hdist = np.linalg.norm(self.W - x, axis=1)
                     nix = np.where(ldist<=r)[0].shape[0]
-                    dix = np.where(ldist<=r*self.csf)[0].shape[0]#nix*self.csf**2#np.where(ldist<=r*self.csf)[0].shape[0]
+                    dix = max(nix,int(self.W.shape[0]*self.recsf))
+                    dix =np.where(ldist<=np.sqrt(dix/np.pi))[0].shape[0]#nix*self.csf**2#np.where(ldist<=r*self.csf)[0].shape[0]
                     decayers = np.argsort((ldist))[:dix]#[:dix]#[:25*nix]#[:dix]
                     neighbors = np.argsort((ldist))[:nix]
 
