@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 
 class GSOM(object):
 
-    def __init__(self,  radius=10, min_rad=2.45, lrst=0.1, sf=0.9, fd=0.15,  sd=0.02, cluster_spacing_factor = .9, its=20, labels=np.array([]), momentum = 0.85, map_structure = 'hex', neighbor_func = 'gaussian'):
+    def __init__(self,  radius=10, min_rad=2.45, lrst=0.1, sf=0.9, fd=0.15,  sd=0.02, cluster_spacing_factor = .9, its=20, labels=np.array([]), momentum = 0.85, map_structure = 'hex', neighbor_func = 'cut_gaussian'):
         self.lrst = lrst
         self.its = its
         self.fd = fd
@@ -75,7 +75,7 @@ class GSOM(object):
             rad_min = self.rad_min
             lambda_rad = np.log(rad_min*1./self.rst)
             lambda_lr = np.log(0.01)
-            X_orig = X
+
             self.prevW = self.W*0
 
             for i in range(its):
@@ -101,7 +101,7 @@ class GSOM(object):
                     ldist = np.linalg.norm(self.grid - self.grid[bmu], axis=1)
                     hdist = np.linalg.norm(self.W - x, axis=1)
                     nix = np.where(ldist<=r)[0].shape[0]
-                    dix = np.where(ldist<=self.rst*self.csf)[0].shape[0]#nix*self.csf**2#np.where(ldist<=r*self.csf)[0].shape[0]
+                    dix = np.where(ldist<=r*self.csf)[0].shape[0]#nix*self.csf**2#np.where(ldist<=r*self.csf)[0].shape[0]
                     decayers = np.argsort((ldist))[:dix]#[:dix]#[:25*nix]#[:dix]
                     neighbors = np.argsort((ldist))[:nix]
 
