@@ -103,8 +103,7 @@ class GSOM(object):
                     ldist = np.linalg.norm(self.grid - self.grid[bmu], axis=1)
                     hdist = np.linalg.norm(self.W - x, axis=1)
                     nix = np.where(ldist<=r)[0].shape[0]
-                    dix = max(nix,int(self.W.shape[0]*self.recsf))
-                    dix =np.where(ldist<=np.sqrt(dix/np.pi))[0].shape[0]#nix*self.csf**2#np.where(ldist<=r*self.csf)[0].shape[0]
+                    dix = np.where(ldist<=r*self.csf)[0].shape[0]
                     decayers = np.argsort((ldist))[:dix]#[:dix]#[:25*nix]#[:dix]
                     neighbors = np.argsort((ldist))[:nix]
 
