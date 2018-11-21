@@ -206,7 +206,6 @@ class GEGSOM(object):
 
     def smoothen(self, X):
         its = 0
-        print ''
         for i in range(its):
             for x in X:
                 bmu = pairwise_distances_argmin(np.array([x]), self.W, axis=1)[0]
