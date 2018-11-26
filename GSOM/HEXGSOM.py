@@ -65,7 +65,7 @@ class GSOM(object):
                 y = np.cos(angle)
                 self.grid[i] = np.array([x, y])
 
-
+            self.ages = np.zeros(self.grid.shape[0])
 
             self.W = np.zeros((self.grid.shape[0], X.shape[1]))#np.random.RandomState(seed=5).random_sample(size=(self.grid.shape[0], X.shape[1]))#np.random.random(size=(self.grid.shape[0], X.shape[1]))
             self.W[:, :2] = self.grid
@@ -96,6 +96,7 @@ class GSOM(object):
                     self.csf = np.inf
 
                 self.errors *= 0
+                self.ages *= 0
                 for x in X:
 
                     ''' Training For Instances'''
@@ -127,15 +128,16 @@ class GSOM(object):
                     deltas[neighbors] += delta_neis
                     self.W += deltas
                     # self.prevW[neighbors] = delta_neis
+                    self.ages+=1
+                    self.ages[neighbors] = 0
                     self.prevW = deltas
                     et = timeit.default_timer()-st
-
                     self.errors[bmu] += np.linalg.norm(self.W[bmu] - x)#**2
                     ''' Growing the map '''
 
                     while self.errors.max() > self.GT and i + 1 < its:
                         self.error_dist(self.errors.argmax())
-
+                    self.prune_map(np.where(self.ages > 600))
                     if xix % 500 == 0:
                         print (
                         '\riter %i of %i : %i / %i : batch : %i :|G| = %i : n_neis :%i : LR: %.4f  QE: %.4f sink?: %s : fd: %.4f : wd_coef : %.4f' % (
@@ -144,7 +146,7 @@ class GSOM(object):
 
                     xix+=1
 
-                self.prune_mid_training(X)
+                # self.prune_mid_training(X)
 
                 if self.labels.shape[0]:
                     fig = plt.figure(figsize=(5, 5))
@@ -202,6 +204,7 @@ class GSOM(object):
         self.errors = np.delete(self.errors, ixs)
         self.grid = np.delete(self.grid, ixs,  axis=0)
         self.hits = np.delete(self.hits, ixs)
+        self.ages = np.delete(self.ages, ixs)
 
 
     def smoothen(self, X):
@@ -250,6 +253,7 @@ class GSOM(object):
                 self.errors = np.append(self.errors, 0.)
                 self.grid = np.append(self.grid, np.array([nei]), axis=0)
                 self.hits = np.append(self.hits, 0.)
+                self.ages = np.append(self.ages, 0)
                 self.errors[g_node] = 0
                 self.prevW = np.append(self.prevW, np.array([w-self.W[g_node]]), axis=0)
 
