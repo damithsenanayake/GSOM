@@ -34,7 +34,7 @@ for config in configurations:
     scores = []
 
     for model in models:
-        print str(model.__class__).split(".")[-1], '    ',
+        print str(model.__class__).split(".")[-1], '            ',
 
     print ''
 
