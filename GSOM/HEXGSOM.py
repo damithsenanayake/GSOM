@@ -122,7 +122,7 @@ class GSOM(object):
                     D = np.exp(-7.*(1-hdist)**(2))
                     pull = D-D.min()
                     pull = np.array([pull]).T
-                    deltas =(((ntime>.5)*0.9 + 0.1)* self.momentum)*self.prevW#np.zeros(self.W.shape)
+                    deltas =(self.momentum)*self.prevW#np.zeros(self.W.shape)
                     delta_dec=(x-self.W[decayers])*wd_coef*pull#*(i>1)
                     deltas[decayers] += delta_dec
                     deltas[neighbors] += delta_neis

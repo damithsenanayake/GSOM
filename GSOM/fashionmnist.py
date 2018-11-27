@@ -10,6 +10,8 @@ from sklearn.cluster import KMeans, DBSCAN
 from sklearn.metrics import adjusted_mutual_info_score, adjusted_rand_score
 from SelfOrganizingSwarm import SelfOrganizingSwarm
 from sklearn.decomposition import PCA
+from sklearn.metrics.pairwise import pairwise_distances_argmin
+from umap import UMAP
 # from TSNE import TSNE
 import timeit
 import warnings
@@ -41,10 +43,15 @@ gc.collect()
 '''
 
 st = timeit.default_timer()
-model = GSOM(lrst=.5, sf=0.9, fd = .2, radius=4., min_rad = 2., sd=.06, its=20, labels=labels, cluster_spacing_factor=.8, momentum=.0, map_structure=8, neighbor_func='cut_gaussian')
+model = GSOM(lrst=.5, sf=0.9, fd = .8, radius=6., min_rad = 6., sd=.06, its=10, labels=None, cluster_spacing_factor=.8, momentum=.15, map_structure=6, neighbor_func='cut_gaussian')
 # model = TSNE(perplexity=40)#
 # x, y = MovingMap(iterations=100, beta=1.5).fit_transform(dat[:samples]).T
-Y= model.fit_transform(dat)
+# Y= model.fit_transform(dat)
+W = model.W
+
+Yu = UMAP().fit_transform(W)
+
+Y = Yu[pairwise_distances_argmin(dat, W)]
 # Y = PCA(2).fit_transform(dat)
 #
 # YS = model.grid
