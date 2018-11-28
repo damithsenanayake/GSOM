@@ -12,6 +12,9 @@ from SelfOrganizingSwarm import SelfOrganizingSwarm
 from sklearn.decomposition import PCA
 # from umap import UMAP
 # from TSNE import TSNE
+import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d import Axes3D
+
 import timeit
 import warnings
 
@@ -42,7 +45,7 @@ gc.collect()
 '''
 
 st = timeit.default_timer()
-model = GSOM(lrst=.05, sf=0.9, fd = .8, radius=6., min_rad = 3., sd=.0, its=2, labels=labels, cluster_spacing_factor=.8, momentum=.15, map_structure=6, neighbor_func='cut_gaussian')
+model = GSOM(lrst=.5, sf=0.9, fd = .8, radius=6., min_rad = 4., sd=.2, its=20, labels=labels, cluster_spacing_factor=.9, momentum=.0, map_structure=6, neighbor_func='cut_gaussian')
 # model = TSNE(perplexity=40)#
 # x, y = MovingMap(iterations=100, beta=1.5).fit_transform(dat[:samples]).T
 Y= model.fit_transform(dat)

@@ -105,7 +105,7 @@ class GSOM(object):
                     hdist = np.linalg.norm(self.W - x, axis=1)
                     nix = np.where(ldist<=r)[0].shape[0]
                     dix = np.where(ldist<=r*self.csf)[0].shape[0]
-                    decayers = np.argsort((ldist))[:dix]#[:dix]#[:25*nix]#[:dix]
+                    decayers = np.argsort((ldist))#[:dix]#[:dix]#[:25*nix]#[:dix]
                     neighbors = np.argsort((ldist))[:nix]
 
                     ''' ** coefficient to consider sinking to neighborhood! ** '''
@@ -120,7 +120,11 @@ class GSOM(object):
                     hdist -= hdist.min()
                     hdist /= hdist.max()
                     D = np.exp(-7.*(1-hdist)**(2))
+                    l = ldist[decayers]/ldist[decayers][min(dix, ldist[decayers].shape[0] - 1)]
+                    d = np.exp( -10. * l ** 60)
+                    D *= d
                     pull = D-D.min()
+                    pull /= pull.max()
                     pull = np.array([pull]).T
                     deltas =(self.momentum)*self.prevW#np.zeros(self.W.shape)
                     delta_dec=(x-self.W[decayers])*wd_coef*pull#*(i>1)
@@ -142,7 +146,7 @@ class GSOM(object):
                         print (
                         '\riter %i of %i : %i / %i : batch : %i :|G| = %i : n_neis :%i : LR: %.4f  QE: %.4f sink?: %s : fd: %.4f : wd_coef : %.4f' % (
                         i + 1,its,  xix, X.shape[0], 1, self.W.shape[0], neighbors.shape[0], self.lr, self.errors.sum(),
-                        str(decayers.shape[0]), self.fd, np.mean(wd_coef))), ' time = %.2f' % (et),
+                        str(self.csf), self.fd, np.mean(wd_coef))), ' time = %.2f' % (et),
 
                     xix+=1
 
@@ -208,7 +212,7 @@ class GSOM(object):
 
 
     def smoothen(self):
-        its = 100
+        its = 0
         print ''
         HDs = pairwise_distances(self.W, self.W)
         orig_lds = pairwise_distances(self.grid, self.grid)
@@ -226,10 +230,10 @@ class GSOM(object):
                     D/= D.max()
                 # if d.max():
                 #     d /= d.max()
-                mu = np.exp(-.5*D**2)#(1./(1+.5*D**2))
-                nu = ((1./(1+.5*d**2)))
+                mu = np.exp(-.5*D**2)
+                nu = ((1./(1+.5*d**2)**1.5))
                 mu[mu ==0 ]=1
-                pull = (mu - nu)*nu
+                pull = (mu - nu)*(nu)
                 # push = 1- nu/mu
 
 
