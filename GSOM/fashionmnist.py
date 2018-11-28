@@ -10,8 +10,7 @@ from sklearn.cluster import KMeans, DBSCAN
 from sklearn.metrics import adjusted_mutual_info_score, adjusted_rand_score
 from SelfOrganizingSwarm import SelfOrganizingSwarm
 from sklearn.decomposition import PCA
-from sklearn.metrics.pairwise import pairwise_distances_argmin
-from umap import UMAP
+# from umap import UMAP
 # from TSNE import TSNE
 import timeit
 import warnings
@@ -27,7 +26,7 @@ samples = 6000
 
 dat =(np.array(fi)[:samples, 1:]).astype(float)#/255.0
 order = np.random.permutation(range(samples))
-dat = PCA(18, random_state=1).fit_transform(dat)#[order]
+dat = PCA(30, random_state=1).fit_transform(dat)#[order]
 
 labels = np.array(fi)[:samples, 0].astype(int)#[order]
 
@@ -43,15 +42,10 @@ gc.collect()
 '''
 
 st = timeit.default_timer()
-model = GSOM(lrst=.5, sf=0.9, fd = .8, radius=6., min_rad = 6., sd=.06, its=10, labels=None, cluster_spacing_factor=.8, momentum=.15, map_structure=6, neighbor_func='cut_gaussian')
+model = GSOM(lrst=.05, sf=0.9, fd = .8, radius=6., min_rad = 3., sd=.0, its=2, labels=labels, cluster_spacing_factor=.8, momentum=.15, map_structure=6, neighbor_func='cut_gaussian')
 # model = TSNE(perplexity=40)#
 # x, y = MovingMap(iterations=100, beta=1.5).fit_transform(dat[:samples]).T
-# Y= model.fit_transform(dat)
-W = model.W
-
-Yu = UMAP().fit_transform(W)
-
-Y = Yu[pairwise_distances_argmin(dat, W)]
+Y= model.fit_transform(dat)
 # Y = PCA(2).fit_transform(dat)
 #
 # YS = model.grid

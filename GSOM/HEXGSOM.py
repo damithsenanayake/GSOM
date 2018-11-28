@@ -158,7 +158,7 @@ class GSOM(object):
                     plt.close(fig)
 
 
-            self.smoothen(X)
+            self.smoothen()
         except KeyboardInterrupt:
             print self.W.shape[0]
             return
@@ -207,17 +207,39 @@ class GSOM(object):
         self.ages = np.delete(self.ages, ixs)
 
 
-    def smoothen(self, X):
-        its = 0
+    def smoothen(self):
+        its = 100
         print ''
+        HDs = pairwise_distances(self.W, self.W)
+        orig_lds = pairwise_distances(self.grid, self.grid)
         for i in range(its):
-            for x in X:
-                bmu = pairwise_distances_argmin(np.array([x]), self.W, axis=1)[0]
-                ldists = np.linalg.norm(self.grid[bmu]-self.grid, axis=1)
-                neighbors = np.argsort(ldists)[:10]
-                hs = np.exp(-0.5*(ldists[neighbors]/ldists[neighbors].max())**2)
-                self.W[neighbors] += (x-self.W[neighbors])*self.lr*np.array([hs]).T
-                print '\r %i / %i smoothen'%(i, its),
+            lds = pairwise_distances(self.grid, self.grid)
+            for ix in range(self.W.shape[0]):
+
+                y = self.grid[ix]
+
+                neis = np.where(orig_lds[ix]<=1)[0]
+
+                D = HDs[ix][neis]
+                d = lds[ix][neis]#np.linalg.norm(self.grid-self.grid[ix], axis=1)[neis]
+                if D.max():
+                    D/= D.max()
+                # if d.max():
+                #     d /= d.max()
+                mu = np.exp(-.5*D**2)#(1./(1+.5*D**2))
+                nu = ((1./(1+.5*d**2)))
+                mu[mu ==0 ]=1
+                pull = (mu - nu)*nu
+                # push = 1- nu/mu
+
+
+                # pull -= (1- 1./(1+d**2))
+
+                force = ((self.grid[neis] - y) *np.array([pull]).T).sum(axis=0)
+
+                self.grid[ix]+= 1*force
+
+                print '\r %i / %i : %i / %i smoothen'%(ix, self.W.shape[0], i, its),
 
     def error_dist(self, g_node):
 
