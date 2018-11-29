@@ -8,12 +8,20 @@ from umap import UMAP
 
 
 
-configurations = [[9, 10, 1],
-                  [9, 10, 4],
+configurations = [#[9, 10, 1],
+    #               [9, 10, 4],
+    # [9, 10, 5],
+    #
+    # [9, 10, 6],
                   [9, 10, 8],
-                  [9, 20, 1],
-                  [9, 20, 4],
-                  [9, 20, 8]]
+                  [9, 30, 1],
+                  [9, 30, 4],
+                    [9, 30, 5],
+
+                    [9, 30, 6],
+
+                    [9, 30, 8]]
+
 
 for config in configurations:
     print config
@@ -26,9 +34,9 @@ for config in configurations:
     c = c[order]
 
     models = [
-        UMAP(),
+        # UMAP(),
         GEGSOM(labels=c),
-        TSNE(perplexity=40)
+        # TSNE(perplexity=40)
     ]
 
     scores = []
