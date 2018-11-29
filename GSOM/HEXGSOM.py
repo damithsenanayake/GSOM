@@ -127,7 +127,7 @@ class GSOM(object):
                     pull /= pull.max()
                     pull = np.array([pull]).T
                     deltas =(self.momentum)*self.prevW#np.zeros(self.W.shape)
-                    delta_dec=(x-self.W[decayers])*wd_coef*pull#*(i>1)
+                    delta_dec=(x-self.W[decayers])*wd_coef*pull
                     deltas[decayers] += delta_dec
                     deltas[neighbors] += delta_neis
                     self.W += deltas
@@ -308,3 +308,7 @@ class GSOM(object):
             return np.exp(-3.5*dists**2)
         elif self._nei_func == 'epanechicov':
             return 1-dists**2
+        elif self._nei_func == 't':
+            return (1+3.5*dists**2)**-1
+        elif self._nei_func == 'cut_t':
+            return (1+.5*dists**2)**-1
