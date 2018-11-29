@@ -8,6 +8,7 @@ from sklearn.metrics import adjusted_mutual_info_score, adjusted_rand_score
 from sklearn.decomposition import PCA
 import timeit
 
+from umap import UMAP
 
 fi = pd.read_csv('~/data/fashionmnist/fashion-mnist_train.csv')
 samples = 6000
