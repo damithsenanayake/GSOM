@@ -7,8 +7,8 @@ X = []
 for image_path in glob.glob("/home/senanayaked/Part2/NewVolume/coil-20-proc/*.png"):
     image = misc.imread(image_path)
     t = int(image_path.split('/')[-1].split('_')[0].replace('obj', ''))
-    if t in [12, 14, 15, 16, 17, 18, 20]:
-        continue
+    # if t in [12, 14, 15, 16, 17, 18, 20]:
+    #     continue
     X.append(image.flatten())
     Y.append([t])
 
