@@ -2,9 +2,9 @@ import numpy as np
 from sklearn.datasets import make_blobs
 from geg_som import GEGSOM
 from sklearn.cluster import KMeans
-from sklearn.manifold import TSNE
+# from sklearn.manifold import TSNE
 from sklearn.metrics import adjusted_mutual_info_score, adjusted_rand_score
-from umap import UMAP
+# from umap import UMAP
 
 
 

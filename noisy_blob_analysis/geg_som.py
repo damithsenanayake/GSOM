@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 
 class GEGSOM(object):
 
-    def __init__(self, radius=8, min_rad=4, lrst=0.5, sf=0.9, fd=0.9, sd=0.04, cluster_spacing_factor=1., its=10,
+    def __init__(self, radius=8, min_rad=4, lrst=0.1, sf=0.9, fd=0.9, sd=0.04, cluster_spacing_factor=1., its=10,
                  labels=np.array([]), momentum=0., map_structure=8, neighbor_func='cut_gaussian', verbose=False):
         self.lrst = lrst
         self.its = its
@@ -161,7 +161,7 @@ class GEGSOM(object):
                     plt.close(fig)
 
 
-            self.smoothen()
+            # self.smoothen()
         except KeyboardInterrupt:
             print self.W.shape[0]
             return
