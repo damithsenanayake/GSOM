@@ -121,7 +121,7 @@ class GSOM(object):
                     hdist /= hdist.max()
                     D = np.exp(-7.*(1-hdist)**(2))
                     l = ldist[decayers]/ldist[decayers][min(dix, ldist[decayers].shape[0] - 1)]
-                    d = np.exp( -10. * l ** 60)
+                    d = np.exp( -(10*(1-self.recsf)) * l ** 60)
                     D *= d
                     pull = D-D.min()
                     pull /= pull.max()
