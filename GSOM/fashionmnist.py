@@ -10,7 +10,7 @@ from sklearn.cluster import KMeans, DBSCAN
 from sklearn.metrics import adjusted_mutual_info_score, adjusted_rand_score
 from SelfOrganizingSwarm import SelfOrganizingSwarm
 from sklearn.decomposition import PCA
-# from umap import UMAP
+from umap import UMAP
 # from TSNE import TSNE
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
@@ -29,7 +29,7 @@ samples = 6000
 
 dat =(np.array(fi)[:samples, 1:]).astype(float)#/255.0
 order = np.random.permutation(range(samples))
-dat = PCA(30, random_state=1).fit_transform(dat)#[order]
+dat = PCA(3, random_state=1).fit_transform(dat)#[order]
 
 labels = np.array(fi)[:samples, 0].astype(int)#[order]
 
@@ -48,7 +48,7 @@ st = timeit.default_timer()
 model = GSOM(lrst=.5, sf=0.6, fd = .8, radius=6., min_rad = 4., sd=.4, its=20, labels=labels, cluster_spacing_factor=.75, momentum=.0, map_structure=6, neighbor_func='cut_gaussian')
 # model = TSNE(perplexity=40)#
 # x, y = MovingMap(iterations=100, beta=1.5).fit_transform(dat[:samples]).T
-Y= model.fit_transform(dat)
+Y= UMAP().fit_transform(dat)
 # Y = PCA(2).fit_transform(dat)
 #
 # YS = model.grid
