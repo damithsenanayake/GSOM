@@ -31,7 +31,7 @@ print dat.shape
 
 gc.collect()
 st = timeit.default_timer()
-model = GEGSOM(lrst=.1, sf=0.9, fd = .8, radius=10., min_rad = 4.,cluster_spacing_factor=1., sd=.08, its=100, labels=labels, momentum=.08, map_structure=6)
+model = GEGSOM(lrst=.5, sf=0.9, fd = .8, radius=6.5, min_rad = 2.,cluster_spacing_factor=1., sd=.02, its=20, labels=labels, momentum=.0, map_structure=6)
 
 Y= model.fit_transform(dat)
 
