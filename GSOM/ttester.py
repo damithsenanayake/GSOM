@@ -16,8 +16,8 @@ x.sort()
 
 
 
-y =np.exp(-(10*(1-.99))*x**60)
-z = 1- np.exp(-4.5 * x ** 4)
+y =np.exp(-x**2/np.mean(2*x**2))#np.exp(-(10*(1-.99))*x**60)
+z = 1./(1+3.5*x**2)
 
 plt.scatter(x, y, c = plt.cm.jet(x))
 

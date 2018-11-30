@@ -305,10 +305,10 @@ class GSOM(object):
         elif self._nei_func == 'cut_gaussian':
             return np.exp(-.5*dists**2)
         elif self._nei_func == 'gaussian':
-            return np.exp(-3.5*dists**2)
+            return np.exp(-dists**2/(np.mean(2*dists**2)))
         elif self._nei_func == 'epanechicov':
             return 1-dists**2
         elif self._nei_func == 't':
-            return (1+3.5*dists**2)**-1
+            return 1./((1+dists**2/np.mean(dists**2)))
         elif self._nei_func == 'cut_t':
             return (1+.5*dists**2)**-1

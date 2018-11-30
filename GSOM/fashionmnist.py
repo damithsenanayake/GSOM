@@ -29,7 +29,7 @@ samples = 6000
 
 dat =(np.array(fi)[:samples, 1:]).astype(float)#/255.0
 order = np.random.permutation(range(samples))
-dat = PCA(3, random_state=1).fit_transform(dat)#[order]
+dat = PCA(30, random_state=1).fit_transform(dat)#[order]
 
 labels = np.array(fi)[:samples, 0].astype(int)#[order]
 
@@ -45,23 +45,10 @@ gc.collect()
 '''
 
 st = timeit.default_timer()
-model = GSOM(lrst=.1, sf=0.99, fd = .0, radius=6., min_rad = 6., sd=.2, its=10, labels=labels, cluster_spacing_factor=.75, momentum=.0, map_structure=6, neighbor_func='t')
+model = GSOM(lrst=.5, sf=0.99, fd = .0, radius=4., min_rad = 3., sd=.1, its=4, labels=labels, cluster_spacing_factor=.8, momentum=.0, map_structure=6, neighbor_func='gaussian')
 # model = TSNE(perplexity=40)#
 # x, y = MovingMap(iterations=100, beta=1.5).fit_transform(dat[:samples]).T
-Y= UMAP().fit_transform(dat)
-# Y = PCA(2).fit_transform(dat)
-#
-# YS = model.grid
-# WS = model.W
-#
-# ds = np.linalg.norm(YS-YS[2], axis=1)
-# order = ds.argsort()
-# DS = np.linalg.norm(WS-WS[2], axis=1)
-# ds/=ds.max()
-# DS/=DS.max()
-#
-# plt.plot(ds[order], DS[order])
-# plt.show(block=False)
+Y= model.fit_transform(dat)
 
 et = timeit.default_timer() - st
 hrs = np.floor(et/3600)
