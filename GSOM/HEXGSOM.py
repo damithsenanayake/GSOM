@@ -79,6 +79,7 @@ class GSOM(object):
             lambda_lr = np.log(0.01)
 
             self.prevW = self.W*0
+            recsf = self.recsf
 
             for i in range(its):
                 ''' Normalized Time Variable for the learning rules.'''
@@ -90,8 +91,10 @@ class GSOM(object):
                 self.wd = self.wdst
                 self.lr = self.lrst*np.exp(lambda_lr*ntime)#np.exp(lambda_lr*ntime)#self.lr*(1-ntime)#*(1-ntime)#*
                 xix = 0
+
+                recsf = self.recsf * ntime ** 0.2
                 try:
-                    self.csf = 1/(1-self.recsf)
+                    self.csf = 1/(1-recsf)
                 except:
                     self.csf = np.inf
 
