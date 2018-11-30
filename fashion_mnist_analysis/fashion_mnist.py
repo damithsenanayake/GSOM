@@ -17,7 +17,7 @@ with warnings.catch_warnings():
     warnings.filterwarnings("ignore", category=DeprecationWarning)
     import md5, sha
 
-print GSOM.__module__
+print GEGSOM.__module__
 fi = pd.read_csv('~/data/fashionmnist/fashion-mnist_train.csv')
 # test = pd.read_csv('../mnist_test.csv', header=None)
 samples = 6000
