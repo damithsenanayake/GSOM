@@ -94,7 +94,7 @@ class GSOM(object):
 
                 recsf = self.recsf #* ntime ** 0.2
                 try:
-                    self.csf = 1/(1-recsf)
+                    self.csf = 1/(1-recsf) + ntime
                 except:
                     self.csf = np.inf
 
@@ -130,7 +130,7 @@ class GSOM(object):
                     pull = D-D.min()
                     pull /= pull.max()
                     pull = np.array([pull]).T
-                    deltas =(self.momentum)*self.prevW#np.zeros(self.W.shape)
+                    deltas =(self.momentum * (ntime>0.8))*self.prevW#np.zeros(self.W.shape)
                     delta_dec=(x-self.W[decayers])*wd_coef*pull
                     deltas[decayers] += delta_dec
                     deltas[neighbors] += delta_neis
