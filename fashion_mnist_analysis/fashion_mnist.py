@@ -1,31 +1,44 @@
-import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
 import gc
 from geg_som import GEGSOM
-from sklearn.cluster import KMeans
+from sklearn.preprocessing import normalize
+from sklearn.manifold import MDS, TSNE, LocallyLinearEmbedding
+from sklearn.cluster import KMeans, DBSCAN
 from sklearn.metrics import adjusted_mutual_info_score, adjusted_rand_score
 from sklearn.decomposition import PCA
+
+import matplotlib.pyplot as plt
+
 import timeit
+import warnings
 
-from umap import UMAP
+with warnings.catch_warnings():
+    warnings.filterwarnings("ignore", category=DeprecationWarning)
+    import md5, sha
 
+print GSOM.__module__
 fi = pd.read_csv('~/data/fashionmnist/fashion-mnist_train.csv')
+# test = pd.read_csv('../mnist_test.csv', header=None)
 samples = 6000
 
 dat =(np.array(fi)[:samples, 1:]).astype(float)
 order = np.random.permutation(range(samples))
-dat = PCA(18, random_state=1).fit_transform(dat)
-dat -= dat.min()
-dat /= dat.max()
+dat = PCA(30, random_state=1).fit_transform(dat)
+
 labels = np.array(fi)[:samples, 0].astype(int)
 
+
+del fi
 print dat.shape
 
 gc.collect()
+'''Cluster Separation Factor :
+    dix = 1/(1-csf)
+'''
 
 st = timeit.default_timer()
-model = GEGSOM(labels=labels, verbose=True)#Provide labels to store intermediate results
+model = GSOM(lrst=.8, sf=0.01, fd = .0, radius=4., min_rad = 3., sd=.08, its=10, labels=labels, cluster_spacing_factor=.75, momentum=.0, map_structure=6, neighbor_func='gaussian')
 
 Y= model.fit_transform(dat)
 
@@ -50,5 +63,5 @@ plt.scatter(x, y, edgecolors='none',c=plt.cm.jet(labels/10.), alpha = 0.5, s = 1
 plt.subplot(212)
 plt.scatter(x, y, edgecolors='none',c=plt.cm.jet(kl/10.), alpha = 0.5, s = 15, marker='h')
 
-
 plt.show()
+

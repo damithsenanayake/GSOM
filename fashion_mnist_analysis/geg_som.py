@@ -2,12 +2,13 @@
 import numpy as np
 from sklearn.metrics.pairwise import pairwise_distances_argmin, pairwise_distances
 import timeit
-
+from sklearn.decomposition import PCA
+from sklearn.cluster import  KMeans
 import matplotlib.pyplot as plt
 
-class GEGSOM(object):
+class GSOM(object):
 
-    def __init__(self,  radius=4, min_rad=4, lrst=0.5, sf=0.9, fd=0.2,  sd=0.2, cluster_spacing_factor = .8, its=20, labels=np.array([]), momentum = 0.0, map_structure = 'hex', neighbor_func = 'cut_gaussian'):
+    def __init__(self,  radius=10, min_rad=2.45, lrst=0.1, sf=0.9, fd=0.15,  sd=0.02, cluster_spacing_factor = .9, its=20, labels=np.array([]), momentum = 0.85, map_structure = 'hex', neighbor_func = 'cut_gaussian'):
         self.lrst = lrst
         self.its = its
         self.fd = fd
@@ -31,6 +32,7 @@ class GEGSOM(object):
         self.momentum = momentum
         self.structure = map_structure
         self.n_low_neighbors = 0
+        self.hits = None
 
 
 
@@ -64,8 +66,8 @@ class GEGSOM(object):
                 y = np.cos(angle)
                 self.grid[i] = np.array([x, y])
 
-
-
+            self.ages = np.zeros(self.grid.shape[0])
+            self.hits = np.zeros(self.grid.shape[0])
             self.W = np.zeros((self.grid.shape[0], X.shape[1]))#np.random.RandomState(seed=5).random_sample(size=(self.grid.shape[0], X.shape[1]))#np.random.random(size=(self.grid.shape[0], X.shape[1]))
             self.W[:, :2] = self.grid
             self.W[:, :2] *= X[:, :2].max(axis=0) - X[:, :2].min(axis=0)
@@ -89,12 +91,16 @@ class GEGSOM(object):
                 self.wd = self.wdst
                 self.lr = self.lrst*np.exp(lambda_lr*ntime)#np.exp(lambda_lr*ntime)#self.lr*(1-ntime)#*(1-ntime)#*
                 xix = 0
+
+                recsf = self.recsf #* ntime ** 0.2
                 try:
-                    self.csf = 1/(1-self.recsf)
+                    self.csf = 1/(1-recsf)
                 except:
                     self.csf = np.inf
 
                 self.errors *= 0
+                self.ages *= 0
+                self.hits *=0
                 for x in X:
 
                     ''' Training For Instances'''
@@ -103,7 +109,7 @@ class GEGSOM(object):
                     hdist = np.linalg.norm(self.W - x, axis=1)
                     nix = np.where(ldist<=r)[0].shape[0]
                     dix = np.where(ldist<=r*self.csf)[0].shape[0]
-                    decayers = np.argsort((ldist))[:dix]#[:dix]#[:25*nix]#[:dix]
+                    decayers = np.argsort((ldist))
                     neighbors = np.argsort((ldist))[:nix]
 
                     ''' ** coefficient to consider sinking to neighborhood! ** '''
@@ -118,32 +124,35 @@ class GEGSOM(object):
                     hdist -= hdist.min()
                     hdist /= hdist.max()
                     D = np.exp(-7.*(1-hdist)**(2))
+                    l = ldist[decayers]/ldist[decayers][min(dix, ldist[decayers].shape[0] - 1)]
+                    d = np.exp( -(10*(1-self.recsf)) * l ** 60)
+                    D *= d
                     pull = D-D.min()
+                    pull /= pull.max()
                     pull = np.array([pull]).T
-                    deltas =(((ntime>.5)*0.9 + 0.1)* self.momentum)*self.prevW#np.zeros(self.W.shape)
-                    delta_dec=(x-self.W[decayers])*wd_coef*pull#*(i>1)
+                    deltas =(self.momentum)*self.prevW#np.zeros(self.W.shape)
+                    delta_dec=(x-self.W[decayers])*wd_coef*pull
                     deltas[decayers] += delta_dec
                     deltas[neighbors] += delta_neis
                     self.W += deltas
-                    # self.prevW[neighbors] = delta_neis
+                    self.ages+=1
+                    self.ages[neighbors] = 0
                     self.prevW = deltas
                     et = timeit.default_timer()-st
-
-                    self.errors[bmu] += np.linalg.norm(self.W[bmu] - x)#**2
+                    self.errors[bmu] += np.linalg.norm(self.W[bmu] - x)**2
                     ''' Growing the map '''
-
-                    while self.errors.max() > self.GT and i + 1 < its:
+                    self.hits[bmu] += 1
+                    while self.errors.max()/max(self.hits[self.errors.argmax()], 1.) > self.GT and i + 1 < its:
                         self.error_dist(self.errors.argmax())
-
+                    self.prune_map(np.where(self.ages > 600))
                     if xix % 500 == 0:
                         print (
                         '\riter %i of %i : %i / %i : batch : %i :|G| = %i : n_neis :%i : LR: %.4f  QE: %.4f sink?: %s : fd: %.4f : wd_coef : %.4f' % (
                         i + 1,its,  xix, X.shape[0], 1, self.W.shape[0], neighbors.shape[0], self.lr, self.errors.sum(),
-                        str(decayers.shape[0]), self.fd, np.mean(wd_coef))), ' time = %.2f' % (et),
+                        str(self.csf), self.fd, np.mean(wd_coef))), ' time = %.2f' % (et),
 
                     xix+=1
 
-                self.prune_mid_training(X)
 
                 if self.labels.shape[0]:
                     fig = plt.figure(figsize=(5, 5))
@@ -155,7 +164,7 @@ class GEGSOM(object):
                     plt.close(fig)
 
 
-            self.smoothen(X)
+            self.smoothen()
         except KeyboardInterrupt:
             print self.W.shape[0]
             return
@@ -175,25 +184,7 @@ class GEGSOM(object):
             newW[neis] = self.W[neis] + self.wd*(self.W[i]-self.W[neis])#.sum(axis=0)
         self.W = newW
 
-    def prune_mid_training(self, X):
-        self.hits*=0
-        bmus = pairwise_distances_argmin(X, self.W)
 
-        for b in bmus:
-            self.hits[b]+=1
-        ''' Moving Average Filter to identify contiguous regions in the map '''
-        self.mean_filter(1)
-
-        ''' Prune nodes in the non-continguous regions of the map to shave of training time '''
-        self.prune_map(np.where(self.hits == 0)[0])
-
-    def mean_filter(self, degree=1):
-        for i in range(degree):
-            self.new_hits = np.zeros(self.hits.shape)
-            for i in range(self.hits.shape[0]):
-                neighbors = np.where((np.linalg.norm(self.grid[i]-self.grid, axis=1)<=1))[0]
-                self.new_hits[i]= self.hits[neighbors].mean()
-            self.hits =self.new_hits
 
     def prune_map(self, ixs):
         self.W = np.delete(self.W, ixs, axis=0)
@@ -201,19 +192,42 @@ class GEGSOM(object):
         self.errors = np.delete(self.errors, ixs)
         self.grid = np.delete(self.grid, ixs,  axis=0)
         self.hits = np.delete(self.hits, ixs)
+        self.ages = np.delete(self.ages, ixs)
 
 
-    def smoothen(self, X):
+    def smoothen(self):
         its = 0
         print ''
+        HDs = pairwise_distances(self.W, self.W)
+        orig_lds = pairwise_distances(self.grid, self.grid)
         for i in range(its):
-            for x in X:
-                bmu = pairwise_distances_argmin(np.array([x]), self.W, axis=1)[0]
-                ldists = np.linalg.norm(self.grid[bmu]-self.grid, axis=1)
-                neighbors = np.argsort(ldists)[:10]
-                hs = np.exp(-0.5*(ldists[neighbors]/ldists[neighbors].max())**2)
-                self.W[neighbors] += (x-self.W[neighbors])*self.lr*np.array([hs]).T
-                print '\r %i / %i smoothen'%(i, its),
+            lds = pairwise_distances(self.grid, self.grid)
+            for ix in range(self.W.shape[0]):
+
+                y = self.grid[ix]
+
+                neis = np.where(orig_lds[ix]<=1)[0]
+
+                D = HDs[ix][neis]
+                d = lds[ix][neis]#np.linalg.norm(self.grid-self.grid[ix], axis=1)[neis]
+                if D.max():
+                    D/= D.max()
+                # if d.max():
+                #     d /= d.max()
+                mu = np.exp(-.5*D**2)
+                nu = ((1./(1+.5*d**2)**1.5))
+                mu[mu ==0 ]=1
+                pull = (mu - nu)*(nu)
+                # push = 1- nu/mu
+
+
+                # pull -= (1- 1./(1+d**2))
+
+                force = ((self.grid[neis] - y) *np.array([pull]).T).sum(axis=0)
+
+                self.grid[ix]+= 1*force
+
+                print '\r %i / %i : %i / %i smoothen'%(ix, self.W.shape[0], i, its),
 
     def error_dist(self, g_node):
 
@@ -249,6 +263,7 @@ class GEGSOM(object):
                 self.errors = np.append(self.errors, 0.)
                 self.grid = np.append(self.grid, np.array([nei]), axis=0)
                 self.hits = np.append(self.hits, 0.)
+                self.ages = np.append(self.ages, 0)
                 self.errors[g_node] = 0
                 self.prevW = np.append(self.prevW, np.array([w-self.W[g_node]]), axis=0)
 
@@ -274,6 +289,10 @@ class GEGSOM(object):
         elif self._nei_func == 'cut_gaussian':
             return np.exp(-.5*dists**2)
         elif self._nei_func == 'gaussian':
-            return np.exp(-3.5*dists**2)
+            return np.exp(-dists**2/(np.mean(2*dists**2)))
         elif self._nei_func == 'epanechicov':
             return 1-dists**2
+        elif self._nei_func == 't':
+            return 1./((1+dists**2/np.mean(dists**2)))
+        elif self._nei_func == 'cut_t':
+            return (1+.5*dists**2)**-1

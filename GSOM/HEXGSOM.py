@@ -32,6 +32,7 @@ class GSOM(object):
         self.momentum = momentum
         self.structure = map_structure
         self.n_low_neighbors = 0
+        self.hits = None
 
 
 
@@ -66,7 +67,7 @@ class GSOM(object):
                 self.grid[i] = np.array([x, y])
 
             self.ages = np.zeros(self.grid.shape[0])
-
+            self.hits = np.zeros(self.grid.shape[0])
             self.W = np.zeros((self.grid.shape[0], X.shape[1]))#np.random.RandomState(seed=5).random_sample(size=(self.grid.shape[0], X.shape[1]))#np.random.random(size=(self.grid.shape[0], X.shape[1]))
             self.W[:, :2] = self.grid
             self.W[:, :2] *= X[:, :2].max(axis=0) - X[:, :2].min(axis=0)
@@ -79,7 +80,6 @@ class GSOM(object):
             lambda_lr = np.log(0.01)
 
             self.prevW = self.W*0
-            recsf = self.recsf
 
             for i in range(its):
                 ''' Normalized Time Variable for the learning rules.'''
@@ -92,7 +92,7 @@ class GSOM(object):
                 self.lr = self.lrst*np.exp(lambda_lr*ntime)#np.exp(lambda_lr*ntime)#self.lr*(1-ntime)#*(1-ntime)#*
                 xix = 0
 
-                recsf = self.recsf * ntime ** 0.2
+                recsf = self.recsf #* ntime ** 0.2
                 try:
                     self.csf = 1/(1-recsf)
                 except:
@@ -100,6 +100,7 @@ class GSOM(object):
 
                 self.errors *= 0
                 self.ages *= 0
+                self.hits *=0
                 for x in X:
 
                     ''' Training For Instances'''
@@ -108,7 +109,7 @@ class GSOM(object):
                     hdist = np.linalg.norm(self.W - x, axis=1)
                     nix = np.where(ldist<=r)[0].shape[0]
                     dix = np.where(ldist<=r*self.csf)[0].shape[0]
-                    decayers = np.argsort((ldist))#[:dix]#[:dix]#[:25*nix]#[:dix]
+                    decayers = np.argsort((ldist))
                     neighbors = np.argsort((ldist))[:nix]
 
                     ''' ** coefficient to consider sinking to neighborhood! ** '''
@@ -134,15 +135,14 @@ class GSOM(object):
                     deltas[decayers] += delta_dec
                     deltas[neighbors] += delta_neis
                     self.W += deltas
-                    # self.prevW[neighbors] = delta_neis
                     self.ages+=1
                     self.ages[neighbors] = 0
                     self.prevW = deltas
                     et = timeit.default_timer()-st
-                    self.errors[bmu] += np.linalg.norm(self.W[bmu] - x)#**2
+                    self.errors[bmu] += np.linalg.norm(self.W[bmu] - x)**2
                     ''' Growing the map '''
-
-                    while self.errors.max() > self.GT and i + 1 < its:
+                    self.hits[bmu] += 1
+                    while self.errors.max()/max(self.hits[self.errors.argmax()], 1.) > self.GT and i + 1 < its:
                         self.error_dist(self.errors.argmax())
                     self.prune_map(np.where(self.ages > 600))
                     if xix % 500 == 0:
@@ -153,7 +153,6 @@ class GSOM(object):
 
                     xix+=1
 
-                # self.prune_mid_training(X)
 
                 if self.labels.shape[0]:
                     fig = plt.figure(figsize=(5, 5))
@@ -185,25 +184,7 @@ class GSOM(object):
             newW[neis] = self.W[neis] + self.wd*(self.W[i]-self.W[neis])#.sum(axis=0)
         self.W = newW
 
-    def prune_mid_training(self, X):
-        self.hits*=0
-        bmus = pairwise_distances_argmin(X, self.W)
 
-        for b in bmus:
-            self.hits[b]+=1
-        ''' Moving Average Filter to identify contiguous regions in the map '''
-        self.mean_filter(1)
-
-        ''' Prune nodes in the non-continguous regions of the map to shave of training time '''
-        self.prune_map(np.where(self.hits == 0)[0])
-
-    def mean_filter(self, degree=1):
-        for i in range(degree):
-            self.new_hits = np.zeros(self.hits.shape)
-            for i in range(self.hits.shape[0]):
-                neighbors = np.where((np.linalg.norm(self.grid[i]-self.grid, axis=1)<=1))[0]
-                self.new_hits[i]= self.hits[neighbors].mean()
-            self.hits =self.new_hits
 
     def prune_map(self, ixs):
         self.W = np.delete(self.W, ixs, axis=0)
