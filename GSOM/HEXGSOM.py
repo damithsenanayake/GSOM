@@ -92,9 +92,9 @@ class GSOM(object):
                 self.lr = self.lrst*np.exp(lambda_lr*ntime)#np.exp(lambda_lr*ntime)#self.lr*(1-ntime)#*(1-ntime)#*
                 xix = 0
 
-                recsf = self.recsf #* ntime ** 0.2
+                recsf = self.recsf * ntime **.4
                 try:
-                    self.csf = 1/(1-recsf) + ntime
+                    self.csf = 1/(1-recsf) #+ ntime
                 except:
                     self.csf = np.inf
 
@@ -123,7 +123,7 @@ class GSOM(object):
                     hdist = hdist[decayers]
                     hdist -= hdist.min()
                     hdist /= hdist.max()
-                    D = np.exp(-7.*(1-hdist)**(2))
+                    D = np.exp(-10.*(1-hdist)**(2))
                     l = ldist[decayers]/ldist[decayers][min(dix, ldist[decayers].shape[0] - 1)]
                     d = np.exp( -(10*(1-self.recsf)) * l ** 60)
                     D *= d
@@ -149,7 +149,7 @@ class GSOM(object):
                         print (
                         '\riter %i of %i : %i / %i : batch : %i :|G| = %i : n_neis :%i : LR: %.4f  QE: %.4f sink?: %s : fd: %.4f : wd_coef : %.4f' % (
                         i + 1,its,  xix, X.shape[0], 1, self.W.shape[0], neighbors.shape[0], self.lr, self.errors.sum(),
-                        str(self.csf), self.fd, np.mean(wd_coef))), ' time = %.2f' % (et),
+                        str(decayers.shape[0]), self.csf, np.mean(wd_coef))), ' time = %.2f' % (et),
 
                     xix+=1
 
