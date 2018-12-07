@@ -92,7 +92,7 @@ class GSOM(object):
                 self.lr = self.lrst*np.exp(lambda_lr*ntime)#np.exp(lambda_lr*ntime)#self.lr*(1-ntime)#*(1-ntime)#*
                 xix = 0
 
-                recsf = self.recsf * ntime **.4
+                recsf = self.recsf * ntime **.1
                 try:
                     self.csf = 1/(1-recsf) #+ ntime
                 except:
@@ -101,53 +101,30 @@ class GSOM(object):
                 self.errors *= 0
                 self.ages *= 0
                 self.hits *=0
-                for x in X:
+                lds = pairwise_distances(self.grid, self.grid)
+                bmus = pairwise_distances_argmin(X, self.W)
+                pwds = pairwise_distances(X, self.W)
 
-                    ''' Training For Instances'''
-                    bmu = pairwise_distances_argmin(np.array([x]), self.W, axis=1)
-                    ldist = np.linalg.norm(self.grid - self.grid[bmu], axis=1)
-                    hdist = np.linalg.norm(self.W - x, axis=1)
-                    nix = np.where(ldist<=r)[0].shape[0]
-                    dix = np.where(ldist<=self.rst*self.csf)[0].shape[0]
-                    decayers = np.argsort((ldist))[:dix]
-                    neighbors = np.argsort((ldist))[:nix]
+                sum_vecs = np.zeros(self.W.shape)
+                hits = np.ones(self.W.shape[0])
 
-                    ''' ** coefficient to consider sinking to neighborhood! ** '''
-                    ld = ldist[neighbors]/r
-                    thetfunc = self.neighbor_func(ld)#np.exp(-.5*ld**2)
-                    theta_d = np.array([thetfunc]).T
-                    delta_neis = (x-self.W[neighbors])*theta_d*self.lr#+ self.momentum *np.exp(-5*(1-ntime)**6)* self.prevW[neighbors]
+                for k in range(X.shape[0]):
 
-                    ''' Gap  Enforcement '''
-                    wd_coef = self.wd*self.lr*nix#*(ntime)**.5
-                    hdist = hdist[decayers]
-                    # hdist -= hdist.min()
-                    hdist /= hdist[nix-1]*self.csf
-                    D = 1-np.exp(-(5)*(hdist)**(8))
-                    pull = D
-                    pull = np.array([pull]).T
-                    deltas =(self.momentum * (ntime>0.8))*self.prevW#np.zeros(self.W.shape)
-                    delta_dec=(x-self.W[decayers])*wd_coef*pull
-                    deltas[decayers] += delta_dec
-                    deltas[neighbors] += delta_neis
-                    self.W += deltas
-                    self.ages+=1
-                    self.ages[neighbors] = 0
-                    self.prevW = deltas
-                    et = timeit.default_timer()-st
-                    self.errors[bmu] += np.linalg.norm(self.W[bmu] - x)**2
-                    ''' Growing the map '''
-                    self.hits[bmu] += 1
-                    while self.errors.max()/max(self.hits[self.errors.argmax()], 1.) > self.GT and i + 1 < its:
-                        self.error_dist(self.errors.argmax())
-                    self.prune_map(np.where(self.ages > 600))
-                    if xix % 500 == 0:
-                        print (
-                        '\riter %i of %i : %i / %i : batch : %i :|G| = %i : n_neis :%i : LR: %.4f  QE: %.4f sink?: %s : fd: %.4f : wd_coef : %.4f' % (
-                        i + 1,its,  xix, X.shape[0], 1, self.W.shape[0], neighbors.shape[0], self.lr, self.errors.sum(),
-                        str(decayers.shape[0]), self.csf, np.mean(wd_coef))), ' time = %.2f' % (et),
+                    sum_vecs[bmus[k]] += X[k]
+                    hits[bmus[k]]+=1
+                    self.errors[bmus[k]]+=pwds[k][bmus[k]]**2
 
-                    xix+=1
+                for k in range(self.W.shape[0]):
+                    neis = np.where(lds[k] <= r)
+                    theta = self.neighbor_func(lds[k][neis])
+                    new_vec = sum_vecs[neis]
+
+                    new_vec *= np.array([theta/hits[neis]]).T
+                    new_vec = np.sum(new_vec, axis=0)
+                    self.W[k] += self.lr*(new_vec-self.W[k])
+                print '\r {} of {} done: |G| = {} '.format(str(i), str(its), str(self.W.shape[0])),
+                while self.errors.max() > self.GT:
+                    self.error_dist(self.errors.argmax())
 
 
                 if self.labels.shape[0]:
@@ -285,10 +262,7 @@ class GSOM(object):
         elif self._nei_func == 'cut_gaussian':
             return np.exp(-.5*dists**2)
         elif self._nei_func == 'gaussian':
-            theta = np.exp(-dists**2/(np.mean(2*dists**2)))
-            theta -= theta.min()
-            theta /= theta.max()
-            return theta
+            return np.exp(-dists**2/(np.pi*np.mean(2*dists**2)))
         elif self._nei_func == 'epanechicov':
             return 1-dists**2
         elif self._nei_func == 't':
