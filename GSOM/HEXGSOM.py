@@ -92,7 +92,7 @@ class GSOM(object):
                 self.lr = self.lrst*np.exp(lambda_lr*ntime)#np.exp(lambda_lr*ntime)#self.lr*(1-ntime)#*(1-ntime)#*
                 xix = 0
 
-                recsf = self.recsf * ntime **.4 if self.recsf<1. else 1.
+                recsf = self.recsf * ntime **.2 if self.recsf<1. else 1.
                 try:
                     self.csf = 1/(1-recsf) #+ ntime
                 except:
@@ -107,6 +107,7 @@ class GSOM(object):
                     bmu = pairwise_distances_argmin(np.array([x]), self.W, axis=1)
                     ldist = np.linalg.norm(self.grid - self.grid[bmu], axis=1)
                     hdist = np.linalg.norm(self.W - x, axis=1)
+                    hmax = hdist.max()
                     nix = np.where(ldist<=r)[0].shape[0]
                     dix = np.where(ldist<=self.rst*self.csf)[0].shape[0]
                     decayers = np.argsort((ldist))[:dix]
@@ -119,10 +120,11 @@ class GSOM(object):
                     delta_neis = (x-self.W[neighbors])*theta_d*self.lr#+ self.momentum *np.exp(-5*(1-ntime)**6)* self.prevW[neighbors]
 
                     ''' Gap  Enforcement '''
-                    wd_coef = self.wd*self.lr*nix#*(ntime)**.5
+                    wd_coef = self.wd*self.lr**2*nix
                     hdist = hdist[decayers]
-                    # hdist -= hdist.min()
-                    hdist /= hdist[nix-1]*self.csf
+                    denom = min(hdist[nix-1]*5*ntime, hdist.max())
+                    hmax /= denom
+                    hdist /= denom
                     D = 1-np.exp(-(5)*(hdist)**(8))
                     pull = D
                     pull = np.array([pull]).T
@@ -143,8 +145,8 @@ class GSOM(object):
                     self.prune_map(np.where(self.ages > 600))
                     if xix % 500 == 0:
                         print (
-                        '\riter %i of %i : %i / %i : batch : %i :|G| = %i : n_neis :%i : LR: %.4f  QE: %.4f sink?: %s : fd: %.4f : wd_coef : %.4f' % (
-                        i + 1,its,  xix, X.shape[0], 1, self.W.shape[0], neighbors.shape[0], self.lr, self.errors.sum(),
+                        '\riter %i of %i : %i / %i : hdistmax : %.4f :|G| = %i : n_neis :%i : LR: %.4f  QE: %.4f sink?: %s : fd: %.4f : wd_coef : %.4f' % (
+                        i + 1,its,  xix, X.shape[0], hmax, self.W.shape[0], neighbors.shape[0], self.lr, self.errors.sum(),
                         str(decayers.shape[0]), self.csf, np.mean(wd_coef))), ' time = %.2f' % (et),
 
                     xix+=1
