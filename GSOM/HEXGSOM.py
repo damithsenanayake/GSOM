@@ -92,7 +92,7 @@ class GSOM(object):
                 self.lr = self.lrst*np.exp(lambda_lr*ntime)#np.exp(lambda_lr*ntime)#self.lr*(1-ntime)#*(1-ntime)#*
                 xix = 0
 
-                recsf = self.recsf * ntime **.4
+                recsf = self.recsf * ntime **.4 if self.recsf<1. else 1.
                 try:
                     self.csf = 1/(1-recsf) #+ ntime
                 except:
