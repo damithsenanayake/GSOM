@@ -5,6 +5,7 @@ import timeit
 from sklearn.decomposition import PCA
 from sklearn.cluster import  KMeans
 import matplotlib.pyplot as plt
+from scipy.spatial.distance import minkowski, cdist
 
 class GSOM(object):
 
@@ -77,7 +78,7 @@ class GSOM(object):
             self.lr = self.lrst
             rad_min = self.rad_min
             lambda_rad = np.log(rad_min*1./self.rst)
-            lambda_lr = np.log(0.01)
+            lambda_lr = np.log(0.9)
 
             self.prevW = self.W*0
 
@@ -86,10 +87,10 @@ class GSOM(object):
                 ntime = i * 1. / max(its, 1)
                 sf = self.sf_max
                 self.GT = -np.sqrt(X.shape[1]) * np.log(sf)* (X.max() - X.min())
-                r = self.rst *np.exp(lambda_rad * ntime)#- ntime * (self.rst - rad_min)
+                r = self.rst *np.exp(lambda_rad * ntime*(1-1./self.W.shape[0]))#- ntime * (self.rst - rad_min)
                 self.r = r
                 self.wd = self.wdst
-                self.lr = self.lrst*np.exp(lambda_lr*ntime)#np.exp(lambda_lr*ntime)#self.lr*(1-ntime)#*(1-ntime)#*
+                self.lr = self.lr*np.exp(-0.2*(1-1./self.W.shape[0]))#np.exp(lambda_lr*ntime)#self.lr*(1-ntime)#*(1-ntime)#*
                 xix = 0
 
                 recsf = self.recsf * ntime **.2 if self.recsf<1. else 1.
@@ -104,10 +105,9 @@ class GSOM(object):
                 for x in X:
 
                     ''' Training For Instances'''
-                    bmu = pairwise_distances_argmin(np.array([x]), self.W, axis=1)
+                    hdist = cdist(self.W, np.array([x]), metric='minkowski', p=X.shape[1])
+                    bmu = hdist.argmin()
                     ldist = np.linalg.norm(self.grid - self.grid[bmu], axis=1)
-                    hdist = np.linalg.norm(self.W - x, axis=1)
-                    hmax = hdist.max()
                     nix = np.where(ldist<=r)[0].shape[0]
                     dix = np.where(ldist<=self.rst*self.csf)[0].shape[0]
                     decayers = np.argsort((ldist))[:dix]
@@ -120,14 +120,13 @@ class GSOM(object):
                     delta_neis = (x-self.W[neighbors])*theta_d*self.lr#+ self.momentum *np.exp(-5*(1-ntime)**6)* self.prevW[neighbors]
 
                     ''' Gap  Enforcement '''
-                    wd_coef = self.wd*self.lr**2*nix
+                    wd_coef = self.wd*self.lr*nix/(np.pi*r**2)#*(ntime)**.5
                     hdist = hdist[decayers]
-                    denom = min(hdist[nix-1]*5*ntime, hdist.max())
-                    hmax /= denom
-                    hdist /= denom
-                    D = 1-np.exp(-(5)*(hdist)**(8))
+                    # hdist -= hdist.min()
+                    hdist /= hdist[nix-1]
+                    D = 1-np.exp(-(.3)**8*(hdist)**(8))
                     pull = D
-                    pull = np.array([pull]).T
+                    # pull = np.array([pull]).T
                     deltas =(self.momentum * (ntime>0.8))*self.prevW#np.zeros(self.W.shape)
                     delta_dec=(x-self.W[decayers])*wd_coef*pull
                     deltas[decayers] += delta_dec
@@ -145,8 +144,8 @@ class GSOM(object):
                     self.prune_map(np.where(self.ages > 600))
                     if xix % 500 == 0:
                         print (
-                        '\riter %i of %i : %i / %i : hdistmax : %.4f :|G| = %i : n_neis :%i : LR: %.4f  QE: %.4f sink?: %s : fd: %.4f : wd_coef : %.4f' % (
-                        i + 1,its,  xix, X.shape[0], hmax, self.W.shape[0], neighbors.shape[0], self.lr, self.errors.sum(),
+                        '\riter %i of %i : %i / %i : batch : %i :|G| = %i : n_neis :%i : LR: %.4f  QE: %.4f sink?: %s : fd: %.4f : wd_coef : %.4f' % (
+                        i + 1,its,  xix, X.shape[0], 1, self.W.shape[0], neighbors.shape[0], self.lr, self.errors.sum(),
                         str(decayers.shape[0]), self.csf, np.mean(wd_coef))), ' time = %.2f' % (et),
 
                     xix+=1
@@ -181,6 +180,7 @@ class GSOM(object):
 
             newW[neis] = self.W[neis] + self.wd*(self.W[i]-self.W[neis])#.sum(axis=0)
         self.W = newW
+
 
 
 
@@ -287,13 +287,13 @@ class GSOM(object):
         elif self._nei_func == 'cut_gaussian':
             return np.exp(-.5*dists**2)
         elif self._nei_func == 'gaussian':
-            theta = np.exp(-dists**2/(np.mean(2*dists**2)))
+            theta = np.exp(-dists**2/(np.mean(2*np.pi*dists**2)))
             theta -= theta.min()
             theta /= theta.max()
             return theta
         elif self._nei_func == 'epanechicov':
             return 1-dists**2
         elif self._nei_func == 't':
-            return 1./((1+dists**2/np.mean(dists**2)))
+            return 1./((1+dists**2/np.mean(np.pi*2*dists**2)))
         elif self._nei_func == 'cut_t':
             return (1+.5*dists**2)**-1
