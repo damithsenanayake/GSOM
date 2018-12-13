@@ -78,7 +78,9 @@ class GSOM(object):
             self.lr = self.lrst
             rad_min = self.rad_min
             lambda_rad = np.log(rad_min*1./self.rst)
-            lambda_lr = np.log(0.9)
+            lambda_lr = np.log(0.01)
+
+            pmink = X.shape[1] if self.recsf<1 else 2
 
             self.prevW = self.W*0
 
@@ -105,7 +107,7 @@ class GSOM(object):
                 for x in X:
 
                     ''' Training For Instances'''
-                    hdist = cdist(self.W, np.array([x]), metric='minkowski', p=X.shape[1])
+                    hdist = cdist(self.W, np.array([x]), metric='minkowski', p=pmink)#(1 if self.recsf == 1 else int(1/(1-self.recsf)))+1)
                     bmu = hdist.argmin()
                     ldist = np.linalg.norm(self.grid - self.grid[bmu], axis=1)
                     nix = np.where(ldist<=r)[0].shape[0]
@@ -124,7 +126,7 @@ class GSOM(object):
                     hdist = hdist[decayers]
                     # hdist -= hdist.min()
                     hdist /= hdist[nix-1]
-                    D = 1-np.exp(-(.3)**8*(hdist)**(8))
+                    D = 1-np.exp(-(.3)**pmink*(hdist)**(pmink)) if self.recsf < 1  else np.exp(-7* (1-hdist/hdist.max())**2)
                     pull = D
                     # pull = np.array([pull]).T
                     deltas =(self.momentum * (ntime>0.8))*self.prevW#np.zeros(self.W.shape)
@@ -144,8 +146,8 @@ class GSOM(object):
                     self.prune_map(np.where(self.ages > 600))
                     if xix % 500 == 0:
                         print (
-                        '\riter %i of %i : %i / %i : batch : %i :|G| = %i : n_neis :%i : LR: %.4f  QE: %.4f sink?: %s : fd: %.4f : wd_coef : %.4f' % (
-                        i + 1,its,  xix, X.shape[0], 1, self.W.shape[0], neighbors.shape[0], self.lr, self.errors.sum(),
+                        '\riter %i of %i : %i / %i : pmink : %s :|G| = %i : n_neis :%i : LR: %.4f  QE: %.4f sink?: %s : fd: %.4f : wd_coef : %.4f' % (
+                        i + 1,its,  xix, X.shape[0], str(pmink), self.W.shape[0], neighbors.shape[0], self.lr, self.errors.sum(),
                         str(decayers.shape[0]), self.csf, np.mean(wd_coef))), ' time = %.2f' % (et),
 
                     xix+=1
