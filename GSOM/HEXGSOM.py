@@ -3,6 +3,7 @@ import numpy as np
 from sklearn.metrics.pairwise import pairwise_distances_argmin, pairwise_distances
 import timeit
 from sklearn.decomposition import PCA
+from scipy.sparse import csr_matrix, coo_matrix, hstack, vstack
 from sklearn.cluster import  KMeans
 import matplotlib.pyplot as plt
 from scipy.spatial.distance import minkowski, cdist
@@ -49,6 +50,7 @@ class GSOM(object):
 
             ''' Hexagonal initialization '''
 
+            self.max_scale = 1.0
 
             if self.structure == 'hex':
                 self.n_low_neighbors = 6
@@ -65,7 +67,7 @@ class GSOM(object):
 
                 x = np.sin(angle)
                 y = np.cos(angle)
-                self.grid[i] = np.array([x, y])
+                self.grid[i] = np.array([x, y])#*self.max_scale
 
             self.ages = np.zeros(self.grid.shape[0])
             self.hits = np.zeros(self.grid.shape[0])
@@ -79,7 +81,7 @@ class GSOM(object):
             rad_min = self.rad_min
             lambda_rad = np.log(rad_min*1./self.rst)
             lambda_lr = np.log(0.01)
-
+            # self.Graph = coo_matrix(np.zeros(self.grid.shape[0], self.grid.shape[0]))
             pmink = X.shape[1] if self.recsf<1 else 2
 
             self.prevW = self.W*0
@@ -126,8 +128,9 @@ class GSOM(object):
                     hdist = hdist[decayers]
                     # hdist -= hdist.min()
                     hdist /= hdist[nix-1]
-                    D = 1-np.exp(-(.3)**pmink*(hdist)**(pmink)) if self.recsf < 1  else np.exp(-7* (1-hdist/hdist.max())**2)
+                    D = 1-np.exp(-(.3)**pmink*(hdist)**(pmink)) if self.recsf < 1  else np.exp(-7* (1-hdist/hdist.max())**50)
                     pull = D
+                    D-= D.min()
                     # pull = np.array([pull]).T
                     deltas =(self.momentum * (ntime>0.8))*self.prevW#np.zeros(self.W.shape)
                     delta_dec=(x-self.W[decayers])*wd_coef*pull
@@ -152,12 +155,14 @@ class GSOM(object):
 
                     xix+=1
 
+                # self.grid *= self.scale
+
 
                 if self.labels.shape[0]:
                     fig = plt.figure(figsize=(5, 5))
                     Y = self.predict(X)
                     x, y = Y.T
-                    plt.scatter(x, y, edgecolors='none', c=plt.cm.jet(self.labels *1./np.unique(self.labels).shape[0] ), alpha=0.5, s=15, marker='h')
+                    plt.scatter(x, y, edgecolors='none', c=plt.cm.jet(self.labels *1./np.unique(self.labels).shape[0] ), alpha=0.5, s=6, marker='h')
                     # plt.show(block=False)
                     plt.savefig('./images/map_'+str(i)+'.png')
                     plt.close(fig)
