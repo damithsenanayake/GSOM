@@ -28,10 +28,10 @@ fi = pd.read_csv('~/data/fashionmnist/fashion-mnist_train.csv')
 samples = 6000
 
 dat =(np.array(fi)[:samples, 1:]).astype(float)#/255.0
-order = np.random.permutation(range(samples))
-dat = PCA(30, random_state=1).fit_transform(dat)#[order]
+order = np.random.RandomState(seed=4).permutation(range(samples))
+dat = PCA(30, random_state=1).fit_transform(dat)[order]
 
-labels = np.array(fi)[:samples, 0].astype(int)#[order]
+labels = np.array(fi)[:samples, 0].astype(int)[order]
 
 # dat = dat[(labels ==5) | (labels == 3)]
 # labels = labels[(labels == 5)|( labels == 3)]
@@ -45,7 +45,7 @@ gc.collect()
 '''
 
 st = timeit.default_timer()
-model = GSOM(lrst=.5, sf=0.0001, fd = .9, radius=6, min_rad = 3., sd=.4, its=10, labels=labels, cluster_spacing_factor=1., momentum=.0, map_structure=4, neighbor_func='cut_gaussian')
+model = GSOM(lrst=.9, sf=0.0001, fd = .9, radius=6, min_rad = 3., sd=.4, its=10, labels=labels, cluster_spacing_factor=1., momentum=.0, map_structure=6, neighbor_func='cut_gaussian')
 # model = TSNE(perplexity=40)#
 # x, y = MovingMap(iterations=100, beta=1.5).fit_transform(dat[:samples]).T
 Y= model.fit_transform(dat)

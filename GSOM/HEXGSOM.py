@@ -124,7 +124,7 @@ class GSOM(object):
                     delta_neis = (x-self.W[neighbors])*theta_d*self.lr#+ self.momentum *np.exp(-5*(1-ntime)**6)* self.prevW[neighbors]
 
                     ''' Gap  Enforcement '''
-                    wd_coef = self.wd*self.lr*np.log10(self.W.shape[0])#nix/(np.pi*r**2)#*(ntime)**.5
+                    wd_coef = self.wd*self.lr#*np.log10(self.W.shape[0])#nix/(np.pi*r**2)#*(ntime)**.5
                     hdist = hdist[decayers]
                     # hdist -= hdist.min()
                     hdist /= hdist[nix-1]
