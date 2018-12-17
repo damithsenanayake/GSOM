@@ -3,7 +3,7 @@ import pandas as pd
 import numpy as np
 import gc
 from MovingMap import  MovingMap
-from HEXGSOM import GSOM
+from curse_estimation_GEGSOM import GSOM
 from sklearn.preprocessing import normalize
 from sklearn.manifold import MDS, TSNE, LocallyLinearEmbedding
 from sklearn.cluster import KMeans, DBSCAN
@@ -45,7 +45,7 @@ gc.collect()
 '''
 
 st = timeit.default_timer()
-model = GSOM(lrst=.9, sf=0.0001, fd = .9, radius=6, min_rad = 3., sd=.4, its=10, labels=labels, cluster_spacing_factor=1., momentum=.0, map_structure=6, neighbor_func='cut_gaussian')
+model = GSOM(lrst=.2, sf=0.0001, fd = .9, radius=8, min_rad = 3., sd=1., its=20, labels=labels, cluster_spacing_factor=1., momentum=.0, map_structure=6, neighbor_func='gaussian')
 # model = TSNE(perplexity=40)#
 # x, y = MovingMap(iterations=100, beta=1.5).fit_transform(dat[:samples]).T
 Y= model.fit_transform(dat)
