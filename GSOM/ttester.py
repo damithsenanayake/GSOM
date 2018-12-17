@@ -19,15 +19,16 @@ d = 30
 X = np.random.randn(100, d)
 x =np.array(range(100)).astype(float)
 x/=x.max()
-p = 1.2
+p = 2
 D = cdist(np.zeros((1, d)), X, metric='minkowski', p = p)#**p
 D.sort()
+D/=D.max()
 # y =np.exp(-x1**2/np.mean(2*x1**2))
-y = D#1-np.exp(-(32./1155)**2*(x1)**8)
+y = 1-np.exp(-40*(D)**2)#1-np.exp(-(32./1155)**2*(x1)**8)
 # y1 = 1-np.exp(-.2 * (x1)**8)
-y2 = 1-np.exp(-1000 * (x)**4)
+# y2 = 1-np.exp(-1000 * (x)**4)
 
-plt.scatter(x, y2, c = plt.cm.jet(x/x.max()))
+plt.scatter(x, y, c = plt.cm.jet(x/x.max()))
 # # plt.scatter(x1, y1, c = plt.cm.jet(x1))
 # plt.scatter(x*x1.max(), y2, c = plt.cm.jet(x))
 

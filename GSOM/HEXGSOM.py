@@ -10,7 +10,7 @@ from scipy.spatial.distance import minkowski, cdist
 
 class GSOM(object):
 
-    def __init__(self,  radius=10, min_rad=2.45, lrst=0.1, sf=0.9, fd=0.15,  sd=0.02, cluster_spacing_factor = .9, its=20, labels=np.array([]), momentum = 0.85, map_structure = 'hex', neighbor_func = 'cut_gaussian'):
+    def __init__(self,  radius=10, min_rad=2.45, lrst=0.1, sf=0.9, fd=0.15,  sd=0.02, cluster_spacing_factor = .9, its=20, labels=np.array([]), momentum = 0.85, map_structure = 'hex', neighbor_func = 'cut_gaussian', pmink = None):
         self.lrst = lrst
         self.its = its
         self.fd = fd
@@ -35,6 +35,8 @@ class GSOM(object):
         self.structure = map_structure
         self.n_low_neighbors = 0
         self.hits = None
+        self.pmink = pmink
+
 
 
 
@@ -82,7 +84,9 @@ class GSOM(object):
             lambda_rad = np.log(rad_min*1./self.rst)
             lambda_lr = np.log(0.01)
             # self.Graph = coo_matrix(np.zeros(self.grid.shape[0], self.grid.shape[0]))
-            pmink = X.shape[1] if self.recsf<1 else 2
+            if self.pmink == None:
+                self.pmink = X.shape[1]
+            pmink = self.pmink
 
             self.prevW = self.W*0
 
@@ -94,44 +98,40 @@ class GSOM(object):
                 r = self.rst *np.exp(lambda_rad * ntime*(1-1./self.W.shape[0]))#- ntime * (self.rst - rad_min)
                 self.r = r
                 self.wd = self.wdst
-                self.lr = self.lr*np.exp(-0.2*(1-1./self.W.shape[0]))#np.exp(lambda_lr*ntime)#self.lr*(1-ntime)#*(1-ntime)#*
+                self.lr =self.lrst*np.exp(lambda_lr*ntime)#np.exp(lambda_lr*ntime)#self.lr*(1-ntime)#*(1-ntime)#*
                 xix = 0
 
-                recsf = self.recsf * ntime **.2 if self.recsf<1. else 1.
-                try:
-                    self.csf = 1/(1-recsf) #+ ntime
-                except:
-                    self.csf = np.inf
+
 
                 self.errors *= 0
                 self.ages *= 0
                 self.hits *=0
                 for x in X:
+                    '''Map Growth'''
+                    while self.errors.max()/max(self.hits[self.errors.argmax()], 1.) > self.GT :
+                        self.error_dist(self.errors.argmax())
 
                     ''' Training For Instances'''
-                    hdist = cdist(self.W, np.array([x]), metric='minkowski', p=pmink)#(1 if self.recsf == 1 else int(1/(1-self.recsf)))+1)
+                    hdist = cdist(self.W, np.array([x]), metric='minkowski', p=2)#(1 if self.recsf == 1 else int(1/(1-self.recsf)))+1)
                     bmu = hdist.argmin()
                     ldist = np.linalg.norm(self.grid - self.grid[bmu], axis=1)
                     nix = np.where(ldist<=r)[0].shape[0]
-                    dix = np.where(ldist<=self.rst*self.csf)[0].shape[0]
-                    decayers = np.argsort((ldist))[:dix]
+                    decayers = np.argsort((ldist))
                     neighbors = np.argsort((ldist))[:nix]
 
                     ''' ** coefficient to consider sinking to neighborhood! ** '''
                     ld = ldist[neighbors]/r
-                    thetfunc = self.neighbor_func(ld)#np.exp(-.5*ld**2)
+                    thetfunc = self.neighbor_func(ld)
                     theta_d = np.array([thetfunc]).T
                     delta_neis = (x-self.W[neighbors])*theta_d*self.lr#+ self.momentum *np.exp(-5*(1-ntime)**6)* self.prevW[neighbors]
 
                     ''' Gap  Enforcement '''
                     wd_coef = self.wd*self.lr#*np.log10(self.W.shape[0])#nix/(np.pi*r**2)#*(ntime)**.5
                     hdist = hdist[decayers]
-                    # hdist -= hdist.min()
-                    hdist /= hdist[nix-1]
-                    D = 1-np.exp(-(.3)**pmink*(hdist)**(pmink)) if self.recsf < 1  else np.exp(-7* (1-hdist/hdist.max())**50)
+                    hdist/=hdist.max()
+                    D = np.exp(-7* (1-hdist)**pmink)
                     pull = D
                     D-= D.min()
-                    # pull = np.array([pull]).T
                     deltas =(self.momentum * (ntime>0.8))*self.prevW#np.zeros(self.W.shape)
                     delta_dec=(x-self.W[decayers])*wd_coef*pull
                     deltas[decayers] += delta_dec
@@ -144,8 +144,6 @@ class GSOM(object):
                     self.errors[bmu] += np.linalg.norm(self.W[bmu] - x)**2
                     ''' Growing the map '''
                     self.hits[bmu] += 1
-                    while self.errors.max()/max(self.hits[self.errors.argmax()], 1.) > self.GT and i + 1 < its:
-                        self.error_dist(self.errors.argmax())
                     self.prune_map(np.where(self.ages > 600))
                     if xix % 500 == 0:
                         print (
@@ -155,15 +153,11 @@ class GSOM(object):
 
                     xix+=1
 
-                # self.grid *= self.scale
-
-
                 if self.labels.shape[0]:
                     fig = plt.figure(figsize=(5, 5))
                     Y = self.predict(X)
                     x, y = Y.T
                     plt.scatter(x, y, edgecolors='none', c=plt.cm.jet(self.labels *1./np.unique(self.labels).shape[0] ), alpha=0.5, s=6, marker='h')
-                    # plt.show(block=False)
                     plt.savefig('./images/map_'+str(i)+'.png')
                     plt.close(fig)
 
