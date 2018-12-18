@@ -8,8 +8,8 @@ def sigmoid(x):
     return (1./(1+np.exp(-x)))
 
 
-def _curse_curve(x, lam):
-    return 1 - np.exp(lam * x ** 2)
+def _curse_curve(x, a):
+    return a*np.log(x)
 
 
 # x1 = np.array(range(100)).astype(float)#np.random.randn(100).astype(float)
@@ -21,15 +21,19 @@ def _curse_curve(x, lam):
 # x.sort()
 d = 30
 
-X = np.random.randn(100, d)
+X = np.array(range(100)).astype(float)#100, d)
+X/=X.max()
 x =np.array(range(100)).astype(float)
 x/=x.max()
 p = 2
-D = cdist(np.zeros((1, d)), X, metric='minkowski', p = p)#**p
-D.sort()
-D/=D.max()
+# D = cdist(np.zeros((1, d)), X, metric='minkowski', p = p)#**p
+# D.sort()
+# D/=D.max()
+k = 7
+a = 2
+b = 6
 # y =np.exp(-x1**2/np.mean(2*x1**2))
-y = np.exp(-40*(1-D)**50)#1-np.exp(-(32./1155)**2*(x1)**8)
+y = 1+50*np.exp(-a*(X)**b)#1-np.exp(-(32./1155)**2*(x1)**8)
 # y1 = 1-np.exp(-.2 * (x1)**8)
 # y2 = 1-np.exp(-1000 * (x)**4)
 

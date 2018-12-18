@@ -93,7 +93,7 @@ class GSOM(object):
             pmink = self.pmink
 
             self.prevW = self.W*0
-
+            p_ = self.Ps.mean()
             for i in range(its):
                 ''' Normalized Time Variable for the learning rules.'''
                 ntime = i * 1. / max(its, 1)
@@ -133,7 +133,7 @@ class GSOM(object):
                     wd_coef = self.wd*self.lr#*np.log10(self.W.shape[0])#nix/(np.pi*r**2)#*(ntime)**.5
                     hdist = hdist[decayers]
                     hdist/=hdist.max()
-                    D = np.exp(-7* (1-hdist)**max(1, 48/33*self.Ps.mean()+60))
+                    D = np.exp(-7* (1-hdist)**max(1, 1+50*np.exp(-4*(p_/40)**6)))
                     pull = D
                     D-=D.min()
                     deltas =(self.momentum * (ntime>0.8))*self.prevW#np.zeros(self.W.shape)
@@ -151,9 +151,9 @@ class GSOM(object):
                     self.prune_map(np.where(self.ages > 600))
                     if xix % 500 == 0:
                         print (
-                        '\riter %i of %i : %i / %i : pmink : %s :|G| = %i : n_neis :%i : LR: %.4f  QE: %.4f sink?: %s : fd: %.4f : wd_coef : %.4f' % (
-                        i + 1,its,  xix, X.shape[0], str(pmink), self.W.shape[0], neighbors.shape[0], self.lr, self.errors.sum(),
-                        str(decayers.shape[0]), self.csf, np.mean(wd_coef))), ' time = %.2f' % (et),
+                        '\riter %i of %i : %i / %i : mean_lambda_curse : %s :|G| = %i : n_neis :%i : LR: %.4f  QE: %.4f Power?: %s : fd: %.4f : wd_coef : %.8f' % (
+                        i + 1,its,  xix, X.shape[0], str(p_), self.W.shape[0], neighbors.shape[0], self.lr, self.errors.sum(),
+                        str(max(1, 1+50*np.exp(-4*(p_/42)**6))), self.csf, np.max(D))), ' time = %.2f' % (et),
 
                     xix+=1
 
