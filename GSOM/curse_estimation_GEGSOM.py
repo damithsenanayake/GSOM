@@ -146,7 +146,7 @@ class GSOM(object):
                     self.errors[bmu] += np.linalg.norm(self.W[bmu] - x)**2
                     ''' Growing the map '''
                     self.hits[bmu] += 1
-                    self.prune_map(np.where(self.ages > self.X.shape[0]/10.))
+                    self.prune_map(np.where(self.ages > X.shape[0]/10.))
                     if xix % 500 == 0:
                         print (
                         '\riter %i of %i : %i / %i : mean_lambda_curse : %.4f :|G| = %i : n_neis :%i : LR: %.4f  QE: %.4f Power?: %.4f : fd: %.4f : wd_coef : %.8f' % (
