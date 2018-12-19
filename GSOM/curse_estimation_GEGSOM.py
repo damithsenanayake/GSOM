@@ -87,10 +87,8 @@ class GSOM(object):
             rad_min = self.rad_min
             lambda_rad = np.log(rad_min*1./self.rst)
             lambda_lr = np.log(0.01)
-            # self.Graph = coo_matrix(np.zeros(self.grid.shape[0], self.grid.shape[0]))
             if self.pmink == None:
                 self.pmink = X.shape[1]
-            pmink = self.pmink
 
             self.prevW = self.W*0
             p_ = self.Ps.mean()
@@ -148,12 +146,12 @@ class GSOM(object):
                     self.errors[bmu] += np.linalg.norm(self.W[bmu] - x)**2
                     ''' Growing the map '''
                     self.hits[bmu] += 1
-                    self.prune_map(np.where(self.ages > 600))
+                    self.prune_map(np.where(self.ages > self.X.shape[0]/10.))
                     if xix % 500 == 0:
                         print (
-                        '\riter %i of %i : %i / %i : mean_lambda_curse : %s :|G| = %i : n_neis :%i : LR: %.4f  QE: %.4f Power?: %s : fd: %.4f : wd_coef : %.8f' % (
-                        i + 1,its,  xix, X.shape[0], str(p_), self.W.shape[0], neighbors.shape[0], self.lr, self.errors.sum(),
-                        str(max(1, 1+50*np.exp(-4*(p_/42)**6))), self.csf, np.max(D))), ' time = %.2f' % (et),
+                        '\riter %i of %i : %i / %i : mean_lambda_curse : %.4f :|G| = %i : n_neis :%i : LR: %.4f  QE: %.4f Power?: %.4f : fd: %.4f : wd_coef : %.8f' % (
+                        i + 1,its,  xix, X.shape[0], (p_), self.W.shape[0], neighbors.shape[0], self.lr, self.errors.sum(),
+                        (max(1, 1+50*np.exp(-4*(p_/42)**6))), self.csf, np.max(D))), ' time = %.2f' % (et),
 
                     xix+=1
 

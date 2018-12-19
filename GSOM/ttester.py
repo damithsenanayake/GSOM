@@ -30,8 +30,8 @@ p = 2
 # D.sort()
 # D/=D.max()
 k = 7
-a = 2
-b = 6
+a = 6
+b = 4
 # y =np.exp(-x1**2/np.mean(2*x1**2))
 y = 1+50*np.exp(-a*(X)**b)#1-np.exp(-(32./1155)**2*(x1)**8)
 # y1 = 1-np.exp(-.2 * (x1)**8)
